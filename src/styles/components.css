@@ -208,9 +208,8 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   font-size: var(--font-size-title);
-  font-family: var(--font-family-display);
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 800;
+  letter-spacing: -0.2px;
   white-space: nowrap;
 }
 .topbar-side { display: flex; align-items: center; gap: var(--space-2); min-width: 44px; }
@@ -245,7 +244,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   cursor: pointer;
   white-space: nowrap;
 }
-.segment-tab.active { background: var(--color-accent-green); color: var(--color-white); }
+.segment-tab.active { background: var(--color-text-primary); color: var(--color-white); }
 .segment-tab .count { background: rgba(255,255,255,0.25); border-radius: var(--radius-pill); padding: 1px 6px; font-size: 11px; }
 .segment-tab:not(.active) .count { background: var(--color-disabled); }
 
@@ -372,7 +371,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 }
 .order-card.canceled { background: var(--color-accent-red-bg); }
 
-.order-card-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+.order-card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
 .elapsed-badge {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: var(--font-size-caption); font-weight: 800;
@@ -386,8 +385,6 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .order-card.canceled .pickup-value { color: var(--color-accent-red); }
 
 .order-card-header-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 6px; margin-bottom: var(--space-3); }
-.order-checkbox-label { display: flex; align-items: center; flex-shrink: 0; }
-.order-checkbox-label input { width: 20px; height: 20px; accent-color: var(--color-text-primary); cursor: pointer; }
 
 .order-card-items { background: var(--color-white); border-radius: var(--space-2); padding: var(--space-3); margin-bottom: var(--space-2); }
 .order-card-menu-line { display: flex; align-items: center; gap: 8px; font-size: var(--font-size-body); font-weight: 600; margin-bottom: 6px; color: var(--color-text-primary); }
@@ -403,11 +400,10 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .order-card-note { margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--color-accent-amber-bg); border-radius: var(--space-2); font-size: var(--font-size-caption); color: #a15c00; font-weight: 600; }
 .order-card-cancel-reason { font-size: var(--font-size-caption); color: var(--color-accent-red); font-weight: 700; margin-bottom: var(--space-2); }
 
-.order-card-meta { border-top: 1px solid var(--color-disabled); margin-top: var(--space-1); padding-top: var(--space-3); display: flex; flex-direction: column; gap: 7px; }
+.order-card-meta { margin-top: var(--space-3); display: flex; flex-direction: column; gap: 7px; }
 .meta-row { display: flex; align-items: baseline; gap: var(--space-3); font-size: var(--font-size-caption); }
 .meta-label { flex: 0 0 56px; color: var(--color-text-secondary); font-weight: 600; white-space: nowrap; }
 .meta-value { flex: 1; min-width: 0; color: var(--color-text-primary); font-weight: 600; }
-.meta-value.reservation { color: #a15c00; font-weight: 800; }
 .phone-btn {
   display: inline-flex; align-items: center; gap: 4px;
   height: 28px; padding: 0 var(--space-2);

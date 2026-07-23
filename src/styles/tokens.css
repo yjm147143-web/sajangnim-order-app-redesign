@@ -34,7 +34,7 @@
   /* Typography */
   --font-family-base: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
     'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --font-family-display: 'Black Han Sans', var(--font-family-base);
+  --font-family-display: var(--font-family-base);
   --font-size-display: 32px;
   --font-size-title: 22px;
   --font-size-subtitle: 17px;

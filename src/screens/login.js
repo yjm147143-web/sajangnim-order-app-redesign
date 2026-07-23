@@ -9,7 +9,7 @@
   function render() {
     return (
       '<style>' +
-      '.login-wordmark{padding:56px 0 6px;text-align:center;font-family:var(--font-family-display);font-size:30px;font-weight:400;letter-spacing:0.01em;background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--color-wordmark);}' +
+      '.login-wordmark{padding:56px 0 6px;text-align:center;font-size:28px;font-weight:800;letter-spacing:-0.5px;background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--color-wordmark);}' +
       '.login-subtitle{text-align:center;color:var(--color-text-secondary);font-size:var(--font-size-caption);margin-bottom:32px;}' +
       '.role-toggle{display:flex;gap:8px;padding:0 20px 28px;}' +
       '.role-toggle .segment-tab{flex:1;height:52px;font-size:var(--font-size-body);}' +
