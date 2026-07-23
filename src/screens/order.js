@@ -53,7 +53,7 @@
       ' color: var(--color-text-secondary); font-size: 10px; line-height: 1;' +
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
-    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
+    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); border-color: rgba(92,130,232,0.35); }' +
     '.kitchen-fab {' +
       ' position: absolute; right: var(--space-4); bottom: 20px; z-index: 30;' +
       ' display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer;' +
