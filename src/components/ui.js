@@ -15,8 +15,12 @@
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
+  function elapsedMinutes(iso) {
+    return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  }
+
   function elapsedLabel(iso) {
-    const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    const mins = elapsedMinutes(iso);
     if (mins < 60) return mins + '분 경과';
     return Math.floor(mins / 60) + '시간 ' + (mins % 60) + '분 경과';
   }
@@ -333,7 +337,7 @@
   }
 
   window.UI = {
-    escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, elapsedLabel: elapsedLabel,
+    escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
     formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
     channelBadgeHtml: channelBadgeHtml, reservationBadgeHtml: reservationBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,

@@ -24,7 +24,6 @@
 
   const SCOPED_STYLE = '' +
     '.topbar-title { max-width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }' +
-    '.order-card-payment-row { font-size: 13px; color: var(--color-text-secondary); font-weight: 600; margin-bottom: 8px; }' +
     '.order-card-actions.three { flex-wrap: wrap; }' +
     '.order-card-actions.three .btn { font-size: 11.5px; padding: 0 4px; flex: 1 1 30%; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
@@ -89,14 +88,17 @@
     updateList();
   }
 
-  // 메뉴명·수량·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다
+  // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
   function itemListHtml(order) {
     return (order.items || []).map(function (it) {
-      const menuLine = '<div class="order-card-menu-line"><span class="line-name">' + esc(it.menuName) + '</span><span class="line-qty">' + it.quantity + '개</span></div>';
-      const optLine = (it.optionNames && it.optionNames.length)
-        ? '<div class="order-card-option-line">ㄴ ' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</div>'
+      const optHtml = (it.optionNames && it.optionNames.length)
+        ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
-      return menuLine + optLine;
+      return '<div class="order-card-menu-line">' +
+        '<span class="line-qty">' + it.quantity + '개</span>' +
+        '<span class="line-name">' + esc(it.menuName) + '</span>' +
+        optHtml +
+        '</div>';
     }).join('');
   }
 
@@ -146,6 +148,15 @@
     const expanded = isBucketExpanded(bucketKey);
     const cls = 'order-card' + (order.canceled ? ' canceled' : '');
     let html = '<div class="' + cls + '">';
+
+    // 상단 상태 행: 경과시간(좌, 오래될수록 강조색) + 픽업번호(우) — 조리 우선순위와 픽업 정보를 한눈에
+    const mins = window.UI.elapsedMinutes(order.orderedAt);
+    const urgencyCls = mins >= 10 ? 'urgent' : 'normal';
+    html += '<div class="order-card-top-row">' +
+      '<span class="elapsed-badge ' + urgencyCls + '">● ' + window.UI.elapsedLabel(order.orderedAt) + '</span>' +
+      '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '좌석' : '픽업') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
+      '</div>';
+
     const checkboxHtml = renderCheckboxHtml(order, tabStatus, disabled);
     // 주문채널·프로모션 뱃지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     const channelHtml = window.UI.channelBadgeHtml(order.channel);
@@ -155,36 +166,34 @@
     if (checkboxHtml || channelHtml || reservationHtml || reusableHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + checkboxHtml + channelHtml + reservationHtml + reusableHtml + promoHtml + '</div>';
     }
-    // 호출번호/좌석번호는 메뉴 정보와 같은 행에 두어 한 시야에 파악되도록 한다
-    html += '<div class="order-card-content-row">' +
-      '<div class="order-card-items">' + itemListHtml(order) + '</div>' +
-      '<div class="order-card-pickup-block"><div class="pickup-label">' + (order.identifierType === 'SEAT' ? '좌석번호' : '호출번호') + '</div><div class="pickup-value">' + esc(order.pickupNo) + '</div></div>' +
-      '</div>';
-    // 전체 펼쳐보기/접기: 접었을 때도 대표주문메뉴·고객연락처·픽업번호·액션버튼·주문시간/경과시간은 노출한다
-    // 예약 주문은 접수시간/경과시간 대신 예약 시각만 볼드로 노출한다
-    // 주문시간·경과시간은 조리 우선순위 판단에 중요한 정보라 강조해서 보여준다
-    if (order.isReservation) {
-      html += '<div class="order-card-time reservation">' + window.UI.clockLabel(order.reservationTime || order.orderedAt) + ' 예약</div>';
-    } else {
-      html += '<div class="order-card-time">' + window.UI.clockLabel(order.orderedAt) + ' 주문 · <span class="elapsed-badge">' + window.UI.elapsedLabel(order.orderedAt) + '</span></div>';
+
+    html += '<div class="order-card-items">' + itemListHtml(order) + '</div>';
+
+    // 고객 요청(메모)은 조리 시 바로 확인해야 하는 정보라 '간단히 보기'에서도 항상 노출한다
+    if (order.customerNote) {
+      html += '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>';
     }
-    const contact = window.UI.formatContact(order.customerContact);
-    const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
-    const phoneBtnHtml = '<a href="tel:' + esc(order.customerContact) + '" class="phone-btn">📞 ' + esc(contact) + '</a>';
-    html += '<div class="order-card-phone">' +
-      (isEmailContact ? esc(contact) : phoneBtnHtml) +
-      '</div>';
     if (order.canceled) {
       const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제취소' : '주문취소');
       html += '<div class="order-card-cancel-reason">[' + typeLabel + '] ' + esc(order.cancelReason || '') + '</div>';
     }
-    if (expanded) {
-      html += '<div class="order-card-detail">' +
-        '<div class="order-card-payment-row">결제수단 ' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</div>' +
-        '<div class="order-card-payment-row">PG주문번호 ' + esc(order.paymentOrderNo) + '</div>' +
-        (order.customerNote ? '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>' : '') +
-        '</div>';
+
+    // 접수시간 등 상세 정보는 key-value 리스트로 정리. 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다
+    html += '<div class="order-card-meta">';
+    if (order.isReservation) {
+      html += '<div class="meta-row"><span class="meta-label">예약</span><span class="meta-value reservation">' + window.UI.clockLabel(order.reservationTime || order.orderedAt) + ' 수령</span></div>';
     }
+    html += '<div class="meta-row"><span class="meta-label">접수</span><span class="meta-value">' + window.UI.clockLabel(order.orderedAt) + '</span></div>';
+    if (expanded) {
+      const contact = window.UI.formatContact(order.customerContact);
+      const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
+      const contactHtml = isEmailContact ? esc(contact) : ('<a href="tel:' + esc(order.customerContact) + '" class="phone-btn">📞 ' + esc(contact) + '</a>');
+      html += '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
+        '<div class="meta-row"><span class="meta-label">결제</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
+        '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>';
+    }
+    html += '</div>';
+
     // 주문취소/결제취소/반품 처리된 완료 탭 건은 되돌리기·반품 버튼을 비활성화한다
     const actionsDisabled = disabled || (tabStatus === 'DONE' && order.canceled);
     html += renderActionsHtml(order, tabStatus, actionsDisabled);
