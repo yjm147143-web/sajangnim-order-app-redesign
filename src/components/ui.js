@@ -21,12 +21,6 @@
     return Math.floor(mins / 60) + '시간 ' + (mins % 60) + '분 경과';
   }
 
-  function isPhoneSuspicious(contact) {
-    if (!contact || contact.indexOf('@') !== -1) return false;
-    const digits = contact.replace(/[^0-9]/g, '');
-    return digits.indexOf('010') !== 0 || digits.length !== 11;
-  }
-
   function formatContact(contact) {
     if (!contact) return '';
     if (contact.indexOf('@') !== -1) return contact;
@@ -340,7 +334,7 @@
 
   window.UI = {
     escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, elapsedLabel: elapsedLabel,
-    isPhoneSuspicious: isPhoneSuspicious, formatContact: formatContact,
+    formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
     channelBadgeHtml: channelBadgeHtml, reservationBadgeHtml: reservationBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     reusableContainerBadgeHtml: reusableContainerBadgeHtml, promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,

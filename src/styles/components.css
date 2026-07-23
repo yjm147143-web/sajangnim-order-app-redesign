@@ -362,30 +362,31 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .section-caption { font-size: var(--font-size-caption); color: var(--color-text-secondary); padding: 0 var(--space-5) var(--space-2); }
 .divider-line { height: 8px; background: #eef0f2; margin: var(--space-2) 0; }
 
-/* ---------- Order Card ---------- */
+/* ---------- Order Card (Toss 스타일 — 무보더 플랫 카드 + 절제된 포인트) ---------- */
 .order-list { padding: 0 var(--space-5) var(--space-5); }
 .order-card {
   background: var(--color-divider);
-  border: 1px solid var(--color-divider);
   border-radius: var(--radius-card);
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-3);
 }
-.order-card.canceled { background: var(--color-accent-red-bg); border: 1.5px solid var(--color-accent-red); }
+.order-card.canceled { background: var(--color-accent-red-bg); }
 
 .order-card-header-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 6px; margin-bottom: var(--space-3); }
 .order-checkbox-label { display: flex; align-items: center; flex-shrink: 0; }
 .order-checkbox-label input { width: 20px; height: 20px; accent-color: var(--color-text-primary); cursor: pointer; }
-.order-card-payno-row { text-align: right; font-size: 11px; color: var(--color-text-secondary); margin-top: -4px; margin-bottom: var(--space-2); }
 
-.order-card-content-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: var(--space-2); }
-.order-card-menu-main { flex: 1; font-size: 18px; font-weight: 800; line-height: 1.3; }
-.order-card-pickup-block { flex-shrink: 0; text-align: right; }
-.pickup-label { font-size: 11px; color: var(--color-text-secondary); font-weight: 600; }
-.pickup-value { font-size: 20px; font-weight: 800; color: var(--color-text-primary); }
+.order-card-content-row { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-2); }
+.order-card-pickup-block { flex-shrink: 0; text-align: right; padding-top: 2px; }
+.pickup-label { font-size: 11px; color: var(--color-text-secondary); font-weight: 600; margin-bottom: 2px; }
+.pickup-value { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.order-card.canceled .pickup-value { color: var(--color-accent-red); }
 
-.order-card-time { font-size: var(--font-size-caption); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
-.order-card-time.reservation { font-weight: 800; color: var(--color-text-primary); }
+.order-card-items { flex: 1 1 auto; min-width: 0; background: var(--color-white); border-radius: var(--space-2); padding: var(--space-3); }
+
+.order-card-time { font-size: var(--font-size-body); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-2); }
+.order-card-time.reservation { font-weight: 800; }
+.order-card-time .elapsed-badge { display: inline-block; margin-left: 2px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--color-accent-amber-bg); color: #a15c00; font-weight: 800; font-size: var(--font-size-caption); }
 .order-card-amount { font-size: var(--font-size-body); font-weight: 800; margin-bottom: var(--space-2); }
 .order-card-cancel-reason { font-size: var(--font-size-caption); color: var(--color-accent-red); font-weight: 700; margin-bottom: var(--space-2); }
 .order-card-phone { margin-bottom: var(--space-2); }
@@ -393,20 +394,22 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   display: inline-flex; align-items: center; gap: 4px;
   height: 32px; padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
-  background: var(--color-divider);
+  background: var(--color-white);
   font-size: var(--font-size-body); font-weight: 700;
   color: var(--color-text-primary);
   text-decoration: none;
 }
 .phone-btn:active { background: var(--color-disabled); }
-.phone-btn.suspicious { color: var(--color-accent-red); font-weight: 800; background: var(--color-accent-red-bg); }
-.phone-warning-inline { font-size: 11px; font-weight: 600; color: var(--color-accent-red); margin-left: 4px; }
-.order-card-detail { border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); padding-top: var(--space-3); }
-.order-card-menu-line { display: flex; justify-content: space-between; font-size: var(--font-size-caption); margin-bottom: 4px; color: var(--color-text-primary); }
-.order-card-option-line { font-size: var(--font-size-micro); color: var(--color-text-secondary); padding-left: 10px; margin: -2px 0 4px; }
+.order-card-detail { border-top: 1px solid var(--color-disabled); margin-top: var(--space-3); padding-top: var(--space-3); }
+.order-card-menu-line { display: flex; align-items: baseline; gap: 10px; font-size: var(--font-size-body); font-weight: 600; margin-bottom: 6px; color: var(--color-text-primary); }
+.order-card-menu-line:last-child { margin-bottom: 0; }
+.order-card-menu-line .line-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-card-menu-line .line-qty { flex-shrink: 0; font-variant-numeric: tabular-nums; font-weight: 700; }
+.order-card-option-line { font-size: var(--font-size-caption); color: var(--color-text-secondary); padding-left: 10px; margin: -2px 0 6px; }
+.order-card-option-line:last-child { margin-bottom: 0; }
 .order-card-note { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--color-accent-amber-bg); border-radius: var(--space-2); font-size: var(--font-size-caption); color: #a15c00; font-weight: 600; }
-.order-card-actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
-.order-card-actions .btn { flex: 1; width: auto; }
+.order-card-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.order-card-actions .btn { flex: 1; width: auto; height: 44px; }
 .order-card-actions .btn-outline { background: var(--color-white); }
 .order-card-expand-toggle { text-align: center; font-size: var(--font-size-caption); color: var(--color-text-secondary); font-weight: 700; margin-top: var(--space-2); cursor: pointer; }
 

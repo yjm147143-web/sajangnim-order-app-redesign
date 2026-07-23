@@ -89,15 +89,15 @@
     updateList();
   }
 
-  // ---------------- 대표 메뉴 라벨 ----------------
-  function mainMenuLabel(order) {
-    const items = order.items || [];
-    if (!items.length) return '';
-    if (items.length === 1) {
-      const it = items[0];
-      return it.quantity > 1 ? (it.menuName + ' ' + it.quantity + '개') : it.menuName;
-    }
-    return items[0].menuName + ' 외 ' + (items.length - 1) + '건';
+  // 메뉴명·수량·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다
+  function itemListHtml(order) {
+    return (order.items || []).map(function (it) {
+      const menuLine = '<div class="order-card-menu-line"><span class="line-name">' + esc(it.menuName) + '</span><span class="line-qty">' + it.quantity + '개</span></div>';
+      const optLine = (it.optionNames && it.optionNames.length)
+        ? '<div class="order-card-option-line">ㄴ ' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</div>'
+        : '';
+      return menuLine + optLine;
+    }).join('');
   }
 
   // ---------------- 렌더 조각들 ----------------
@@ -147,50 +147,43 @@
     const cls = 'order-card' + (order.canceled ? ' canceled' : '');
     let html = '<div class="' + cls + '">';
     const checkboxHtml = renderCheckboxHtml(order, tabStatus, disabled);
-    const channelHtml = expanded ? window.UI.channelBadgeHtml(order.channel) : '';
+    // 주문채널·프로모션 뱃지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
+    const channelHtml = window.UI.channelBadgeHtml(order.channel);
+    const promoHtml = window.UI.promoBadgeHtml(order.promoType);
     const reservationHtml = (expanded && order.isReservation) ? window.UI.reservationBadgeHtml() : '';
     const reusableHtml = (expanded && order.isReusableContainer) ? window.UI.reusableContainerBadgeHtml() : '';
-    const promoHtml = expanded ? window.UI.promoBadgeHtml(order.promoType) : '';
     if (checkboxHtml || channelHtml || reservationHtml || reusableHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + checkboxHtml + channelHtml + reservationHtml + reusableHtml + promoHtml + '</div>';
     }
-    if (expanded) {
-      html += '<div class="order-card-payno-row">PG주문번호 ' + esc(order.paymentOrderNo) + '</div>';
-    }
+    // 호출번호/좌석번호는 메뉴 정보와 같은 행에 두어 한 시야에 파악되도록 한다
     html += '<div class="order-card-content-row">' +
-      '<div class="order-card-menu-main">' + esc(mainMenuLabel(order)) + '</div>' +
+      '<div class="order-card-items">' + itemListHtml(order) + '</div>' +
       '<div class="order-card-pickup-block"><div class="pickup-label">' + (order.identifierType === 'SEAT' ? '좌석번호' : '호출번호') + '</div><div class="pickup-value">' + esc(order.pickupNo) + '</div></div>' +
       '</div>';
     // 전체 펼쳐보기/접기: 접었을 때도 대표주문메뉴·고객연락처·픽업번호·액션버튼·주문시간/경과시간은 노출한다
     // 예약 주문은 접수시간/경과시간 대신 예약 시각만 볼드로 노출한다
+    // 주문시간·경과시간은 조리 우선순위 판단에 중요한 정보라 강조해서 보여준다
     if (order.isReservation) {
       html += '<div class="order-card-time reservation">' + window.UI.clockLabel(order.reservationTime || order.orderedAt) + ' 예약</div>';
     } else {
-      html += '<div class="order-card-time">' + window.UI.clockLabel(order.orderedAt) + ' 주문 (' + window.UI.elapsedLabel(order.orderedAt) + ')</div>';
+      html += '<div class="order-card-time">' + window.UI.clockLabel(order.orderedAt) + ' 주문 · <span class="elapsed-badge">' + window.UI.elapsedLabel(order.orderedAt) + '</span></div>';
     }
     const contact = window.UI.formatContact(order.customerContact);
-    const suspicious = window.UI.isPhoneSuspicious(order.customerContact);
     const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
-    const warningHtml = suspicious ? ' <span class="phone-warning-inline">⚠️오입력</span>' : '';
-    const phoneBtnHtml = '<a href="tel:' + esc(order.customerContact) + '" class="phone-btn' + (suspicious ? ' suspicious' : '') + '">📞 ' + esc(contact) + '</a>';
+    const phoneBtnHtml = '<a href="tel:' + esc(order.customerContact) + '" class="phone-btn">📞 ' + esc(contact) + '</a>';
     html += '<div class="order-card-phone">' +
-      (isEmailContact ? (esc(contact) + warningHtml) : (phoneBtnHtml + warningHtml)) +
+      (isEmailContact ? esc(contact) : phoneBtnHtml) +
       '</div>';
     if (order.canceled) {
       const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제취소' : '주문취소');
       html += '<div class="order-card-cancel-reason">[' + typeLabel + '] ' + esc(order.cancelReason || '') + '</div>';
     }
     if (expanded) {
-      html += '<div class="order-card-payment-row">결제수단 ' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</div>';
-      html += '<div class="order-card-detail">' + order.items.map(function (it) {
-        const menuLine = '<div class="order-card-menu-line"><span>' + esc(it.menuName) + '</span><span>' + it.quantity + '개</span></div>';
-        const optLine = (it.optionNames && it.optionNames.length)
-          ? '<div class="order-card-option-line">ㄴ ' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</div>'
-          : '';
-        return menuLine + optLine;
-      }).join('') +
-      (order.customerNote ? '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>' : '') +
-      '</div>';
+      html += '<div class="order-card-detail">' +
+        '<div class="order-card-payment-row">결제수단 ' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</div>' +
+        '<div class="order-card-payment-row">PG주문번호 ' + esc(order.paymentOrderNo) + '</div>' +
+        (order.customerNote ? '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>' : '') +
+        '</div>';
     }
     // 주문취소/결제취소/반품 처리된 완료 탭 건은 되돌리기·반품 버튼을 비활성화한다
     const actionsDisabled = disabled || (tabStatus === 'DONE' && order.canceled);
