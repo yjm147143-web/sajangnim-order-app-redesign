@@ -110,7 +110,7 @@
       let msg = '전체 매장(' + ids.length + '개)을 ' + label + ' 처리할까요?';
       if (alreadyCount > 0) msg += '<br/>이미 ' + label + ' 상태인 매장 ' + alreadyCount + '개는 제외돼요.';
 
-      window.UI.confirmModal('전체 매장 ' + label, msg, label, function () {
+      window.UI.confirmModal('전체 매장 ' + label, msg, label + ' 처리하기', function () {
         const result = window.MockApi.bulkUpdateStoreStatus(ids, target);
         const parts = ['성공 ' + result.success + '건'];
         if (result.skipped) parts.push('제외 ' + result.skipped + '건');

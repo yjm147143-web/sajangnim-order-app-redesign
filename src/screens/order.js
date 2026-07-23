@@ -167,7 +167,7 @@
     }
     if (tabStatus === 'PROCESSING') {
       return '<div class="order-card-actions three">' +
-        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>고객 호출 (' + (order.calledCount || 0) + '회)</button>' +
+        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출 (' + (order.calledCount || 0) + '회)</button>' +
         '<button type="button" class="btn btn-danger-solid" data-action="cancel-payment" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>' +
         '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료 (' + (order.completeCount || 0) + '회)</button>' +
         '</div>';
@@ -204,11 +204,11 @@
     // 상단 상태 행: 경과시간/예약시간(좌) + 픽업번호(우) — 조리 우선순위와 픽업 정보를 한눈에
     html += '<div class="order-card-top-row">' +
       '<div class="top-badges">' + topBadgesHtml(order) + '</div>' +
-      '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '좌석' : '픽업') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
+      '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '자리' : '픽업') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
       '</div>';
 
-    // 주문채널·배달·프로모션 뱃지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
-    // 예약 여부는 상단의 [예약 HH:MM] 뱃지로 이미 표시되므로 헤더에 별도 예약 뱃지를 중복 노출하지 않는다
+    // 주문채널·배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
+    // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
     const channelHtml = window.UI.channelBadgeHtml(order.channel);
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
     const promoHtml = window.UI.promoBadgeHtml(order.promoType);
@@ -219,7 +219,7 @@
 
     html += '<div class="order-card-items">' + itemListHtml(order) + '</div>';
 
-    // 고객 요청(메모)은 조리 시 바로 확인해야 하는 정보라 '간단히 보기'에서도 항상 노출한다
+    // 손님 요청(메모)은 조리 시 바로 확인해야 하는 정보라 '간단히 보기'에서도 항상 노출한다
     if (order.customerNote) {
       html += '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>';
     }
@@ -233,7 +233,7 @@
       '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '" data-bucket="' + esc(bucketKey) + '">' + (expanded ? '▲' : '▼') + '</button>' +
       '</div>';
 
-    // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 뱃지로 이동)
+    // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
     if (expanded) {
       const contact = window.UI.formatContact(order.customerContact);
       const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
@@ -286,7 +286,7 @@
       return '<div class="bulk-action-bar"><button type="button" class="btn btn-primary" data-action="bulk-accept"' + dAttr + '>선택 ' + n + '건 주문 수락</button></div>';
     }
     return '<div class="bulk-action-bar">' +
-      '<button type="button" class="btn btn-outline" data-action="bulk-call"' + dAttr + '>선택 ' + n + '건 고객 호출</button>' +
+      '<button type="button" class="btn btn-outline" data-action="bulk-call"' + dAttr + '>선택 ' + n + '건 손님 호출</button>' +
       '<button type="button" class="btn btn-primary" data-action="bulk-complete"' + dAttr + '>선택 ' + n + '건 완료</button>' +
       '</div>';
   }
@@ -455,7 +455,7 @@
     }
 
     function renderModal() {
-      const options = ['재료 소진', '고객 요청', '영업 마감', '고객 미수령', '직접 입력'];
+      const options = ['재료 소진', '손님 요청', '영업 마감', '손님 미수령', '직접 입력'];
       let bodyHtml = '<div class="reason-pill-row">' + options.map(function (opt) {
         return '<button type="button" class="pill-btn reason-pill' + (selected === opt ? ' active' : '') + '" data-reason="' + opt + '">' + opt + '</button>';
       }).join('') + '</div>';
@@ -541,8 +541,8 @@
     if (order && order.calledCount > 0) {
       window.UI.confirmModal(
         '다시 호출할까요?',
-        '이미 호출한 주문건입니다. 다시 알림을 보낼까요?',
-        '다시 호출',
+        '이미 호출한 주문건이에요. 다시 알림을 보낼까요?',
+        '다시 호출하기',
         proceed
       );
       return;
@@ -559,8 +559,8 @@
     if (order && !order.called) {
       window.UI.confirmModal(
         '호출 없이 완료할까요?',
-        '아직 고객을 호출하지 않았어요. 호출 없이 주문을 완료 처리할까요?',
-        '완료 처리',
+        '아직 손님을 호출하지 않았어요. 호출 없이 주문을 완료 처리할까요?',
+        '완료 처리하기',
         proceed
       );
       return;
@@ -583,7 +583,7 @@
   function handleOpenContact(contact, isEmail) {
     if (!contact) return;
     window.UI.confirmModal(
-      '고객 연락처로 이동하시겠습니까?',
+      '손님 연락처로 이동하시겠어요?',
       contact,
       '이동하기',
       function () { window.location.href = (isEmail ? 'mailto:' : 'tel:') + contact; },

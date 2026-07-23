@@ -96,7 +96,7 @@
         '<div class="icon">📦</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="customerGuideSettings">' +
-        '<div class="icon">📢</div><div class="label">고객 대기 관리</div><div class="chevron">›</div>' +
+        '<div class="icon">📢</div><div class="label">손님 대기 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="sales">' +
         '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
@@ -266,7 +266,7 @@
       var logoutBtn = wrap.querySelector('#logout-btn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', function () {
-          window.UI.confirmModal('로그아웃', '정말 로그아웃 하시겠어요?', '로그아웃', function () {
+          window.UI.confirmModal('로그아웃', '정말 로그아웃 하시겠어요?', '로그아웃하기', function () {
             window.MockApi.logout();
             window.Router.resetTo('login');
           }, { danger: true });

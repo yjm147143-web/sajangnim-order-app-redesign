@@ -97,7 +97,7 @@
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="cg-back-btn" aria-label="뒤로가기">←</button></div>' +
-        '<div class="topbar-title">고객 대기 관리</div>' +
+        '<div class="topbar-title">손님 대기 관리</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll">' +
@@ -105,7 +105,7 @@
         '<div class="settings-list-item no-toggle-click">' +
           '<div class="icon">⏱️</div>' +
           '<div class="label-group">' +
-            '<div class="label">고객 대기 관리 사용</div>' +
+            '<div class="label">손님 대기 관리 사용</div>' +
             '<div class="label-sub" id="cg-enabled-sub">-</div>' +
           '</div>' +
           '<button type="button" class="toggle" id="cg-enabled-toggle"><span class="toggle-knob"></span></button>' +

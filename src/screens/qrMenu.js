@@ -32,7 +32,7 @@
     var qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(info.url);
     return (
       '<div class="section-title">' + esc(info.storeName) + ' 메뉴판</div>' +
-      '<div class="section-caption">고객이 QR을 스캔하면 메뉴판 페이지로 연결돼요</div>' +
+      '<div class="section-caption">손님이 QR을 스캔하면 메뉴판 페이지로 연결돼요</div>' +
       '<div class="qr-section-pad">' +
         '<div class="link-row">' +
           '<div class="link-row-text">' + esc(info.url) + '</div>' +

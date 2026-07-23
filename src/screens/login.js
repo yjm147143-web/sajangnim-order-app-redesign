@@ -109,7 +109,7 @@
           showIdError(root, msg);
         } else if (msg.indexOf('비밀번호를 입력') !== -1) {
           showPwError(root, msg);
-        } else if (msg.indexOf('계정이 아닙니다') !== -1) {
+        } else if (msg.indexOf('계정이 아니에요') !== -1) {
           showIdError(root, msg);
         } else {
           // 아이디 또는 비밀번호가 올바르지 않아요.

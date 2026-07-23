@@ -37,7 +37,7 @@
     const user = findUser(loginId);
     if (!user || user.password !== password) return { ok: false, message: '아이디 또는 비밀번호가 올바르지 않아요.' };
     if (user.role !== role) {
-      return { ok: false, message: role === 'OWNER' ? '사장님 계정이 아닙니다' : '행사 담당자 계정이 아닙니다' };
+      return { ok: false, message: role === 'OWNER' ? '사장님 계정이 아니에요' : '행사 담당자 계정이 아니에요' };
     }
     setSession(user.id);
     if (params.autoLogin) setAutoLogin(loginId); else setAutoLogin(null);
@@ -116,7 +116,7 @@
     return getMinOrderSettings(storeId);
   }
 
-  // 주문 방식 관리: 예약 주문 / 딜리버리(좌석번호) 주문 / 고객 요청사항 수신 여부를 매장이 직접 켜고 끈다.
+  // 주문 방식 관리: 예약 주문 / 배달(자리번호) 주문 / 손님 요청사항 수신 여부를 매장이 직접 켜고 끈다.
   function getOrderChannelSettings(storeId) {
     const store = findStore(storeId);
     return {

@@ -1,6 +1,6 @@
 /*
  * 주문 방식 관리 화면 (설정 > 주문 관리 > 주문 방식 관리)
- * - 예약 주문 / 배달(좌석번호) 주문 / 고객 요청사항 수신 여부를 매장이 직접 켜고 끈다.
+ * - 예약 주문 / 배달(자리번호) 주문 / 손님 요청사항 수신 여부를 매장이 직접 켜고 끈다.
  * - 꺼진 항목은 개발자 테스트 패널에서도 해당 옵션이 비활성화되어, 실제로 그 유형의
  *   주문이 인입되지 않는 것처럼 시뮬레이션된다.
  * - 예약 주문 ON일 때는 예약 접수 시간(운영 시간과 동일 / 직접 설정)도 함께 관리한다.
@@ -66,11 +66,11 @@
       reservationHoursHtml(settings) +
       '<div class="divider-line"></div>' +
       rowHtml('🛎️', 'ocs-seat-toggle', '배달 주문',
-        settings.acceptSeatOrders ? '켜면 좌석번호 주문도 함께 들어와요' : '꺼져 있으면 호출번호 주문만 들어와요',
+        settings.acceptSeatOrders ? '켜면 자리번호 주문도 함께 들어와요' : '꺼져 있으면 호출번호 주문만 들어와요',
         settings.acceptSeatOrders) +
       '<div class="divider-line"></div>' +
-      rowHtml('💬', 'ocs-note-toggle', '고객 요청사항',
-        settings.acceptCustomerNotes ? '주문 시 고객 요청사항을 받고 있어요' : '고객 요청사항을 받지 않아요',
+      rowHtml('💬', 'ocs-note-toggle', '손님 요청사항',
+        settings.acceptCustomerNotes ? '주문 시 손님 요청사항을 받고 있어요' : '손님 요청사항을 받지 않아요',
         settings.acceptCustomerNotes)
     );
   }
@@ -128,13 +128,13 @@
       root.querySelector('#ocs-seat-toggle').addEventListener('click', function () {
         var next = !settings.acceptSeatOrders;
         window.MockApi.updateOrderChannelSettings(storeId, { acceptSeatOrders: next });
-        window.UI.toast(next ? '배달(좌석번호) 주문을 받기 시작해요' : '배달 주문을 받지 않아요 · 호출번호 주문만 들어와요');
+        window.UI.toast(next ? '배달(자리번호) 주문을 받기 시작해요' : '배달 주문을 받지 않아요 · 호출번호 주문만 들어와요');
         refresh();
       });
       root.querySelector('#ocs-note-toggle').addEventListener('click', function () {
         var next = !settings.acceptCustomerNotes;
         window.MockApi.updateOrderChannelSettings(storeId, { acceptCustomerNotes: next });
-        window.UI.toast(next ? '고객 요청사항을 받기 시작해요' : '고객 요청사항을 받지 않아요');
+        window.UI.toast(next ? '손님 요청사항을 받기 시작해요' : '손님 요청사항을 받지 않아요');
         refresh();
       });
 

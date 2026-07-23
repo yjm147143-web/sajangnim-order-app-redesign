@@ -329,7 +329,7 @@
           (state.allergyInfo ? '<div class="menu-preview-origin">알레르기 정보 · ' + esc(state.allergyInfo) + '</div>' : '') +
         '</div>' +
       '</div>' +
-      (!state.exposed ? '<div class="section-caption" style="text-align:center;">고객 화면에 보이지 않아요 (숨김 설정)</div>' : '')
+      (!state.exposed ? '<div class="section-caption" style="text-align:center;">손님 화면에 보이지 않아요 (숨김 설정)</div>' : '')
     );
   }
 
@@ -631,7 +631,7 @@
           '</div>' +
 
           '<div class="input-group">' +
-            '<div class="input-label">고객 화면 미리보기</div>' +
+            '<div class="input-label">손님 화면 미리보기</div>' +
             '<div id="menu-preview-container">' + renderPreviewHtml(state) + '</div>' +
           '</div>' +
 
