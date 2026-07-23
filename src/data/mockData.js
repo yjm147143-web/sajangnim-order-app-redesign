@@ -157,10 +157,29 @@
 
   const KEY = window.AppConfig.DB_KEY;
 
+  // 옵션 그룹을 메뉴에 임베드하던 이전 스키마로 저장된 localStorage를 새 스키마
+  // (매장 공용 optionGroups 배열 + 메뉴의 optionGroupIds 참조)로 옮겨준다.
+  // 이 마이그레이션이 없으면 이전 방문 기록이 남아있는 브라우저에서 DB.optionGroups가
+  // undefined라 메뉴 추가/수정 화면이 렌더링 중 예외를 던지고 빈 화면으로 멈춘다.
+  function migrateOptionGroups(db) {
+    if (!db.optionGroups) db.optionGroups = [];
+    (db.menuItems || []).forEach(function (item) {
+      if (item.optionGroupIds) return;
+      const legacyGroups = item.optionGroups;
+      item.optionGroupIds = (legacyGroups || []).map(function (g) {
+        const group = Object.assign({}, g, { storeId: item.storeId });
+        db.optionGroups.push(group);
+        return group.id;
+      });
+      delete item.optionGroups;
+    });
+    return db;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) return migrateOptionGroups(JSON.parse(raw));
     } catch (e) { /* ignore */ }
     const seed = buildSeed();
     localStorage.setItem(KEY, JSON.stringify(seed));
