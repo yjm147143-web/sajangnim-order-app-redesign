@@ -31,10 +31,14 @@
     '.order-list.with-bulk-bar { padding-bottom: 88px; }' +
     '#bulk-bar-slot:empty { display: none; }' +
     '.kitchen-board-pill { background: var(--color-accent-amber-bg); color: #a15c00; font-weight: 800; }' +
-    '.choice-pair { display: flex; gap: 8px; margin-bottom: 14px; }' +
-    '.choice-pair button { flex: 1; padding: 12px 8px; border: 1.5px solid var(--color-disabled); border-radius: var(--radius-button);' +
-      ' background: var(--color-white); font-size: var(--font-size-body); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
-    '.choice-pair button.on { border-color: var(--color-text-primary); background: var(--color-text-primary); color: var(--color-white); }';
+    '.filter-section { margin-bottom: 18px; }' +
+    '.filter-section-title { font-size: var(--font-size-caption); font-weight: 800; color: var(--color-text-secondary); margin-bottom: 10px; }' +
+    '.filter-chip-row { display: flex; gap: 8px; flex-wrap: wrap; }' +
+    '.filter-chip { padding: 9px 14px; border: 1.5px solid var(--color-disabled); border-radius: var(--radius-pill);' +
+      ' background: var(--color-white); font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
+    '.filter-chip.on { border-color: var(--color-accent-blue); background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
+    '.filter-sheet-actions { display: flex; gap: 8px; margin-top: 8px; }' +
+    '.filter-sheet-actions .btn { height: 48px; }';
 
   // ---------------- 탭 구성 ----------------
   // 자동수락 ON이면 신규 주문이 대기 없이 바로 처리중으로 인입되므로 대기 탭 자체를 숨긴다.
@@ -273,11 +277,14 @@
   function updateFilterBtnLabel() {
     const btn = root.querySelector('#order-filter-btn');
     if (!btn) return;
+    const parts = [];
+    if (menuFilter) parts.push(menuFilter);
+    if (orderTypeFilter) parts.push(ORDER_TYPE_LABELS[orderTypeFilter] || '');
     let label = '주문 필터';
-    if (menuFilter) label = '메뉴 · ' + menuFilter;
-    else if (orderTypeFilter) label = ORDER_TYPE_LABELS[orderTypeFilter] || '주문 필터';
+    if (parts.length === 1) label = parts[0];
+    else if (parts.length >= 2) label = parts[0] + ' +' + (parts.length - 1);
     btn.textContent = label;
-    btn.classList.toggle('active', !!(menuFilter || orderTypeFilter));
+    btn.classList.toggle('active', parts.length > 0);
   }
 
   function switchTab(idx) {
@@ -293,9 +300,12 @@
     updateList();
   }
 
-  // ---------------- 주문 필터 바텀시트 (메뉴별 필터 / 주문 유형별 필터) ----------------
+  // ---------------- 주문 필터 바텀시트 (메뉴별 필터 + 주문 유형별 필터를 동시에 적용 가능) ----------------
+  // 두 필터를 서로 배타적인 탭으로 나누지 않고, 한 화면에서 각자 독립적으로 고르게 한 뒤
+  // '적용'을 눌러야 실제로 반영되도록 해 두 조건을 자유롭게 조합해볼 수 있게 한다.
   function openOrderFilterSheet() {
-    let mode = orderTypeFilter ? 'TYPE' : 'MENU';
+    let draftMenu = menuFilter;
+    let draftType = orderTypeFilter;
     const ordersInTab = window.MockApi.getOrders(storeId, { status: currentStatus() });
     const menuNames = [];
     ordersInTab.forEach(function (o) {
@@ -304,68 +314,80 @@
       });
     });
 
-    function optionsHtml() {
-      if (mode === 'MENU') {
-        if (!menuNames.length) return '<div class="empty-state"><div>필터링할 메뉴가 없어요</div></div>';
-        return '<div class="sheet-option' + (!menuFilter ? ' selected' : '') + '" data-menu="">전체 보기</div>' +
-          menuNames.map(function (name) {
-            return '<div class="sheet-option' + (menuFilter === name ? ' selected' : '') + '" data-menu="' + esc(name) + '">' + esc(name) + '</div>';
-          }).join('');
-      }
+    function menuChipsHtml() {
+      const allChip = '<button type="button" class="filter-chip' + (!draftMenu ? ' on' : '') + '" data-menu="">전체</button>';
+      if (!menuNames.length) return allChip;
+      return allChip + menuNames.map(function (name) {
+        return '<button type="button" class="filter-chip' + (draftMenu === name ? ' on' : '') + '" data-menu="' + esc(name) + '">' + esc(name) + '</button>';
+      }).join('');
+    }
+
+    function typeChipsHtml() {
       return ORDER_TYPE_OPTIONS.map(function (o) {
-        return '<div class="sheet-option' + ((orderTypeFilter || '') === o.v ? ' selected' : '') + '" data-order-type="' + o.v + '">' + o.label + '</div>';
+        return '<button type="button" class="filter-chip' + ((draftType || '') === o.v ? ' on' : '') + '" data-order-type="' + o.v + '">' + o.label + '</button>';
       }).join('');
     }
 
     const bodyHtml =
       '<div class="sheet-title">주문 필터</div>' +
-      '<div class="choice-pair" id="filter-mode-choice">' +
-      '<button type="button" data-mode="MENU">메뉴별 필터</button>' +
-      '<button type="button" data-mode="TYPE">주문 유형별 필터</button>' +
+      '<div class="filter-section">' +
+        '<div class="filter-section-title">메뉴</div>' +
+        '<div class="filter-chip-row" id="menu-chip-row">' + menuChipsHtml() + '</div>' +
       '</div>' +
-      '<div id="filter-options-wrap"></div>';
+      '<div class="filter-section">' +
+        '<div class="filter-section-title">주문 유형</div>' +
+        '<div class="filter-chip-row" id="type-chip-row">' + typeChipsHtml() + '</div>' +
+      '</div>' +
+      '<div class="filter-sheet-actions">' +
+        '<button type="button" class="btn btn-outline" id="filter-reset-btn">초기화</button>' +
+        '<button type="button" class="btn btn-primary" id="filter-apply-btn">적용</button>' +
+      '</div>';
 
     window.UI.showBottomSheet(bodyHtml, function (host) {
-      const modeChoice = host.querySelector('#filter-mode-choice');
-      const optionsWrap = host.querySelector('#filter-options-wrap');
+      const menuRow = host.querySelector('#menu-chip-row');
+      const typeRow = host.querySelector('#type-chip-row');
 
-      function bindOptionEvents() {
-        optionsWrap.querySelectorAll('[data-menu]').forEach(function (el) {
+      function bindMenuChips() {
+        menuRow.querySelectorAll('[data-menu]').forEach(function (el) {
           el.addEventListener('click', function () {
-            menuFilter = el.getAttribute('data-menu') || null;
-            orderTypeFilter = null;
-            window.UI.closeModal();
-            updateFilterBtnLabel();
-            updateList();
-          });
-        });
-        optionsWrap.querySelectorAll('[data-order-type]').forEach(function (el) {
-          el.addEventListener('click', function () {
-            orderTypeFilter = el.getAttribute('data-order-type') || null;
-            menuFilter = null;
-            window.UI.closeModal();
-            updateFilterBtnLabel();
-            updateList();
+            draftMenu = el.getAttribute('data-menu') || null;
+            menuRow.querySelectorAll('[data-menu]').forEach(function (b) {
+              b.classList.toggle('on', (b.getAttribute('data-menu') || null) === draftMenu);
+            });
           });
         });
       }
 
-      function renderMode() {
-        modeChoice.querySelectorAll('button').forEach(function (btn) {
-          btn.classList.toggle('on', btn.getAttribute('data-mode') === mode);
+      function bindTypeChips() {
+        typeRow.querySelectorAll('[data-order-type]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            draftType = el.getAttribute('data-order-type') || null;
+            typeRow.querySelectorAll('[data-order-type]').forEach(function (b) {
+              b.classList.toggle('on', (b.getAttribute('data-order-type') || null) === draftType);
+            });
+          });
         });
-        optionsWrap.innerHTML = optionsHtml();
-        bindOptionEvents();
       }
 
-      modeChoice.querySelectorAll('button').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          mode = btn.getAttribute('data-mode');
-          renderMode();
-        });
+      bindMenuChips();
+      bindTypeChips();
+
+      host.querySelector('#filter-reset-btn').addEventListener('click', function () {
+        draftMenu = null;
+        draftType = null;
+        menuRow.innerHTML = menuChipsHtml();
+        typeRow.innerHTML = typeChipsHtml();
+        bindMenuChips();
+        bindTypeChips();
       });
 
-      renderMode();
+      host.querySelector('#filter-apply-btn').addEventListener('click', function () {
+        menuFilter = draftMenu;
+        orderTypeFilter = draftType;
+        window.UI.closeModal();
+        updateFilterBtnLabel();
+        updateList();
+      });
     });
   }
 
