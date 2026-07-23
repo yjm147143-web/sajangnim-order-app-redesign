@@ -364,7 +364,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 /* ---------- Order Card (Toss 스타일 — 무보더 플랫 카드 + 절제된 포인트) ---------- */
 .order-list { padding: 0 var(--space-5) var(--space-5); }
 .order-card {
-  background: var(--color-divider);
+  background: var(--color-card-bg);
   border-radius: var(--radius-card);
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-3);

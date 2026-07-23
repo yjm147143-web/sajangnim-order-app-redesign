@@ -12,6 +12,8 @@
   --color-divider: #EEF7F5;
   --color-disabled: #DCEAE7;
   --color-text-secondary: #6E7488;
+  /* 카드 표면 전용 중립 회색 — 파스텔 뱃지(민트/블루/앰버 등)와 색이 겹치지 않도록 --color-divider와 분리 */
+  --color-card-bg: #F4F4F7;
 
   --color-accent-red: #F0426B;
   --color-accent-red-bg: #FDE7EE;
