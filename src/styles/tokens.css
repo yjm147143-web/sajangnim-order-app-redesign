@@ -1,0 +1,59 @@
+/*
+ * 디자인 토큰 — "Neo Mint" 리디자인
+ * 민트/틸(#4FC9B8) · 블루(#5C82E8) · 퍼플(#7C2FF0) · 워드마크 네이비(#1E1D2B)
+ * 화이트 베이스 위에 세 가지 브랜드 컬러가 역할을 나눠 쓰인다:
+ *   민트 = 상태/성공/토글 ON, 블루 = 선택/필터/정보, 퍼플 = 핵심 액션(CTA)
+ */
+:root {
+  /* Color */
+  --color-text-primary: #1E1D2B;
+  --color-wordmark: #1E1D2B;
+  --color-bg: #ffffff;
+  --color-divider: #EEF7F5;
+  --color-disabled: #DCEAE7;
+  --color-text-secondary: #6E7488;
+
+  --color-accent-red: #F0426B;
+  --color-accent-red-bg: #FDE7EE;
+  --color-accent-green: #4FC9B8;
+  --color-accent-green-bg: #E1F7F3;
+  --color-accent-amber: #FFB020;
+  --color-accent-amber-bg: #FFF3DE;
+  --color-accent-blue: #5C82E8;
+  --color-accent-blue-bg: #EAF0FE;
+  --color-accent-purple: #7C2FF0;
+  --color-accent-purple-bg: #F3E9FE;
+  --color-white: #ffffff;
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(135deg, #7C2FF0 0%, #5C82E8 65%, #4FC9B8 100%);
+  --gradient-brand-soft: linear-gradient(135deg, #F3E9FE 0%, #EAF0FE 55%, #E1F7F3 100%);
+  --shadow-glow-purple: 0 10px 24px -8px rgba(124,47,240,0.45);
+  --shadow-card: 0 2px 14px rgba(30,29,43,0.06);
+
+  /* Typography */
+  --font-family-base: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-family-display: 'Black Han Sans', var(--font-family-base);
+  --font-size-display: 32px;
+  --font-size-title: 22px;
+  --font-size-subtitle: 17px;
+  --font-size-body: 15px;
+  --font-size-caption: 13px;
+  --font-size-micro: 11px;
+
+  /* Radius / Spacing */
+  --radius-card: 18px;
+  --radius-button: 14px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Layout */
+  --cta-height: 56px;
+}

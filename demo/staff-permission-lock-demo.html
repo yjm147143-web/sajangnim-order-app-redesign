@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>직원 계정 관리 - 권한 잠금 데모</title>
+<style>
+  :root{
+    --color-text-primary:#111111; --color-bg:#ffffff; --color-divider:#f2f3f5; --color-disabled:#e5e8eb;
+    --color-text-secondary:#6b7684; --color-accent-red:#e5484d; --color-accent-red-bg:#fdecec;
+    --color-accent-green:#12b76a; --color-accent-green-bg:#e9f9f1; --color-accent-amber:#f5a623;
+    --color-accent-blue:#3182f6; --color-white:#ffffff;
+    --font-family-base:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    --radius-card:16px; --radius-button:14px; --radius-pill:999px;
+    --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:#eef0f2;font-family:var(--font-family-base);color:var(--color-text-primary);}
+  body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:24px 0;}
+  .device-frame{position:relative;width:402px;max-width:100vw;height:874px;max-height:calc(100vh - 48px);margin:0 auto;
+    background:var(--color-bg);overflow:hidden;border-radius:40px;border:8px solid #111111;box-shadow:0 24px 60px rgba(17,17,17,.18);}
+  .app-root{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--color-bg);}
+
+  .demo-banner{background:#111111;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:6px 10px;flex-shrink:0;line-height:1.5;}
+  .demo-banner b{color:#ffd166;}
+
+  .role-switch{display:flex;gap:6px;background:var(--color-divider);padding:6px;margin:var(--space-3) var(--space-5) 0;border-radius:14px;flex-shrink:0;}
+  .role-switch button{flex:1;border:none;background:transparent;border-radius:10px;padding:10px 8px;font-size:13px;font-weight:800;
+    color:var(--color-text-secondary);cursor:pointer;}
+  .role-switch button.on{background:#fff;color:var(--color-text-primary);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+  .topbar{position:relative;display:flex;align-items:center;justify-content:center;padding:var(--space-4) var(--space-5) var(--space-2);flex-shrink:0;}
+  .topbar-title{font-size:20px;font-weight:800;}
+
+  .screen-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .section-title{font-size:16px;font-weight:800;padding:8px var(--space-5);}
+  .section-caption{font-size:12px;color:var(--color-text-secondary);padding:0 var(--space-5) 8px;line-height:1.5;}
+  .divider-line{height:8px;background:#eef0f2;margin:8px 0;}
+
+  .lock-entry{display:flex;align-items:center;gap:12px;padding:14px var(--space-5);cursor:pointer;}
+  .lock-entry:active{background:var(--color-divider);}
+  .lock-entry .icon{font-size:22px;width:28px;text-align:center;flex-shrink:0;}
+  .lock-entry .label-group{flex:1;min-width:0;}
+  .lock-entry .label{font-size:15px;font-weight:700;}
+  .lock-entry .label-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px;}
+  .lock-entry .status-pill{font-size:11px;font-weight:800;padding:3px 10px;border-radius:var(--radius-pill);white-space:nowrap;flex-shrink:0;}
+  .lock-entry .status-pill.locked{background:var(--color-accent-red-bg);color:var(--color-accent-red);}
+  .lock-entry .status-pill.unlocked{background:var(--color-divider);color:var(--color-text-secondary);}
+  .lock-entry .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:18px;margin-left:2px;}
+
+  .card-row{display:flex;align-items:center;justify-content:space-between;padding:12px var(--space-5);gap:12px;}
+  .card-row .name{font-size:15px;font-weight:700;}
+  .card-row .sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px;}
+
+  .toggle{position:relative;display:inline-flex;align-items:center;width:48px;height:28px;border-radius:var(--radius-pill);
+    background:var(--color-disabled);border:none;cursor:pointer;padding:2px;transition:background .15s ease;flex-shrink:0;}
+  .toggle.on{background:var(--color-text-primary);}
+  .toggle .knob{width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);
+    transform:translateX(0);transition:transform .15s ease;}
+  .toggle.on .knob{transform:translateX(20px);}
+
+  .owner-only-note{margin:10px var(--space-5) 0;padding:10px 12px;background:var(--color-divider);border-left:3px solid var(--color-text-primary);
+    border-radius:0 10px 10px 0;font-size:12px;color:var(--color-text-secondary);line-height:1.5;}
+  .owner-only-note b{color:var(--color-text-primary);}
+
+  .trial-btn{display:flex;align-items:center;justify-content:space-between;width:calc(100% - 40px);margin:0 var(--space-5) 10px;
+    padding:14px 16px;border-radius:var(--radius-button);border:1.5px solid var(--color-disabled);background:#fff;cursor:pointer;
+    font-size:15px;font-weight:700;color:var(--color-text-primary);}
+  .trial-btn .right{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--color-text-secondary);}
+  .trial-btn.locked .right{color:var(--color-accent-red);}
+  .trial-btn.unlocked .right{color:var(--color-accent-green);}
+
+  .staff-hint{margin:4px var(--space-5) 16px;font-size:12px;color:var(--color-text-secondary);line-height:1.5;}
+
+  .modal-overlay{position:absolute;inset:0;background:rgba(17,17,17,.5);display:flex;align-items:center;justify-content:center;
+    padding:var(--space-6);z-index:90;opacity:0;pointer-events:none;transition:opacity .15s ease;}
+  .modal-overlay.show{opacity:1;pointer-events:auto;}
+  .modal-card{background:#fff;border-radius:20px;padding:var(--space-6) var(--space-5) var(--space-5);width:100%;max-width:300px;
+    transform:scale(.96);transition:transform .15s ease;}
+  .modal-overlay.show .modal-card{transform:scale(1);}
+  .modal-icon{font-size:28px;text-align:center;margin-bottom:6px;}
+  .modal-title{font-size:17px;font-weight:800;text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .modal-title .badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-green-bg);color:var(--color-accent-green);}
+  .modal-desc{font-size:13px;color:var(--color-text-secondary);text-align:center;margin-bottom:16px;line-height:1.5;}
+  .modal-input{width:100%;height:50px;border-radius:var(--radius-button);border:1.5px solid var(--color-disabled);
+    background:#fff;font-size:17px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:6px;}
+  .modal-input.error{border-color:var(--color-accent-red);}
+  .modal-error-text{font-size:12px;color:var(--color-accent-red);text-align:center;min-height:16px;margin-bottom:10px;font-weight:600;}
+  .modal-btn-row{display:flex;flex-direction:column;gap:8px;}
+  .modal-btn-row button{height:50px;border:none;border-radius:var(--radius-button);font-size:15px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:var(--color-text-primary);color:#fff;}
+  .btn-secondary{background:var(--color-divider);color:var(--color-text-primary);}
+  .btn-danger-text{background:transparent;color:var(--color-accent-red);height:auto !important;padding:4px;}
+  .modal-hint{font-size:11px;color:var(--color-text-secondary);text-align:center;margin-top:10px;}
+
+  .toast-host{position:absolute;left:0;right:0;bottom:24px;display:flex;justify-content:center;pointer-events:none;z-index:80;}
+  .toast{background:rgba(17,17,17,.92);color:#fff;padding:12px 20px;border-radius:var(--radius-pill);font-size:14px;font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease;text-align:center;
+    max-width:calc(100% - 40px);}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.success{background:#0f8a4f;}
+  .toast.danger{background:#b3261e;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="device-frame"><div class="app-root">
+  <div class="demo-banner">🧪 데모 전용 사본 — 실제 앱(목업)에는 아직 반영되지 않았어요.</div>
+  <div class="role-switch">
+    <button type="button" class="on" data-role="OWNER" onclick="setRole('OWNER')">👑 사장님으로 보기</button>
+    <button type="button" data-role="STAFF" onclick="setRole('STAFF')">🙋 직원으로 보기</button>
+  </div>
+  <div class="topbar"><div class="topbar-title">직원 계정 관리</div></div>
+
+  <div class="screen-scroll">
+    <!-- 사장님 전용: 권한 잠금 설정 진입점 (계정 목록 위) -->
+    <div id="owner-lock-entry-wrap">
+      <div class="lock-entry" onclick="openPasswordSetupModal()">
+        <div class="icon">🔐</div>
+        <div class="label-group">
+          <div class="label">권한 잠금 설정</div>
+          <div class="label-sub" id="lock-entry-sub">비밀번호가 설정되지 않았어요 · 직원이 자유롭게 접근할 수 있어요</div>
+        </div>
+        <span class="status-pill unlocked" id="lock-entry-status">미설정</span>
+        <span class="chevron">›</span>
+      </div>
+      <div class="owner-only-note">🔒 이 항목은 <b>사장님 계정에서만</b> 보이고 설정할 수 있어요. 직원 계정으로 로그인하면 이 항목 자체가 노출되지 않아요.</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="section-title">계정 목록</div>
+    <div class="card-row">
+      <div><div class="name">박직원</div><div class="sub">staff1 · 010-1111-2222 · 상시</div></div>
+      <button type="button" class="toggle on" onclick="this.classList.toggle('on')"><span class="knob"></span></button>
+    </div>
+    <div class="card-row">
+      <div><div class="name">이직원</div><div class="sub">staff2 · 010-3333-4444 · 2026.07.01 ~ 2026.07.31</div></div>
+      <button type="button" class="toggle" onclick="this.classList.toggle('on')"><span class="knob"></span></button>
+    </div>
+
+    <!-- 직원 전용: 체험 영역 -->
+    <div id="staff-trial-panel" class="hidden">
+      <div class="divider-line"></div>
+      <div class="section-title">직원 계정으로 눌러보기</div>
+      <div class="staff-hint" id="staff-hint-text"></div>
+
+      <button type="button" class="trial-btn" data-feature="sales" onclick="tryFeature('sales', '매출 조회')">
+        <span>💰 매출 조회 열어보기</span><span class="right" id="right-sales"></span>
+      </button>
+      <button type="button" class="trial-btn" data-feature="status" onclick="tryFeature('status', '영업상태 변경')">
+        <span>🏪 개점 · 일시중지 · 마감 눌러보기</span><span class="right" id="right-status"></span>
+      </button>
+      <button type="button" class="trial-btn" data-feature="return" onclick="tryFeature('return', '반품 처리')">
+        <span>↩️ 완료 탭에서 반품 처리해보기</span><span class="right" id="right-return"></span>
+      </button>
+      <button type="button" class="trial-btn" data-feature="staffmgmt" onclick="tryFeature('staffmgmt', '직원 계정 관리')">
+        <span>👥 직원 계정 관리 들어가보기</span><span class="right" id="right-staffmgmt"></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="modal-host"></div>
+  <div id="toast-host" class="toast-host"></div>
+</div></div>
+
+<script>
+  const FEATURE_LABEL = { sales: '매출 조회', status: '영업상태 변경', return: '반품 처리', staffmgmt: '직원 계정 관리' };
+  let lockPassword = null; // null = 잠금 미설정 (자유 접근), 문자열 = 설정된 비밀번호
+  let role = 'OWNER';
+
+  function setRole(next) {
+    role = next;
+    document.querySelectorAll('.role-switch button').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-role') === role);
+    });
+    document.getElementById('owner-lock-entry-wrap').classList.toggle('hidden', role !== 'OWNER');
+    document.getElementById('staff-trial-panel').classList.toggle('hidden', role !== 'STAFF');
+    if (role === 'STAFF') renderTrialButtons();
+  }
+
+  function renderLockEntryStatus() {
+    var statusEl = document.getElementById('lock-entry-status');
+    var subEl = document.getElementById('lock-entry-sub');
+    var locked = !!lockPassword;
+    statusEl.textContent = locked ? '설정됨' : '미설정';
+    statusEl.classList.toggle('locked', locked);
+    statusEl.classList.toggle('unlocked', !locked);
+    subEl.textContent = locked
+      ? '비밀번호가 설정되어 있어요 · 직원은 아래 4가지 진입 시 비밀번호를 입력해야 해요'
+      : '비밀번호가 설정되지 않았어요 · 직원이 자유롭게 접근할 수 있어요';
+  }
+
+  function renderTrialButtons() {
+    var locked = !!lockPassword;
+    Object.keys(FEATURE_LABEL).forEach(function (key) {
+      var btn = document.querySelector('.trial-btn[data-feature="' + key + '"]');
+      var right = document.getElementById('right-' + key);
+      btn.classList.toggle('locked', locked);
+      btn.classList.toggle('unlocked', !locked);
+      right.innerHTML = locked ? '🔒 잠김' : '✅ 바로 사용';
+    });
+    document.getElementById('staff-hint-text').textContent = locked
+      ? '사장님이 권한 잠금을 설정해서, 아래 4가지 모두 같은 비밀번호를 입력해야 들어갈 수 있어요.'
+      : '사장님이 아직 권한 잠금을 설정하지 않아서, 아래 4가지 모두 비밀번호 없이 바로 들어갈 수 있어요.';
+  }
+
+  function tryFeature(key, label) {
+    if (!lockPassword) {
+      toast(label + ' 기능을 사용했어요', 'success');
+      return;
+    }
+    openStaffPasswordModal(key, label);
+  }
+
+  // ---------- 사장님: 권한 잠금 설정(비밀번호 설정/변경/해제) ----------
+  function openPasswordSetupModal() {
+    var host = document.getElementById('modal-host');
+    var isSet = !!lockPassword;
+    host.innerHTML =
+      '<div class="modal-overlay" id="setup-modal">' +
+        '<div class="modal-card">' +
+          '<div class="modal-icon">🔐</div>' +
+          '<div class="modal-title">권한 잠금 설정' + (isSet ? ' <span class="badge">설정됨</span>' : '') + '</div>' +
+          '<div class="modal-desc">' + (isSet
+            ? '새 비밀번호를 입력하고 저장하면 기존 비밀번호가 바뀌어요.'
+            : '비밀번호를 설정하면, 직원 계정으로 매출 조회 · 영업상태 변경 · 반품 처리 · 직원 계정 관리에 들어갈 때마다 이 비밀번호를 입력해야 해요.') + '</div>' +
+          '<input type="password" class="modal-input" id="setup-input" maxlength="8" inputmode="numeric" placeholder="새 비밀번호" />' +
+          '<div class="modal-error-text" id="setup-error"></div>' +
+          '<div class="modal-btn-row">' +
+            '<button type="button" class="btn-primary" id="setup-save">' + (isSet ? '비밀번호 변경 저장' : '저장') + '</button>' +
+            (isSet ? '<button type="button" class="btn-danger-text" id="setup-unlock">잠금 해제</button>' : '') +
+            '<button type="button" class="btn-secondary" id="setup-cancel">취소</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    requestAnimationFrame(function () { document.getElementById('setup-modal').classList.add('show'); });
+    var input = document.getElementById('setup-input');
+    input.focus();
+
+    function close() { host.innerHTML = ''; }
+    document.getElementById('setup-cancel').addEventListener('click', close);
+    document.getElementById('setup-modal').addEventListener('click', function (e) { if (e.target.id === 'setup-modal') close(); });
+
+    document.getElementById('setup-save').addEventListener('click', function () {
+      var val = input.value.trim();
+      if (!val) {
+        input.classList.add('error');
+        document.getElementById('setup-error').textContent = '비밀번호를 입력해주세요.';
+        return;
+      }
+      lockPassword = val;
+      close();
+      renderLockEntryStatus();
+      toast(isSet ? '비밀번호를 변경했어요' : '권한 잠금을 설정했어요', 'success');
+    });
+
+    var unlockBtn = document.getElementById('setup-unlock');
+    if (unlockBtn) {
+      unlockBtn.addEventListener('click', function () {
+        openUnlockConfirmModal();
+      });
+    }
+  }
+
+  function openUnlockConfirmModal() {
+    var host = document.getElementById('modal-host');
+    host.innerHTML =
+      '<div class="modal-overlay show" id="unlock-modal">' +
+        '<div class="modal-card">' +
+          '<div class="modal-icon">⚠️</div>' +
+          '<div class="modal-title">잠금을 해제할까요?</div>' +
+          '<div class="modal-desc">해제하면 직원 계정으로 매출 조회 · 영업상태 변경 · 반품 처리 · 직원 계정 관리에 비밀번호 없이 바로 들어갈 수 있어요.</div>' +
+          '<div class="modal-btn-row">' +
+            '<button type="button" class="btn-primary" id="unlock-confirm" style="background:var(--color-accent-red);">해제하기</button>' +
+            '<button type="button" class="btn-secondary" id="unlock-cancel">취소</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.getElementById('unlock-cancel').addEventListener('click', function () { host.innerHTML = ''; });
+    document.getElementById('unlock-confirm').addEventListener('click', function () {
+      lockPassword = null;
+      host.innerHTML = '';
+      renderLockEntryStatus();
+      toast('권한 잠금을 해제했어요', 'danger');
+    });
+  }
+
+  // ---------- 직원: 잠긴 기능 진입 시 비밀번호 확인 ----------
+  function openStaffPasswordModal(key, label) {
+    var host = document.getElementById('modal-host');
+    host.innerHTML =
+      '<div class="modal-overlay" id="pw-modal">' +
+        '<div class="modal-card">' +
+          '<div class="modal-icon">🔒</div>' +
+          '<div class="modal-title">' + label + '</div>' +
+          '<div class="modal-desc">사장님이 잠근 기능이에요.<br/>계속하려면 비밀번호를 입력해주세요.</div>' +
+          '<input type="password" class="modal-input" id="pw-input" maxlength="8" inputmode="numeric" placeholder="••••" />' +
+          '<div class="modal-error-text" id="pw-error"></div>' +
+          '<div class="modal-btn-row">' +
+            '<button type="button" class="btn-primary" id="pw-confirm">확인</button>' +
+            '<button type="button" class="btn-secondary" id="pw-cancel">취소</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    requestAnimationFrame(function () { document.getElementById('pw-modal').classList.add('show'); });
+    var input = document.getElementById('pw-input');
+    input.focus();
+
+    function close() { host.innerHTML = ''; }
+    document.getElementById('pw-cancel').addEventListener('click', close);
+    document.getElementById('pw-modal').addEventListener('click', function (e) { if (e.target.id === 'pw-modal') close(); });
+
+    function attempt() {
+      if (input.value === lockPassword) {
+        close();
+        toast(label + ' 확인 완료 — 기능을 사용했어요', 'success');
+      } else {
+        input.classList.add('error');
+        document.getElementById('pw-error').textContent = '비밀번호가 올바르지 않아요.';
+        input.value = '';
+        input.focus();
+      }
+    }
+    document.getElementById('pw-confirm').addEventListener('click', attempt);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') attempt(); });
+    input.addEventListener('input', function () { input.classList.remove('error'); document.getElementById('pw-error').textContent = ''; });
+  }
+
+  let toastTimer = null;
+  function toast(msg, variant) {
+    var host = document.getElementById('toast-host');
+    host.innerHTML = '<div class="toast ' + (variant || '') + '" id="active-toast">' + msg + '</div>';
+    requestAnimationFrame(function () { document.getElementById('active-toast').classList.add('show'); });
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      var el = document.getElementById('active-toast');
+      if (el) el.classList.remove('show');
+    }, 2200);
+  }
+
+  renderLockEntryStatus();
+  setRole('OWNER');
+</script>
+</body>
+</html>

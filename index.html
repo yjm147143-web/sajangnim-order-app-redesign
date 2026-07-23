@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>사장님 주문접수앱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" />
+<link rel="stylesheet" href="src/styles/tokens.css" />
+<link rel="stylesheet" href="src/styles/base.css" />
+<link rel="stylesheet" href="src/styles/components.css" />
+</head>
+<body>
+<div style="display:flex; flex-direction:column; align-items:center; gap:12px; width:100%;">
+  <div id="dev-panel-host"></div>
+  <div class="device-frame">
+    <div class="app-root" id="app-root"></div>
+  </div>
+</div>
+
+<script src="src/config.js"></script>
+<script src="src/data/mockData.js"></script>
+<script src="src/api/mockApi.js"></script>
+<script src="src/components/ui.js"></script>
+<script src="src/router.js"></script>
+
+<!-- 로그인 -->
+<script src="src/screens/login.js"></script>
+
+<!-- 사장님 보드 -->
+<script src="src/screens/order.js"></script>
+<script src="src/screens/kitchenBoard.js"></script>
+<script src="src/screens/settings.js"></script>
+<script src="src/screens/menuManagement.js"></script>
+<script src="src/screens/orderManagement.js"></script>
+<script src="src/screens/minOrderAmount.js"></script>
+<script src="src/screens/orderChannelSettings.js"></script>
+<script src="src/screens/qrMenu.js"></script>
+<script src="src/screens/permissionLock.js"></script>
+<script src="src/screens/customerGuideSettings.js"></script>
+<script src="src/screens/sales.js"></script>
+
+<!-- 행사 담당자 보드 -->
+<script src="src/screens/eventSelect.js"></script>
+<script src="src/screens/eventManagerShell.js"></script>
+<script src="src/screens/eventManagerHome.js"></script>
+<script src="src/screens/eventManagerSales.js"></script>
+<script src="src/screens/eventManagerSettings.js"></script>
+
+<!-- 개발자 테스트 패널 (QA/데모용, 폰 목업 바깥에 렌더링) -->
+<script src="src/devPanel.js"></script>
+
+<script src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>메뉴별 집계 현황판 — 폰 목업 미리보기 (세로/가로)</title>
+<link rel="stylesheet" href="src/styles/tokens.css" />
+<link rel="stylesheet" href="src/styles/base.css" />
+<style>
+  body { flex-direction: column; gap: 40px; padding: 40px 20px; align-items: center; }
+  .frame-block { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .frame-label { font-family: var(--font-family-base); font-size: 14px; font-weight: 800; color: var(--color-text-primary); }
+  .device-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 가로 버전: 폰을 눕힌 형태로 가로/세로 치수를 맞바꾼다 */
+  .device-frame.landscape { width: 874px; height: 402px; }
+</style>
+</head>
+<body>
+  <div class="frame-block">
+    <div class="frame-label">📱 세로 버전 (Portrait)</div>
+    <div class="device-frame">
+      <iframe src="menu-summary-board.html" title="메뉴별 집계 현황판 - 세로"></iframe>
+    </div>
+  </div>
+
+  <div class="frame-block">
+    <div class="frame-label">📱 가로 버전 (Landscape)</div>
+    <div class="device-frame landscape">
+      <iframe src="menu-summary-board.html" title="메뉴별 집계 현황판 - 가로"></iframe>
+    </div>
+  </div>
+</body>
+</html>
