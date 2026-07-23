@@ -50,6 +50,7 @@
   var devIsReservation = false;
   var devHappyHour = false;
   var devFirstCome = false;
+  var devHasOption = false;
   var devMenuCountMode = '1';
   var devMenuCountCustom = 3;
   var devOrderCountMode = '1';
@@ -141,6 +142,7 @@
     return (
       '<div class="dp-subsection">' +
         '<div class="dp-subsection-title">메뉴 설정하기</div>' +
+        pillGroupHtml('옵션', [{ v: '0', label: '없음' }, { v: '1', label: '있음' }], devHasOption ? '1' : '0', 'dp-set-option') +
         countGroupHtml('메뉴 수', devMenuCountMode, devMenuCountCustom, 'dp-set-menu-count', 'dp-set-menu-count-custom') +
         countGroupHtml('주문 건수', devOrderCountMode, devOrderCountCustom, 'dp-set-order-count', 'dp-set-order-count-custom') +
       '</div>'
@@ -222,6 +224,7 @@
         identifierType: devIdentifierType,
         contactType: devContactType,
         lineCount: lineCount,
+        hasOption: devHasOption,
         isReusableContainer: devReusable,
         hasHappyHour: devHappyHour,
         hasFirstCome: devFirstCome,
@@ -265,6 +268,7 @@
     if (action === 'dp-set-channel') devChannel = value;
     else if (action === 'dp-set-identifier') devIdentifierType = value;
     else if (action === 'dp-set-contact') devContactType = value;
+    else if (action === 'dp-set-option') devHasOption = value === '1';
     else if (action === 'dp-toggle') { onToggle(target.getAttribute('data-key')); }
     else if (action === 'dp-set-menu-count') devMenuCountMode = value;
     else if (action === 'dp-set-order-count') devOrderCountMode = value;

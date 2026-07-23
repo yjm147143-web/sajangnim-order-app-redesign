@@ -305,17 +305,28 @@
     const seatCodes = ['A-3', 'A-12', 'B-2', 'B-7', 'C-1', 'D-5'];
     const isReservation = !!opts.isReservation && channelSettings.acceptReservationOrders;
 
-    function buildLine() {
-      const menu = menuItems[Math.floor(Math.random() * menuItems.length)];
+    // 옵션 있음: 옵션 그룹(+ 옵션값)이 실제로 등록된 메뉴만 후보로 삼는다.
+    const itemsWithOption = menuItems.filter(function (m) {
+      return (m.optionGroups || []).some(function (g) { return (g.options || []).length; });
+    });
+    function buildLine(preferOption) {
+      const pool = (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
+      const menu = pool[Math.floor(Math.random() * pool.length)];
       const qty = 1 + Math.floor(Math.random() * 2);
-      return { menuName: menu.name, optionNames: [], quantity: qty, price: menu.price };
+      let optionNames = [];
+      if (preferOption) {
+        const group = (menu.optionGroups || []).find(function (g) { return (g.options || []).length; });
+        if (group) optionNames = [group.options[Math.floor(Math.random() * group.options.length)].name];
+      }
+      return { menuName: menu.name, optionNames: optionNames, quantity: qty, price: menu.price };
     }
 
     const lineCount = Math.max(1, opts.lineCount || 1);
     const lines = [];
     let amount = 0;
     for (let i = 0; i < lineCount; i++) {
-      const line = buildLine();
+      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서 우선 배정한다.
+      const line = buildLine(!!opts.hasOption && i === 0);
       lines.push({ menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity });
       amount += line.price * line.quantity;
     }
