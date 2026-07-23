@@ -49,10 +49,21 @@
   // ---------------- Store / Settings ----------------
   function getStore(storeId) { return findStore(storeId); }
 
+  function isSameCalendarDay(isoA, isoB) {
+    if (!isoA || !isoB) return false;
+    const a = new Date(isoA), b = new Date(isoB);
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
   function updateOperatingStatus(storeId, status) {
     const store = findStore(storeId);
+    const now = new Date().toISOString();
+    // 하루 중 두 번째 개점부터는 최초 개점 시각을 그대로 유지한다 (일시중지 전환은 이 값에 영향을 주지 않는다)
+    if (status === 'OPEN' && !isSameCalendarDay(store.todayFirstOpenAt, now)) {
+      store.todayFirstOpenAt = now;
+    }
     store.operatingStatus = status;
-    store.statusChangedAt = new Date().toISOString();
+    store.statusChangedAt = now;
     persist();
     return store;
   }
@@ -92,11 +103,13 @@
     return {
       enabled: !!store.minOrderAmountEnabled,
       amount: store.minOrderAmount != null ? store.minOrderAmount : 10000,
+      brandControlled: !!store.minOrderBrandControlled,
     };
   }
 
   function updateMinOrderSettings(storeId, opts) {
     const store = findStore(storeId);
+    if (store.minOrderBrandControlled) return getMinOrderSettings(storeId);
     if (opts.enabled != null) store.minOrderAmountEnabled = opts.enabled;
     if (opts.amount != null) store.minOrderAmount = opts.amount;
     persist();
@@ -359,15 +372,29 @@
     return order;
   }
 
+  // 유형별 필터 각 항목이 실제 주문에 해당하는지 판정
+  function matchesOrderType(order, type) {
+    if (type === 'RESERVATION') return !!order.isReservation;
+    if (type === 'DELIVERY') return order.identifierType === 'SEAT';
+    if (type === 'CALLED') return !!order.called;
+    return false;
+  }
+
   function getOrders(storeId, opts) {
     opts = opts || {};
     let list = DB.orders.filter(function (o) { return o.storeId === storeId; });
     if (opts.status) list = list.filter(function (o) { return o.status === opts.status; });
-    if (opts.menuFilter) list = list.filter(function (o) { return o.items.some(function (it) { return it.menuName === opts.menuFilter; }); });
-    if (opts.orderTypeFilter === 'RESERVATION') list = list.filter(function (o) { return !!o.isReservation; });
-    else if (opts.orderTypeFilter === 'DELIVERY') list = list.filter(function (o) { return o.identifierType === 'SEAT'; });
-    else if (opts.orderTypeFilter === 'CALLED') list = list.filter(function (o) { return !!o.called; });
-    else if (opts.orderTypeFilter === 'NOT_CALLED') list = list.filter(function (o) { return !o.called; });
+    // 메뉴별/유형별 필터는 각 카테고리 내에서는 중복 선택(OR), 카테고리 사이에는 동시 적용(AND)된다
+    if (opts.menuFilters && opts.menuFilters.length) {
+      list = list.filter(function (o) {
+        return o.items.some(function (it) { return opts.menuFilters.indexOf(it.menuName) !== -1; });
+      });
+    }
+    if (opts.orderTypeFilters && opts.orderTypeFilters.length) {
+      list = list.filter(function (o) {
+        return opts.orderTypeFilters.some(function (t) { return matchesOrderType(o, t); });
+      });
+    }
     if (opts.search) {
       const q = opts.search.trim();
       list = list.filter(function (o) { return o.pickupNo.indexOf(q) !== -1; });
@@ -379,10 +406,26 @@
     return list;
   }
 
+  // 주문이 수락되면 실제로 준비량이 줄고, 그 결과 0이 되면 자동 품절 처리한다.
+  // 화면(order.js)에서 하단 배너로 안내할 수 있도록 전역 이벤트로 새로 품절된 메뉴명을 알려준다.
+  function applyStockForOrder(order) {
+    const newlySoldOut = [];
+    (order.items || []).forEach(function (it) {
+      const menuItem = DB.menuItems.find(function (m) { return m.storeId === order.storeId && m.name === it.menuName; });
+      if (!menuItem || menuItem.stockQuantity == null) return;
+      menuItem.stockQuantity = Math.max(0, menuItem.stockQuantity - it.quantity);
+      if (checkAutoSoldout(menuItem)) newlySoldOut.push(menuItem.name);
+    });
+    if (newlySoldOut.length) {
+      window.dispatchEvent(new CustomEvent('mock:auto-soldout', { detail: { names: newlySoldOut } }));
+    }
+  }
+
   function acceptOrder(id) {
     const o = getOrder(id);
     o.status = 'PROCESSING';
     o.acceptedAt = new Date().toISOString();
+    applyStockForOrder(o);
     persist();
     return { order: o, notification: '주문 완료' };
   }

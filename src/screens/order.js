@@ -14,13 +14,14 @@
   let currentIndex = 0;
   let sortDir = 'asc';    // 접수 시간 기준, 기본 오름차순(오래된순 — 새 주문이 아래로 쌓임)
   let searchQuery = '';
-  let menuFilter = null;
-  let orderTypeFilter = null;  // null | 'RESERVATION' | 'DELIVERY' | 'CALLED' | 'NOT_CALLED'
+  let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
+  let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' | 'CALLED' 중 선택된 값 배열
   let selectedIds = new Set();
   let expandedAll = true;      // 전체 펼쳐보기 기본값
   let bucketOverrides = {};    // { [bucketKey:string]: boolean } 시간대 그룹 단위 펼침 오버라이드
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (시간대 그룹 설정보다 우선)
   let isOnline = true;
+  let autoSoldoutNames = [];   // 자동 품절 배너에 노출 중인 메뉴명 목록 (X로 닫으면 비움)
   let root = null;
 
   const SCOPED_STYLE = '' +
@@ -31,7 +32,6 @@
     '.reason-textarea { margin-top: 4px; }' +
     '.order-list.with-bulk-bar { padding-bottom: 88px; }' +
     '#bulk-bar-slot:empty { display: none; }' +
-    '.kitchen-board-pill { background: var(--color-accent-amber-bg); color: #a15c00; font-weight: 800; }' +
     '.filter-section { margin-bottom: 18px; }' +
     '.filter-section-title { font-size: var(--font-size-caption); font-weight: 800; color: var(--color-text-secondary); margin-bottom: 10px; }' +
     '.filter-chip-row { display: flex; gap: 8px; flex-wrap: wrap; }' +
@@ -73,8 +73,8 @@
   function fetchOrders() {
     return window.MockApi.getOrders(storeId, {
       status: currentStatus(),
-      menuFilter: menuFilter || undefined,
-      orderTypeFilter: orderTypeFilter || undefined,
+      menuFilters: menuFilters,
+      orderTypeFilters: orderTypeFilters,
       search: searchQuery || undefined,
       sortDir: sortDir,
     });
@@ -143,6 +143,16 @@
 
   function offlineBannerHtml() {
     return '<div class="offline-banner">📶 오프라인 상태예요 · 네트워크가 연결되면 다시 사용할 수 있어요</div>';
+  }
+
+  function autoSoldoutBannerHtml() {
+    if (!autoSoldoutNames.length) return '';
+    const first = esc(autoSoldoutNames[0]);
+    const label = autoSoldoutNames.length > 1 ? first + ' 외 ' + (autoSoldoutNames.length - 1) + '개 메뉴가' : first + ' 메뉴가';
+    return '<div class="auto-soldout-banner">' +
+      '<span>⚠️ ' + label + ' 자동 품절됐어요.</span>' +
+      '<button type="button" class="auto-soldout-banner-close" data-action="dismiss-auto-soldout" aria-label="닫기">✕</button>' +
+      '</div>';
   }
 
   function renderActionsHtml(order, tabStatus, disabled) {
@@ -247,7 +257,7 @@
     return '<div class="bucket-header">' +
       '<div class="bucket-header-left">' +
       (showCheckbox ? '<input type="checkbox" data-action="bucket-select-all" data-bucket="' + group.key + '"' + (allSelected ? ' checked' : '') + (disabled ? ' disabled' : '') + ' />' : '') +
-      '<span class="bucket-label">' + group.label + (group.isReservationGroup ? '' : ' (5분 단위)') + '</span>' +
+      '<span class="bucket-label">' + group.label + '</span>' +
       '</div>' +
       '<div class="bucket-toggle-label" data-action="toggle-bucket-expand" data-bucket="' + group.key + '">' + (expanded ? '간단히 보기' : '펼쳐보기') + '</div>' +
       '</div>';
@@ -301,18 +311,14 @@
   }
 
   const ORDER_TYPE_OPTIONS = [
-    { v: '', label: '전체' },
     { v: 'RESERVATION', label: '예약 주문만' },
     { v: 'DELIVERY', label: '배달 주문' },
     { v: 'CALLED', label: '호출' },
-    { v: 'NOT_CALLED', label: '미호출' },
   ];
-  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문', CALLED: '호출', NOT_CALLED: '미호출' };
+  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문', CALLED: '호출' };
 
   function filterBtnLabel() {
-    const parts = [];
-    if (menuFilter) parts.push(menuFilter);
-    if (orderTypeFilter) parts.push(ORDER_TYPE_LABELS[orderTypeFilter] || '');
+    const parts = menuFilters.concat(orderTypeFilters.map(function (t) { return ORDER_TYPE_LABELS[t] || t; }));
     if (parts.length === 1) return parts[0];
     if (parts.length >= 2) return parts[0] + ' +' + (parts.length - 1);
     return '주문 필터';
@@ -322,7 +328,7 @@
     const btn = root.querySelector('#order-filter-btn');
     if (!btn) return;
     btn.textContent = filterBtnLabel();
-    btn.classList.toggle('active', !!(menuFilter || orderTypeFilter));
+    btn.classList.toggle('active', menuFilters.length > 0 || orderTypeFilters.length > 0);
   }
 
   function switchTab(idx) {
@@ -330,20 +336,20 @@
     currentIndex = idx;
     selectedIds = new Set();
     searchQuery = '';
-    menuFilter = null;
-    orderTypeFilter = null;
+    menuFilters = [];
+    orderTypeFilters = [];
     const input = root.querySelector('#search-input');
     if (input) input.value = '';
     updateFilterBtnLabel();
     updateList();
   }
 
-  // ---------------- 주문 필터 바텀시트 (메뉴별 필터 + 주문 유형별 필터를 동시에 적용 가능) ----------------
-  // 두 필터를 서로 배타적인 탭으로 나누지 않고, 한 화면에서 각자 독립적으로 고르게 한 뒤
-  // '적용'을 눌러야 실제로 반영되도록 해 두 조건을 자유롭게 조합해볼 수 있게 한다.
+  // ---------------- 주문 필터 바텀시트 (메뉴별 + 주문 유형별, 각 카테고리 내에서도 중복 선택 가능) ----------------
+  // 두 카테고리를 서로 배타적인 탭으로 나누지 않고, 각각 다중 선택 가능한 칩으로 노출한 뒤
+  // '적용'을 눌러야 실제로 반영되도록 해 다양한 조합(메뉴+메뉴, 유형+유형, 메뉴+유형)을 자유롭게 시도해볼 수 있게 한다.
   function openOrderFilterSheet() {
-    let draftMenu = menuFilter;
-    let draftType = orderTypeFilter;
+    let draftMenus = menuFilters.slice();
+    let draftTypes = orderTypeFilters.slice();
     const ordersInTab = window.MockApi.getOrders(storeId, { status: currentStatus() });
     const menuNames = [];
     ordersInTab.forEach(function (o) {
@@ -353,27 +359,26 @@
     });
 
     function menuChipsHtml() {
-      const allChip = '<button type="button" class="filter-chip' + (!draftMenu ? ' on' : '') + '" data-menu="">전체</button>';
-      if (!menuNames.length) return allChip;
-      return allChip + menuNames.map(function (name) {
-        return '<button type="button" class="filter-chip' + (draftMenu === name ? ' on' : '') + '" data-menu="' + esc(name) + '">' + esc(name) + '</button>';
+      if (!menuNames.length) return '<div class="empty-state"><div>필터링할 메뉴가 없어요</div></div>';
+      return menuNames.map(function (name) {
+        return '<button type="button" class="filter-chip' + (draftMenus.indexOf(name) !== -1 ? ' on' : '') + '" data-menu="' + esc(name) + '">' + esc(name) + '</button>';
       }).join('');
     }
 
     function typeChipsHtml() {
       return ORDER_TYPE_OPTIONS.map(function (o) {
-        return '<button type="button" class="filter-chip' + ((draftType || '') === o.v ? ' on' : '') + '" data-order-type="' + o.v + '">' + o.label + '</button>';
+        return '<button type="button" class="filter-chip' + (draftTypes.indexOf(o.v) !== -1 ? ' on' : '') + '" data-order-type="' + o.v + '">' + o.label + '</button>';
       }).join('');
     }
 
     const bodyHtml =
       '<div class="sheet-title">주문 필터</div>' +
       '<div class="filter-section">' +
-        '<div class="filter-section-title">메뉴</div>' +
+        '<div class="filter-section-title">메뉴 (중복 선택 가능)</div>' +
         '<div class="filter-chip-row" id="menu-chip-row">' + menuChipsHtml() + '</div>' +
       '</div>' +
       '<div class="filter-section">' +
-        '<div class="filter-section-title">주문 유형</div>' +
+        '<div class="filter-section-title">주문 유형 (중복 선택 가능)</div>' +
         '<div class="filter-chip-row" id="type-chip-row">' + typeChipsHtml() + '</div>' +
       '</div>' +
       '<div class="filter-sheet-actions">' +
@@ -388,10 +393,10 @@
       function bindMenuChips() {
         menuRow.querySelectorAll('[data-menu]').forEach(function (el) {
           el.addEventListener('click', function () {
-            draftMenu = el.getAttribute('data-menu') || null;
-            menuRow.querySelectorAll('[data-menu]').forEach(function (b) {
-              b.classList.toggle('on', (b.getAttribute('data-menu') || null) === draftMenu);
-            });
+            const name = el.getAttribute('data-menu');
+            const idx = draftMenus.indexOf(name);
+            if (idx === -1) draftMenus.push(name); else draftMenus.splice(idx, 1);
+            el.classList.toggle('on', draftMenus.indexOf(name) !== -1);
           });
         });
       }
@@ -399,10 +404,10 @@
       function bindTypeChips() {
         typeRow.querySelectorAll('[data-order-type]').forEach(function (el) {
           el.addEventListener('click', function () {
-            draftType = el.getAttribute('data-order-type') || null;
-            typeRow.querySelectorAll('[data-order-type]').forEach(function (b) {
-              b.classList.toggle('on', (b.getAttribute('data-order-type') || null) === draftType);
-            });
+            const v = el.getAttribute('data-order-type');
+            const idx = draftTypes.indexOf(v);
+            if (idx === -1) draftTypes.push(v); else draftTypes.splice(idx, 1);
+            el.classList.toggle('on', draftTypes.indexOf(v) !== -1);
           });
         });
       }
@@ -411,8 +416,8 @@
       bindTypeChips();
 
       host.querySelector('#filter-reset-btn').addEventListener('click', function () {
-        draftMenu = null;
-        draftType = null;
+        draftMenus = [];
+        draftTypes = [];
         menuRow.innerHTML = menuChipsHtml();
         typeRow.innerHTML = typeChipsHtml();
         bindMenuChips();
@@ -420,8 +425,8 @@
       });
 
       host.querySelector('#filter-apply-btn').addEventListener('click', function () {
-        menuFilter = draftMenu;
-        orderTypeFilter = draftType;
+        menuFilters = draftMenus;
+        orderTypeFilters = draftTypes;
         window.UI.closeModal();
         updateFilterBtnLabel();
         updateList();
@@ -608,6 +613,19 @@
     if (slot) slot.innerHTML = isOnline ? '' : offlineBannerHtml();
   }
 
+  function refreshAutoSoldoutBanner() {
+    const slot = root.querySelector('#auto-soldout-banner-slot');
+    if (slot) slot.innerHTML = autoSoldoutBannerHtml();
+  }
+
+  // 주문 수락으로 준비량이 소진되어 자동 품절되면 하단 배너로 알린다
+  function onAutoSoldout(e) {
+    const names = (e.detail && e.detail.names) || [];
+    if (!names.length) return;
+    names.forEach(function (n) { if (autoSoldoutNames.indexOf(n) === -1) autoSoldoutNames.push(n); });
+    refreshAutoSoldoutBanner();
+  }
+
   function onOffline() { isOnline = false; refreshOfflineBanner(); updateList(); }
   function onOnline() { isOnline = true; refreshOfflineBanner(); updateList(); }
   // 폰 목업 바깥의 테스트 패널(devPanel.js)에서 주문을 추가했을 때 목록을 즉시 갱신한다.
@@ -621,6 +639,7 @@
     const id = target.getAttribute('data-id');
     if (action === 'open-settings') onSettingsClick();
     else if (action === 'toggle-operating-status') handleToggleOperatingStatus();
+    else if (action === 'dismiss-auto-soldout') { autoSoldoutNames = []; refreshAutoSoldoutBanner(); }
     else if (action === 'open-kitchen-board') window.Router.showScreen('kitchenBoard');
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
     else if (action === 'toggle-sort') toggleSort();
@@ -680,12 +699,13 @@
     currentIndex = 0;
     sortDir = 'asc';
     searchQuery = '';
-    menuFilter = null;
-    orderTypeFilter = null;
+    menuFilters = [];
+    orderTypeFilters = [];
     selectedIds = new Set();
     expandedAll = true;
     bucketOverrides = {};
     cardOverrides = {};
+    autoSoldoutNames = [];
     isOnline = navigator.onLine && !(window.DevTools && window.DevTools.isOffline());
 
     const disabled = controlsDisabled();
@@ -700,10 +720,12 @@
       '</div>' +
       '<div class="topbar-title">' + esc(store.name) + '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
+      '<button type="button" class="icon-btn" data-action="open-kitchen-board" aria-label="조리 현황판">🍳</button>' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
       '</div>' +
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
+      '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +
       '<div class="segment-tabs" id="segment-tabs">' + renderSegmentTabsHtml() + '</div>' +
       '<div class="toolbar">' +
       '<div class="search-row">' +
@@ -715,9 +737,8 @@
       '</div>' +
       '<div class="toolbar-row">' +
       '<div style="display:flex; gap:8px;">' +
-      '<button type="button" class="pill-btn' + ((menuFilter || orderTypeFilter) ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
+      '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length) ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
       '<button type="button" class="pill-btn" id="expand-all-toggle" data-action="toggle-expand-all">' + (expandedAll ? '간단히 보기' : '펼쳐보기') + '</button>' +
-      '<button type="button" class="pill-btn kitchen-board-pill" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '</div>' +
       '</div>' +
       '</div>' +
@@ -735,12 +756,14 @@
     window.addEventListener('offline', onOffline);
     window.addEventListener('online', onOnline);
     window.addEventListener('mock:orders-changed', onMockDataChanged);
+    window.addEventListener('mock:auto-soldout', onAutoSoldout);
   }
 
   function unmount() {
     window.removeEventListener('offline', onOffline);
     window.removeEventListener('online', onOnline);
     window.removeEventListener('mock:orders-changed', onMockDataChanged);
+    window.removeEventListener('mock:auto-soldout', onAutoSoldout);
     root = null;
   }
 

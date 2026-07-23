@@ -51,7 +51,6 @@
           '<div class="menu-row-name">' + esc(item.name) +
             (item.soldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') +
             (item.exposed === false ? ' <span class="badge badge-neutral">숨김</span>' : '') +
-            (item.promoType ? ' ' + window.UI.promoBadgeHtml(item.promoType) : '') +
             (item.happyHourEnabled ? ' ' + window.UI.promoBadgeHtml('HAPPY_HOUR') : '') +
             (item.firstComeEnabled ? ' ' + window.UI.promoBadgeHtml('FIRST_COME') : '') +
           '</div>' +
@@ -92,7 +91,8 @@
         '.menu-list{padding-bottom:24px;}' +
         '.menu-row-soldout-toggle{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}' +
         '.menu-row-toggle-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:700;}' +
-        '.menu-add-btn{background:none;border:none;font-size:var(--font-size-body);font-weight:700;color:var(--color-text-primary);cursor:pointer;padding:8px;white-space:nowrap;}' +
+        '.menu-add-btn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 14px;border:none;border-radius:var(--radius-pill);' +
+          'background:var(--color-accent-blue-bg);font-size:var(--font-size-caption);font-weight:800;color:var(--color-accent-blue);cursor:pointer;white-space:nowrap;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="menu-back">←</button></div>' +
@@ -163,6 +163,18 @@
    * 2) 메뉴 추가/수정 폼 화면 ('menuEdit')
    * ========================================================= */
 
+  // 기존 데이터에 옵션별 품절/노출 필드가 없을 수 있어 기본값을 채워준다
+  function normalizeOptionGroups(groups) {
+    return (groups || []).map(function (g) {
+      g.options = (g.options || []).map(function (o) {
+        if (o.soldOut == null) o.soldOut = false;
+        if (o.exposed == null) o.exposed = true;
+        return o;
+      });
+      return g;
+    });
+  }
+
   function buildInitialState(params) {
     params = params || {};
     var storeId = currentStoreId();
@@ -181,7 +193,7 @@
         origin: item.origin || '',
         nutritionInfo: item.nutritionInfo || '',
         allergyInfo: item.allergyInfo || '',
-        promoType: item.promoType || '',
+        pricePromoEnabled: !!(item.happyHourEnabled || item.firstComeEnabled),
         happyHourEnabled: !!item.happyHourEnabled,
         happyHourPrice: item.happyHourPrice != null ? item.happyHourPrice : '',
         happyHourStart: item.happyHourStart || '15:00',
@@ -194,7 +206,7 @@
         exposed: item.exposed !== false,
         soldOut: !!item.soldOut,
         useOptionGroups: !!(item.optionGroups && item.optionGroups.length),
-        optionGroups: JSON.parse(JSON.stringify(item.optionGroups || [])),
+        optionGroups: normalizeOptionGroups(JSON.parse(JSON.stringify(item.optionGroups || []))),
       };
     }
     return {
@@ -210,7 +222,7 @@
       origin: '',
       nutritionInfo: '',
       allergyInfo: '',
-      promoType: '',
+      pricePromoEnabled: false,
       happyHourEnabled: false,
       happyHourPrice: '',
       happyHourStart: '15:00',
@@ -243,10 +255,16 @@
     return state.optionGroups.map(function (g, gi) {
       var optionsHtml = (g.options || []).map(function (o, oi) {
         return (
-          '<div class="option-row">' +
-            '<input class="input-field" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-            '<input class="input-field" type="number" placeholder="추가 금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-            '<button type="button" class="icon-btn-sm" data-action="remove-option" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">✕</button>' +
+          '<div class="option-row-block">' +
+            '<div class="option-row">' +
+              '<input class="input-field" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
+              '<input class="input-field" type="number" placeholder="추가 금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
+              '<button type="button" class="icon-btn-sm" data-action="remove-option" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">✕</button>' +
+            '</div>' +
+            '<div class="option-avail-row">' +
+              '<button type="button" class="option-avail-toggle' + (o.soldOut ? ' is-soldout' : '') + '" data-action="toggle-option-soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">' + (o.soldOut ? '품절' : '판매중') + '</button>' +
+              '<button type="button" class="option-avail-toggle' + (o.exposed === false ? ' is-hidden' : '') + '" data-action="toggle-option-exposed" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">' + (o.exposed === false ? '숨김' : '노출') + '</button>' +
+            '</div>' +
           '</div>'
         );
       }).join('');
@@ -256,9 +274,15 @@
             '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="group-name" data-group-idx="' + gi + '" />' +
             '<button type="button" class="icon-btn-sm" data-action="remove-group" data-group-idx="' + gi + '" style="margin-left:8px;">✕</button>' +
           '</div>' +
-          '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">' +
-            '<button type="button" class="pill-btn' + (g.required ? ' active' : '') + '" data-action="toggle-required" data-group-idx="' + gi + '">' + (g.required ? '필수' : '선택') + '</button>' +
-            '<button type="button" class="pill-btn' + (g.multiSelect ? ' active' : '') + '" data-action="toggle-multi" data-group-idx="' + gi + '">' + (g.multiSelect ? '복수선택 허용' : '단일선택') + '</button>' +
+          '<div class="option-group-controls">' +
+            '<div class="option-select-mode">' +
+              '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="set-select-single" data-group-idx="' + gi + '">1개 선택</button>' +
+              '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="set-select-multi" data-group-idx="' + gi + '">중복 선택</button>' +
+            '</div>' +
+            '<div class="option-required-row">' +
+              '<span class="option-required-label">필수 여부</span>' +
+              '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="toggle-required" data-group-idx="' + gi + '"><span class="toggle-knob"></span></button>' +
+            '</div>' +
           '</div>' +
           optionsHtml +
           '<button type="button" class="btn btn-secondary btn-sm" data-action="add-option" data-group-idx="' + gi + '">+ 옵션 추가</button>' +
@@ -365,7 +389,7 @@
             multiSelect: !!g.multiSelect,
             options: (g.options || [])
               .filter(function (o) { return o.name && o.name.trim(); })
-              .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0 }; }),
+              .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0, soldOut: !!o.soldOut, exposed: o.exposed !== false }; }),
           };
         });
     }
@@ -379,7 +403,6 @@
       origin: (state.origin || '').trim(),
       nutritionInfo: (state.nutritionInfo || '').trim(),
       allergyInfo: (state.allergyInfo || '').trim(),
-      promoType: state.promoType || null,
       happyHourEnabled: !!state.happyHourEnabled,
       happyHourPrice: state.happyHourEnabled && state.happyHourPrice !== '' ? Number(state.happyHourPrice) : null,
       happyHourStart: state.happyHourEnabled ? state.happyHourStart : null,
@@ -419,18 +442,32 @@
         '.menu-edit-preview-hidden{opacity:0.45;}' +
         '.menu-edit-form-pad{padding:20px;}' +
         '.menu-image-upload-row{display:flex;align-items:center;gap:12px;}' +
-        '.menu-image-thumb{width:64px;height:64px;border-radius:12px;background:var(--color-divider);display:flex;' +
-          'align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:24px;}' +
+        '.menu-image-thumb{width:56px;height:56px;border-radius:12px;background:var(--color-divider);display:flex;' +
+          'align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:22px;}' +
         '.menu-image-thumb img{width:100%;height:100%;object-fit:cover;}' +
-        '.menu-image-upload-actions{display:flex;flex-direction:column;align-items:flex-start;gap:4px;}' +
-        '.menu-image-upload-actions label.btn{cursor:pointer;}' +
-        '.promo-pill-row{display:flex;gap:6px;flex-wrap:wrap;}' +
+        '.menu-image-upload-actions{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;}' +
+        '.menu-image-upload-actions label.btn{cursor:pointer;height:36px;min-height:36px;padding:0 12px;font-size:var(--font-size-caption);}' +
+        '.pricing-promo-section{margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-disabled);}' +
         '.time-range-row{display:flex;align-items:center;gap:8px;}' +
         '.time-range-row .input-field{flex:1;}' +
         '.time-range-sep{color:var(--color-text-secondary);flex-shrink:0;}' +
         '.info-memo{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
           'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin-top:10px;}' +
         '.promo-price-net{font-size:var(--font-size-caption);color:var(--color-text-secondary);margin-bottom:8px;}' +
+        '.option-group-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}' +
+        '.option-select-mode{display:flex;border:1px solid var(--color-disabled);border-radius:var(--radius-pill);padding:2px;}' +
+        '.segment-tab-sm{border:none;background:transparent;padding:6px 12px;font-size:var(--font-size-micro);font-weight:700;' +
+          'color:var(--color-text-secondary);border-radius:var(--radius-pill);cursor:pointer;}' +
+        '.segment-tab-sm.active{background:var(--color-text-primary);color:var(--color-white);}' +
+        '.option-required-row{display:flex;align-items:center;gap:8px;}' +
+        '.option-required-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
+        '.option-row-block{margin-bottom:10px;}' +
+        '.option-row-block .option-row{margin-bottom:6px;}' +
+        '.option-avail-row{display:flex;gap:6px;padding-left:2px;}' +
+        '.option-avail-toggle{border:1.5px solid var(--color-disabled);background:var(--color-white);color:var(--color-text-secondary);' +
+          'font-size:var(--font-size-micro);font-weight:700;padding:4px 10px;border-radius:var(--radius-pill);cursor:pointer;}' +
+        '.option-avail-toggle.is-soldout{border-color:var(--color-accent-red);color:var(--color-accent-red);background:var(--color-accent-red-bg);}' +
+        '.option-avail-toggle.is-hidden{border-color:var(--color-text-secondary);color:var(--color-text-secondary);background:var(--color-divider);}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="edit-back">←</button></div>' +
@@ -439,6 +476,23 @@
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="menu-edit-form-pad">' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">메뉴 이미지</div>' +
+            '<div class="menu-image-upload-row">' +
+              '<div class="menu-image-thumb" id="menu-image-thumb">' +
+                (state.imageUrl ? '<img src="' + esc(state.imageUrl) + '" alt="" />' : '<span>📷</span>') +
+              '</div>' +
+              '<div class="menu-image-upload-actions">' +
+                '<label class="btn btn-outline btn-sm" for="f-image-file-album">앨범에서 선택</label>' +
+                '<label class="btn btn-outline btn-sm" for="f-image-file-camera">직접 촬영</label>' +
+                (state.imageUrl ? '<button type="button" class="btn-text" id="remove-image-btn">이미지 삭제</button>' : '') +
+              '</div>' +
+              '<input type="file" accept="image/*" id="f-image-file-album" style="display:none;" />' +
+              '<input type="file" accept="image/*" capture="environment" id="f-image-file-camera" style="display:none;" />' +
+            '</div>' +
+            '<span class="menu-edit-subcaption">앨범에서 선택하거나 카메라로 바로 촬영할 수 있어요</span>' +
+          '</div>' +
 
           '<div class="input-group">' +
             '<div class="input-label">메뉴명</div>' +
@@ -463,96 +517,59 @@
           '</div>' +
 
           '<div class="input-group">' +
+            '<div class="toggle-row">' +
+              '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                '<span class="input-label" style="margin:0;">가격 프로모션 설정</span>' +
+                '<span class="menu-edit-subcaption">해피아워 · 선착순 할인가를 설정할 수 있어요</span>' +
+              '</div>' +
+              '<button type="button" class="toggle' + (state.pricePromoEnabled ? ' on' : '') + '" id="toggle-price-promo"><span class="toggle-knob"></span></button>' +
+            '</div>' +
+            '<div id="price-promo-section" class="pricing-promo-section" style="' + (state.pricePromoEnabled ? '' : 'display:none;') + '">' +
+
+              '<div class="toggle-row">' +
+                '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                  '<span class="input-label" style="margin:0;">해피아워 가격 설정</span>' +
+                  '<span class="menu-edit-subcaption">정해진 시간 동안만 할인 가격으로 판매해요</span>' +
+                '</div>' +
+                '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
+              '</div>' +
+              '<div id="happy-hour-detail" style="margin-top:12px;' + (state.happyHourEnabled ? '' : 'display:none;') + '">' +
+                '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
+                '<div class="input-label">해피아워 가격</div>' +
+                '<input class="input-field" type="number" id="f-happy-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.happyHourPrice === '' ? '' : state.happyHourPrice) + '" />' +
+                '<div class="input-error" id="err-happyHourPrice" style="display:none;"></div>' +
+                '<div class="input-label" style="margin-top:10px;">해피아워 시간</div>' +
+                '<div class="time-range-row">' +
+                  '<input type="time" class="input-field" id="f-happy-start" value="' + esc(state.happyHourStart) + '" />' +
+                  '<span class="time-range-sep">~</span>' +
+                  '<input type="time" class="input-field" id="f-happy-end" value="' + esc(state.happyHourEnd) + '" />' +
+                '</div>' +
+                '<div class="info-memo">💡 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
+              '</div>' +
+
+              '<div class="toggle-row" style="margin-top:16px;">' +
+                '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                  '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
+                  '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
+                '</div>' +
+                '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
+              '</div>' +
+              '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
+                '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
+                '<div class="input-label">선착순 가격</div>' +
+                '<input class="input-field" type="number" id="f-first-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.firstComePrice === '' ? '' : state.firstComePrice) + '" />' +
+                '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
+                '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
+                '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
+                '<div class="info-memo">💡 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
+              '</div>' +
+
+            '</div>' +
+          '</div>' +
+
+          '<div class="input-group">' +
             '<div class="input-label">메뉴 설명</div>' +
             '<textarea class="input-field" id="f-desc" placeholder="메뉴 설명을 입력해주세요">' + esc(state.description) + '</textarea>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">메뉴 이미지</div>' +
-            '<div class="menu-image-upload-row">' +
-              '<div class="menu-image-thumb" id="menu-image-thumb">' +
-                (state.imageUrl ? '<img src="' + esc(state.imageUrl) + '" alt="" />' : '<span>📷</span>') +
-              '</div>' +
-              '<div class="menu-image-upload-actions">' +
-                '<label class="btn btn-outline btn-sm" for="f-image-file-album">앨범에서 선택</label>' +
-                '<label class="btn btn-outline btn-sm" for="f-image-file-camera">직접 촬영</label>' +
-                (state.imageUrl ? '<button type="button" class="btn-text" id="remove-image-btn">이미지 삭제</button>' : '') +
-              '</div>' +
-              '<input type="file" accept="image/*" id="f-image-file-album" style="display:none;" />' +
-              '<input type="file" accept="image/*" capture="environment" id="f-image-file-camera" style="display:none;" />' +
-            '</div>' +
-            '<span class="menu-edit-subcaption">앨범에서 선택하거나 카메라로 바로 촬영할 수 있어요</span>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">원산지 (선택)</div>' +
-            '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">영양 정보 (선택)</div>' +
-            '<textarea class="input-field" id="f-nutrition" placeholder="예: 열량 350kcal, 당류 20g">' + esc(state.nutritionInfo) + '</textarea>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">알레르기 정보 (선택)</div>' +
-            '<textarea class="input-field" id="f-allergy" placeholder="예: 우유, 밀, 대두 함유">' + esc(state.allergyInfo) + '</textarea>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">쿠폰 프로모션 (선택)</div>' +
-            '<div class="promo-pill-row">' +
-            [
-              { v: '', label: '없음' },
-              { v: 'GROUP_COUPON', label: '쿠폰(그룹)' },
-              { v: 'STORE_COUPON', label: '쿠폰(매장)' },
-            ].map(function (o) {
-              return '<button type="button" class="pill-btn' + (state.promoType === o.v ? ' active' : '') + '" data-action="set-promo" data-value="' + o.v + '">' + o.label + '</button>';
-            }).join('') +
-            '</div>' +
-            '<span class="menu-edit-subcaption">이 메뉴가 포함된 주문 카드에 쿠폰 뱃지로 노출돼요</span>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="toggle-row">' +
-              '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">해피아워 가격 설정</span>' +
-                '<span class="menu-edit-subcaption">정해진 시간 동안만 할인 가격으로 판매해요</span>' +
-              '</div>' +
-              '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
-            '</div>' +
-            '<div id="happy-hour-detail" style="margin-top:12px;' + (state.happyHourEnabled ? '' : 'display:none;') + '">' +
-              '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
-              '<div class="input-label">해피아워 가격</div>' +
-              '<input class="input-field" type="number" id="f-happy-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.happyHourPrice === '' ? '' : state.happyHourPrice) + '" />' +
-              '<div class="input-error" id="err-happyHourPrice" style="display:none;"></div>' +
-              '<div class="input-label" style="margin-top:10px;">해피아워 시간</div>' +
-              '<div class="time-range-row">' +
-                '<input type="time" class="input-field" id="f-happy-start" value="' + esc(state.happyHourStart) + '" />' +
-                '<span class="time-range-sep">~</span>' +
-                '<input type="time" class="input-field" id="f-happy-end" value="' + esc(state.happyHourEnd) + '" />' +
-              '</div>' +
-              '<div class="info-memo">💡 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="toggle-row">' +
-              '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
-                '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
-              '</div>' +
-              '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
-            '</div>' +
-            '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
-              '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
-              '<div class="input-label">선착순 가격</div>' +
-              '<input class="input-field" type="number" id="f-first-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.firstComePrice === '' ? '' : state.firstComePrice) + '" />' +
-              '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
-              '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
-              '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
-              '<div class="info-memo">💡 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
-            '</div>' +
           '</div>' +
 
           '<div class="input-group">' +
@@ -590,6 +607,21 @@
               '<div id="option-groups-list">' + renderOptionGroupsList(state) + '</div>' +
               '<button type="button" class="btn btn-outline btn-sm" data-action="add-group">+ 옵션 그룹 추가</button>' +
             '</div>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">원산지 (선택)</div>' +
+            '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">영양 정보 (선택)</div>' +
+            '<textarea class="input-field" id="f-nutrition" placeholder="예: 열량 350kcal, 당류 20g">' + esc(state.nutritionInfo) + '</textarea>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">알레르기 정보 (선택)</div>' +
+            '<textarea class="input-field" id="f-allergy" placeholder="예: 우유, 밀, 대두 함유">' + esc(state.allergyInfo) + '</textarea>' +
           '</div>' +
 
           '<div class="input-group">' +
@@ -641,14 +673,29 @@
     root.querySelector('#f-allergy').addEventListener('input', function (e) { state.allergyInfo = e.target.value; updatePreview(); });
     root.querySelector('#f-stock').addEventListener('input', function (e) { state.stockQuantity = e.target.value; updatePreview(); });
 
-    root.querySelectorAll('[data-action="set-promo"]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        state.promoType = btn.getAttribute('data-value');
-        root.querySelectorAll('[data-action="set-promo"]').forEach(function (b) {
-          b.classList.toggle('active', b.getAttribute('data-value') === state.promoType);
-        });
-        updatePreview();
-      });
+    var pricePromoToggle = root.querySelector('#toggle-price-promo');
+    var pricePromoSection = root.querySelector('#price-promo-section');
+    pricePromoToggle.addEventListener('click', function () {
+      state.pricePromoEnabled = !state.pricePromoEnabled;
+      pricePromoToggle.classList.toggle('on', state.pricePromoEnabled);
+      pricePromoSection.style.display = state.pricePromoEnabled ? '' : 'none';
+      if (!state.pricePromoEnabled) {
+        // 마스터 토글을 끄면 하위 해피아워/선착순도 함께 꺼서 숨겨진 상태로 값이 남지 않게 한다
+        state.happyHourEnabled = false;
+        state.happyHourPrice = '';
+        state.firstComeEnabled = false;
+        state.firstComePrice = '';
+        state.firstComeQty = '';
+        var hToggle = root.querySelector('#toggle-happy-hour');
+        var hDetail = root.querySelector('#happy-hour-detail');
+        if (hToggle) hToggle.classList.remove('on');
+        if (hDetail) hDetail.style.display = 'none';
+        var fToggle = root.querySelector('#toggle-first-come');
+        var fDetail = root.querySelector('#first-come-detail');
+        if (fToggle) fToggle.classList.remove('on');
+        if (fDetail) fDetail.style.display = 'none';
+      }
+      updatePreview();
     });
 
     var happyToggle = root.querySelector('#toggle-happy-hour');
@@ -798,10 +845,33 @@
         renderGroupsList();
         return;
       }
-      var multiBtn = e.target.closest('[data-action="toggle-multi"]');
+      var singleBtn = e.target.closest('[data-action="set-select-single"]');
+      if (singleBtn) {
+        state.optionGroups[Number(singleBtn.getAttribute('data-group-idx'))].multiSelect = false;
+        renderGroupsList();
+        return;
+      }
+      var multiBtn = e.target.closest('[data-action="set-select-multi"]');
       if (multiBtn) {
-        var giMulti = Number(multiBtn.getAttribute('data-group-idx'));
-        state.optionGroups[giMulti].multiSelect = !state.optionGroups[giMulti].multiSelect;
+        state.optionGroups[Number(multiBtn.getAttribute('data-group-idx'))].multiSelect = true;
+        renderGroupsList();
+        return;
+      }
+      var soldoutBtn = e.target.closest('[data-action="toggle-option-soldout"]');
+      if (soldoutBtn) {
+        var giSo = Number(soldoutBtn.getAttribute('data-group-idx'));
+        var oiSo = Number(soldoutBtn.getAttribute('data-opt-idx'));
+        var opt = state.optionGroups[giSo].options[oiSo];
+        opt.soldOut = !opt.soldOut;
+        renderGroupsList();
+        return;
+      }
+      var exposedBtn = e.target.closest('[data-action="toggle-option-exposed"]');
+      if (exposedBtn) {
+        var giEx = Number(exposedBtn.getAttribute('data-group-idx'));
+        var oiEx = Number(exposedBtn.getAttribute('data-opt-idx'));
+        var optEx = state.optionGroups[giEx].options[oiEx];
+        optEx.exposed = optEx.exposed === false ? true : false;
         renderGroupsList();
         return;
       }

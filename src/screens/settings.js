@@ -28,6 +28,25 @@
     );
   }
 
+  function dateTimeLabel(iso) {
+    var d = new Date(iso);
+    var yy = String(d.getFullYear()).slice(2);
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mi = String(d.getMinutes()).padStart(2, '0');
+    return yy + '.' + mm + '.' + dd + ' ' + hh + ':' + mi;
+  }
+
+  // 일시중지는 부제 표시에 변동을 주지 않는다 — 개점 부제는 오늘 최초 개점 시각을 그대로 유지한다
+  function statusTimeSubtitle(store) {
+    if (store.operatingStatus === 'CLOSED') {
+      return store.statusChangedAt ? '(' + dateTimeLabel(store.statusChangedAt) + ' 마감)' : '';
+    }
+    var openTs = store.todayFirstOpenAt || store.statusChangedAt;
+    return openTs ? '(' + dateTimeLabel(openTs) + ' 개점)' : '';
+  }
+
   function contentHtml(store) {
     var autoAcceptOn = !!store.autoAcceptOrders;
     var notificationOn = store.notificationEnabled !== false;
@@ -37,7 +56,8 @@
         '<div class="icon">🏪</div>' +
         '<div class="label-group">' +
           '<div class="label">영업 상태</div>' +
-          window.UI.statusPillHtml(store.operatingStatus) +
+          '<div class="status-subtitle-row">' + window.UI.statusPillHtml(store.operatingStatus) +
+            '<span class="status-time-sub">' + statusTimeSubtitle(store) + '</span></div>' +
         '</div>' +
         '<div class="settings-inline-actions">' + actionButtonsHtml(store.operatingStatus) + '</div>' +
       '</div>' +
@@ -59,16 +79,13 @@
         '</div>' +
         '<button type="button" class="toggle' + (notificationOn ? ' on' : '') + '" id="notification-toggle"><span class="toggle-knob"></span></button>' +
       '</div>' +
-      (notificationOn ?
-        '<div class="notification-volume-row">' +
-          '<span class="notification-volume-label">알림음 크기</span>' +
-          '<input type="range" min="0" max="100" step="5" value="' + volume + '" id="notification-volume-slider" />' +
-          '<span class="notification-volume-value" id="notification-volume-value">' + volume + '</span>' +
-          '<button type="button" class="pill-btn" id="notification-preview-btn">🔊 미리듣기</button>' +
-        '</div>' +
-        (volume === 0 ? '<div class="notification-volume-hint">소리 크기가 0이라 진동으로만 알려드려요</div>' : '')
-        : ''
-      ) +
+      '<div class="notification-volume-row' + (notificationOn ? '' : ' disabled') + '">' +
+        '<span class="notification-volume-label">알림음 크기</span>' +
+        '<input type="range" min="0" max="100" step="5" value="' + volume + '" id="notification-volume-slider"' + (notificationOn ? '' : ' disabled') + ' />' +
+        '<span class="notification-volume-value" id="notification-volume-value">' + volume + '</span>' +
+        '<button type="button" class="pill-btn" id="notification-preview-btn"' + (notificationOn ? '' : ' disabled') + '>🔊</button>' +
+      '</div>' +
+      '<div class="notification-volume-hint">' + (notificationOn && volume === 0 ? '소리 크기가 0이라 진동으로만 알려드려요' : '') + '</div>' +
 
       '<div class="divider-line"></div>' +
 
@@ -112,7 +129,10 @@
         '.settings-list-item .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:20px;margin-left:auto;}' +
         '.settings-logout .label{color:var(--color-accent-red);}' +
         '.settings-logout .icon{filter:none;}' +
+        '.status-subtitle-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}' +
+        '.status-time-sub{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
         '.notification-volume-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;}' +
+        '.notification-volume-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.notification-volume-label{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:600;flex-shrink:0;white-space:nowrap;}' +
         '.notification-volume-row input[type=range]{flex:1;accent-color:var(--color-text-primary);}' +
         '.notification-volume-value{font-size:var(--font-size-caption);font-weight:700;width:28px;text-align:right;flex-shrink:0;}' +
@@ -141,8 +161,8 @@
           function applyStatusChange() {
             if (newStatus === 'CLOSED') {
               window.UI.confirmModal(
-                '정말 마감하시겠습니까?',
-                '마감을 진행하면 처리중에 있는 모든 주문건이 완료 처리됩니다.',
+                '지금 영업을 마감할까요?',
+                '영업을 마감하면, 대기 중이거나 처리하고 있던 주문도 모두 완료돼요.',
                 '마감하기',
                 function () {
                   var result = window.MockApi.closeStoreAndCompleteProcessing(storeId);
@@ -151,7 +171,7 @@
                     : '영업 상태가 변경되었어요');
                   refresh();
                 },
-                { danger: true }
+                { danger: true, cancelLabel: '닫기' }
               );
               return;
             }
@@ -175,7 +195,7 @@
             if (waitingCount > 0) {
               window.UI.confirmModal(
                 '자동 수락으로 전환할까요?',
-                '전환하면 지금 미수락 상태인 주문 ' + waitingCount + '건이 모두 자동 수락(처리중)되고, 앞으로 미수락 탭이 보이지 않아요.',
+                '전환하면 지금 <strong>미수락 상태인 주문 ' + waitingCount + '건이 모두 자동 수락</strong>(처리중)되고, 앞으로 미수락 탭이 보이지 않아요.',
                 '전환하기',
                 function () {
                   var result = window.MockApi.updateAutoAccept(storeId, true);

@@ -25,30 +25,33 @@
     );
   }
 
-  function timeRangeHtml(idPrefix, start, end) {
+  function timeRangeHtml(idPrefix, start, end, readOnly) {
+    var dAttr = readOnly ? ' disabled' : '';
     return (
       '<div class="ocs-time-row">' +
-        '<input type="time" class="ocs-time-input" id="' + idPrefix + '-start" value="' + start + '" />' +
+        '<input type="time" class="ocs-time-input" id="' + idPrefix + '-start" value="' + start + '"' + dAttr + ' />' +
         '<span class="ocs-time-sep">~</span>' +
-        '<input type="time" class="ocs-time-input" id="' + idPrefix + '-end" value="' + end + '" />' +
+        '<input type="time" class="ocs-time-input" id="' + idPrefix + '-end" value="' + end + '"' + dAttr + ' />' +
       '</div>'
     );
   }
 
+  // 예약 주문 토글 OFF여도 영역을 그대로 유지해 아래 항목들의 위치가 바뀌지 않도록 한다
   function reservationHoursHtml(settings) {
-    if (!settings.acceptReservationOrders) return '';
+    var on = !!settings.acceptReservationOrders;
     var isOperating = settings.reservationHoursMode !== 'CUSTOM';
+    var dAttr = on ? '' : ' disabled';
     return (
-      '<div class="ocs-subsection">' +
+      '<div class="ocs-subsection' + (on ? '' : ' ocs-subsection-disabled') + '">' +
         '<div class="ocs-subsection-title">예약 접수 시간</div>' +
         '<div class="choice-pair" id="ocs-hours-mode">' +
-          '<button type="button" class="' + (isOperating ? 'on' : '') + '" data-hours-mode="OPERATING">운영 시간과 동일하게 할게요</button>' +
-          '<button type="button" class="' + (!isOperating ? 'on' : '') + '" data-hours-mode="CUSTOM">직접 설정</button>' +
+          '<button type="button" class="' + (isOperating ? 'on' : '') + '" data-hours-mode="OPERATING"' + dAttr + '>운영 시간과 동일하게 할게요</button>' +
+          '<button type="button" class="' + (!isOperating ? 'on' : '') + '" data-hours-mode="CUSTOM"' + dAttr + '>직접 설정</button>' +
         '</div>' +
         (isOperating
-          ? timeRangeHtml('ocs-operating', settings.operatingHoursStart, settings.operatingHoursEnd) +
-            '<div class="ocs-time-hint">여기서 설정한 시간이 매장 운영 시간이자 예약 접수 시간이에요</div>'
-          : timeRangeHtml('ocs-custom', settings.reservationCustomStart, settings.reservationCustomEnd) +
+          ? timeRangeHtml('ocs-operating', settings.operatingHoursStart, settings.operatingHoursEnd, true) +
+            '<div class="ocs-time-hint">사장님사이트에서 설정한 운영 시간이 자동으로 적용돼요 · 이 화면에서는 변경할 수 없어요</div>'
+          : timeRangeHtml('ocs-custom', settings.reservationCustomStart, settings.reservationCustomEnd, !on) +
             '<div class="ocs-time-hint">이 시간 동안만 예약 주문을 받아요</div>'
         ) +
       '</div>'
@@ -81,6 +84,8 @@
         '.settings-list-item .label-group .label{flex:none;}' +
         '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
         '.ocs-subsection{padding:0 var(--space-5) var(--space-4);}' +
+        '.ocs-subsection-disabled{opacity:0.45;pointer-events:none;}' +
+        '.screen-scroll{padding-bottom:88px;}' +
         '.ocs-subsection-title{font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);margin-bottom:8px;}' +
         '.choice-pair{display:flex;gap:8px;margin-bottom:10px;}' +
         '.choice-pair button{flex:1;padding:10px 8px;border:1.5px solid var(--color-disabled);border-radius:var(--radius-button);' +
@@ -97,7 +102,10 @@
         '<div class="topbar-title">주문 방식 관리</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
-      '<div class="screen-scroll"><div id="ocs-content"></div></div>'
+      '<div class="screen-scroll"><div id="ocs-content"></div></div>' +
+      '<div class="cta-fixed">' +
+        '<button type="button" class="btn btn-primary" id="ocs-save-btn">저장</button>' +
+      '</div>'
     );
   }
 
@@ -135,9 +143,21 @@
         hoursModeWrap.querySelectorAll('[data-hours-mode]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var mode = btn.getAttribute('data-hours-mode');
-            window.MockApi.updateOrderChannelSettings(storeId, { reservationHoursMode: mode });
-            window.UI.toast(mode === 'OPERATING' ? '운영 시간과 동일하게 설정했어요' : '예약 접수 시간을 직접 설정해요');
-            refresh();
+            if (mode === settings.reservationHoursMode) return;
+            function apply() {
+              window.MockApi.updateOrderChannelSettings(storeId, { reservationHoursMode: mode });
+              window.UI.toast(mode === 'OPERATING' ? '운영 시간과 동일하게 설정했어요' : '예약 접수 시간을 직접 설정해요');
+              refresh();
+            }
+            if (mode === 'OPERATING') {
+              window.UI.showModal({
+                title: '운영 시간과 동일하게 할게요',
+                message: '사장님사이트에서 설정한 시간으로 자동 설정돼요.',
+                buttons: [{ label: '확인', variant: 'btn-primary', onClick: apply }],
+              });
+            } else {
+              apply();
+            }
           });
         });
       }
@@ -171,6 +191,9 @@
 
     root.querySelector('#ocs-back').addEventListener('click', function () {
       window.Router.back();
+    });
+    root.querySelector('#ocs-save-btn').addEventListener('click', function () {
+      window.UI.toast('저장되었어요');
     });
 
     refresh();

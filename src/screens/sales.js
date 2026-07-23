@@ -146,6 +146,7 @@
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="section-title">매출 항목을 선택하세요</div>' +
+        '<div class="section-caption">최근 한 달 매출만 조회돼요. 더 많은 매출은 사장님사이트에서 조회 가능해요</div>' +
         '<div class="sales-hub-list">' + HUB_CARDS.map(hubCardRowHtml).join('') + '</div>' +
       '</div>'
     );

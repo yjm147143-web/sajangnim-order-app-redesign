@@ -558,3 +558,16 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   font-size: var(--font-size-caption);
   font-weight: 700;
 }
+.auto-soldout-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 0 var(--space-5) var(--space-3);
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--color-accent-amber-bg);
+  color: #a15c00;
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+}
+.auto-soldout-banner-close {
+  background: none; border: none; padding: 4px; color: #a15c00; font-size: 13px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+}

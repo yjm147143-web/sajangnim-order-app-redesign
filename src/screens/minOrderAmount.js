@@ -76,7 +76,16 @@
     var user = window.MockApi.getCurrentUser();
     var storeId = user.storeId;
     var settings = window.MockApi.getMinOrderSettings(storeId);
+    var brandControlled = !!settings.brandControlled;
     var state = { enabled: settings.enabled, amount: settings.amount };
+
+    function notifyBrandControlled() {
+      window.UI.showModal({
+        title: '수정할 수 없어요',
+        message: '브랜드에서 설정한 최소 주문 금액이 설정되어 있어요. 수정이 불가능해요.',
+        buttons: [{ label: '확인', variant: 'btn-primary' }],
+      });
+    }
 
     function refresh() {
       var wrap = root.querySelector('#moa-content');
@@ -88,6 +97,7 @@
       var toggle = wrap.querySelector('#moa-toggle');
       if (toggle) {
         toggle.addEventListener('click', function () {
+          if (brandControlled) { notifyBrandControlled(); return; }
           state.enabled = !state.enabled;
           refresh();
         });
@@ -95,6 +105,7 @@
 
       wrap.querySelectorAll('[data-preset]').forEach(function (btn) {
         btn.addEventListener('click', function () {
+          if (brandControlled) { notifyBrandControlled(); return; }
           state.amount = Number(btn.getAttribute('data-preset'));
           refresh();
         });
@@ -103,6 +114,7 @@
       var input = wrap.querySelector('#moa-amount-input');
       if (input) {
         input.addEventListener('input', function () {
+          if (brandControlled) { notifyBrandControlled(); refresh(); return; }
           state.amount = Number(input.value);
           var hint = wrap.querySelector('#moa-hint');
           if (hint) hint.textContent = (!state.amount || state.amount <= 0) ? '0원보다 큰 금액을 입력해주세요' : '';
@@ -118,6 +130,7 @@
     });
 
     root.querySelector('#moa-save-btn').addEventListener('click', function () {
+      if (brandControlled) { notifyBrandControlled(); return; }
       if (state.enabled && (!state.amount || state.amount <= 0)) {
         window.UI.toast('0원보다 큰 금액을 입력해주세요');
         return;
