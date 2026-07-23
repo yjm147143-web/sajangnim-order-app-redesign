@@ -53,7 +53,16 @@
       ' color: var(--color-text-secondary); font-size: 10px; line-height: 1;' +
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
-    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }';
+    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
+    '.kitchen-fab {' +
+      ' position: absolute; right: var(--space-4); bottom: 20px; z-index: 30;' +
+      ' display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer;' +
+      ' background: var(--color-text-primary); color: var(--color-white);' +
+      ' font-size: var(--font-size-caption); font-weight: 800; white-space: nowrap;' +
+      ' padding: 12px 18px 12px 14px; border-radius: var(--radius-pill);' +
+      ' box-shadow: 0 10px 24px -8px rgba(30,29,43,0.45); transition: bottom .2s ease, transform .15s ease; }' +
+    '.kitchen-fab:active { transform: scale(0.95); }' +
+    '.kitchen-fab.with-bulk-bar { bottom: 92px; }';
 
   // ---------------- 탭 구성 ----------------
   // 자동수락 ON이면 신규 주문이 대기 없이 바로 처리중으로 인입되므로 대기 탭 자체를 숨긴다.
@@ -309,6 +318,8 @@
     wrap.innerHTML = renderGroupsHtml(groups, orders, disabled);
     const bulkSlot = root.querySelector('#bulk-bar-slot');
     if (bulkSlot) bulkSlot.innerHTML = renderBulkBarHtml(disabled);
+    const fab = root.querySelector('#kitchen-fab');
+    if (fab) fab.classList.toggle('with-bulk-bar', hasBulkBar);
     const tabsEl = root.querySelector('#segment-tabs');
     if (tabsEl) tabsEl.innerHTML = renderSegmentTabsHtml();
   }
@@ -765,7 +776,6 @@
       '</div>' +
       '<div class="topbar-title">' + esc(store.name) + '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
-      '<button type="button" class="icon-btn" data-action="open-kitchen-board" aria-label="조리 현황판">🍳</button>' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
       '</div>' +
       '</div>' +
@@ -790,6 +800,7 @@
       '<div class="screen-scroll" id="order-scroll">' +
       '<div class="order-list" id="order-list-wrap">' + renderGroupsHtml(groups, orders, disabled) + '</div>' +
       '</div>' +
+      '<button type="button" class="kitchen-fab" id="kitchen-fab" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '<div id="bulk-bar-slot">' + renderBulkBarHtml(disabled) + '</div>';
   }
 
