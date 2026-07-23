@@ -123,12 +123,18 @@
     ];
 
     const menuItems = [
-      { id: 'menu-1', storeId: 'store-1', categoryId: 'cat-1', name: '아메리카노', price: 4500, description: '깔끔한 원두 본연의 맛', imageUrl: '', origin: '콜롬비아산 원두', nutritionInfo: '', allergyInfo: '', stockQuantity: 40, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 1, promoType: 'STORE_COUPON', optionGroups: [{ id: 'og-1', name: '샷 추가', required: false, multiSelect: false, options: [{ name: '1샷 추가', price: 500 }, { name: '2샷 추가', price: 1000 }] }] },
-      { id: 'menu-2', storeId: 'store-1', categoryId: 'cat-1', name: '카페라떼', price: 5000, description: '고소한 우유 거품 라떼', imageUrl: '', origin: '콜롬비아산 원두 · 국내산 우유', nutritionInfo: '', allergyInfo: '우유 함유', stockQuantity: 30, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 2, promoType: null, optionGroups: [] },
-      { id: 'menu-3', storeId: 'store-1', categoryId: 'cat-1', name: '바닐라라떼', price: 5500, description: '달콤한 바닐라 시럽 라떼', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '우유 함유', stockQuantity: 0, autoSoldoutEnabled: true, soldOut: true, exposed: true, sortOrder: 3, promoType: null, optionGroups: [] },
-      { id: 'menu-4', storeId: 'store-1', categoryId: 'cat-2', name: '레모네이드', price: 5000, description: '상큼한 생레몬 에이드', imageUrl: '', origin: '국내산 레몬', nutritionInfo: '', allergyInfo: '', stockQuantity: 25, autoSoldoutEnabled: false, soldOut: false, exposed: true, sortOrder: 1, promoType: null, firstComeEnabled: true, firstComePrice: 3900, firstComeQty: 20, optionGroups: [{ id: 'og-2', name: '얼음량', required: true, multiSelect: false, options: [{ name: '적게', price: 0 }, { name: '보통', price: 0 }, { name: '많이', price: 0 }] }] },
-      { id: 'menu-5', storeId: 'store-1', categoryId: 'cat-3', name: '크로플', price: 6000, description: '바삭한 크로와상 와플', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '밀, 대두 함유', stockQuantity: 15, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 1, promoType: null, happyHourEnabled: true, happyHourPrice: 4500, happyHourStart: '15:00', happyHourEnd: '17:00', optionGroups: [] },
-      { id: 'menu-6', storeId: 'store-1', categoryId: 'cat-3', name: '초코쿠키', price: 3500, description: '진한 초콜릿 쿠키', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '밀, 우유, 대두 함유', stockQuantity: 20, autoSoldoutEnabled: false, soldOut: false, exposed: false, sortOrder: 2, promoType: null, optionGroups: [] },
+      { id: 'menu-1', storeId: 'store-1', categoryId: 'cat-1', name: '아메리카노', price: 4500, description: '깔끔한 원두 본연의 맛', imageUrl: '', origin: '콜롬비아산 원두', nutritionInfo: '', allergyInfo: '', stockQuantity: 40, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 1, promoType: 'STORE_COUPON', optionGroupIds: ['og-1'] },
+      { id: 'menu-2', storeId: 'store-1', categoryId: 'cat-1', name: '카페라떼', price: 5000, description: '고소한 우유 거품 라떼', imageUrl: '', origin: '콜롬비아산 원두 · 국내산 우유', nutritionInfo: '', allergyInfo: '우유 함유', stockQuantity: 30, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 2, promoType: null, optionGroupIds: [] },
+      { id: 'menu-3', storeId: 'store-1', categoryId: 'cat-1', name: '바닐라라떼', price: 5500, description: '달콤한 바닐라 시럽 라떼', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '우유 함유', stockQuantity: 0, autoSoldoutEnabled: true, soldOut: true, exposed: true, sortOrder: 3, promoType: null, optionGroupIds: [] },
+      { id: 'menu-4', storeId: 'store-1', categoryId: 'cat-2', name: '레모네이드', price: 5000, description: '상큼한 생레몬 에이드', imageUrl: '', origin: '국내산 레몬', nutritionInfo: '', allergyInfo: '', stockQuantity: 25, autoSoldoutEnabled: false, soldOut: false, exposed: true, sortOrder: 1, promoType: null, firstComeEnabled: true, firstComePrice: 3900, firstComeQty: 20, optionGroupIds: ['og-2'] },
+      { id: 'menu-5', storeId: 'store-1', categoryId: 'cat-3', name: '크로플', price: 6000, description: '바삭한 크로와상 와플', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '밀, 대두 함유', stockQuantity: 15, autoSoldoutEnabled: true, soldOut: false, exposed: true, sortOrder: 1, promoType: null, happyHourEnabled: true, happyHourPrice: 4500, happyHourStart: '15:00', happyHourEnd: '17:00', optionGroupIds: [] },
+      { id: 'menu-6', storeId: 'store-1', categoryId: 'cat-3', name: '초코쿠키', price: 3500, description: '진한 초콜릿 쿠키', imageUrl: '', origin: '', nutritionInfo: '', allergyInfo: '밀, 우유, 대두 함유', stockQuantity: 20, autoSoldoutEnabled: false, soldOut: false, exposed: false, sortOrder: 2, promoType: null, optionGroupIds: [] },
+    ];
+
+    // 옵션 그룹은 매장 단위로 공유되는 자원이라, 메뉴가 optionGroupIds로 참조한다 (완전 연동 — 한 곳에서 수정하면 이 그룹을 쓰는 모든 메뉴에 반영됨)
+    const optionGroups = [
+      { id: 'og-1', storeId: 'store-1', name: '샷 추가', required: false, multiSelect: false, options: [{ name: '1샷 추가', price: 500, soldOut: false, exposed: true }, { name: '2샷 추가', price: 1000, soldOut: false, exposed: true }] },
+      { id: 'og-2', storeId: 'store-1', name: '얼음량', required: true, multiSelect: false, options: [{ name: '적게', price: 0, soldOut: false, exposed: true }, { name: '보통', price: 0, soldOut: false, exposed: true }, { name: '많이', price: 0, soldOut: false, exposed: true }] },
     ];
 
     function items(list) { return list; }
@@ -146,7 +152,7 @@
 
     const auditLogs = [];
 
-    return { users, events, stores, categories, menuItems, orders, auditLogs };
+    return { users, events, stores, categories, menuItems, optionGroups, orders, auditLogs };
   }
 
   const KEY = window.AppConfig.DB_KEY;

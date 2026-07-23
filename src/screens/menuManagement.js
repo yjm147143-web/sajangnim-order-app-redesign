@@ -85,6 +85,58 @@
     return '<div class="menu-list">' + items.map(function (item) { return menuRowHtml(item, categories, isSpecific); }).join('') + '</div>';
   }
 
+  // 옵션 목록 탭 — 매장에 등록된 옵션 그룹을 직접 편집한다 (메뉴 추가 폼과 달리 저장 버튼 없이 즉시 반영됨)
+  function optionGroupCardHtml(g) {
+    var usage = window.MockApi.getOptionGroupUsageCount(g.id);
+    var optionsHtml = (g.options || []).map(function (o, oi) {
+      var soldOut = !!o.soldOut;
+      var hidden = o.exposed === false;
+      return (
+        '<div class="option-row">' +
+          '<div class="option-seg-pair">' +
+            '<button type="button" class="option-seg-btn' + (!soldOut ? ' active' : '') + '" data-action="lib-set-option-status" data-value="available" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">판매</button>' +
+            '<button type="button" class="option-seg-btn tone-red' + (soldOut ? ' active' : '') + '" data-action="lib-set-option-status" data-value="soldout" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">품절</button>' +
+          '</div>' +
+          '<div class="option-seg-pair">' +
+            '<button type="button" class="option-seg-btn' + (!hidden ? ' active' : '') + '" data-action="lib-set-option-visibility" data-value="visible" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">노출</button>' +
+            '<button type="button" class="option-seg-btn tone-gray' + (hidden ? ' active' : '') + '" data-action="lib-set-option-visibility" data-value="hidden" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">숨김</button>' +
+          '</div>' +
+          '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="lib-opt-name" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
+          '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="lib-opt-price" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
+          '<button type="button" class="icon-btn-sm" data-action="lib-remove-option" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">✕</button>' +
+        '</div>'
+      );
+    }).join('');
+    return (
+      '<div class="option-group-card">' +
+        '<div class="option-group-head">' +
+          '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="lib-group-name" data-group-id="' + g.id + '" />' +
+          '<button type="button" class="icon-btn-sm" data-action="lib-remove-group" data-group-id="' + g.id + '" style="margin-left:8px;">✕</button>' +
+        '</div>' +
+        '<div class="option-group-usage">' + (usage > 0 ? usage + '개 메뉴에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' +
+        '<div class="option-group-controls">' +
+          '<div class="option-select-mode">' +
+            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-single" data-group-id="' + g.id + '">1개 선택</button>' +
+            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-multi" data-group-id="' + g.id + '">중복 선택</button>' +
+          '</div>' +
+          '<div class="option-required-row">' +
+            '<span class="option-required-label">필수 여부</span>' +
+            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="lib-toggle-required" data-group-id="' + g.id + '"><span class="toggle-knob"></span></button>' +
+          '</div>' +
+        '</div>' +
+        optionsHtml +
+        '<button type="button" class="btn btn-secondary btn-sm" data-action="lib-add-option" data-group-id="' + g.id + '">+ 옵션 추가</button>' +
+      '</div>'
+    );
+  }
+
+  function optionLibraryHtml(groups) {
+    if (!groups.length) {
+      return '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>';
+    }
+    return '<div class="option-library-list">' + groups.map(optionGroupCardHtml).join('') + '</div>';
+  }
+
   function renderMenuList() {
     return (
       '<style>' +
@@ -93,11 +145,22 @@
         '.menu-row-toggle-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:700;}' +
         '.menu-add-btn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 14px;border:none;border-radius:var(--radius-pill);' +
           'background:var(--color-accent-blue-bg);font-size:var(--font-size-caption);font-weight:800;color:var(--color-accent-blue);cursor:pointer;white-space:nowrap;}' +
+        '.main-tab-row{display:flex;gap:8px;padding:0 var(--space-5) var(--space-3);}' +
+        '.main-tab{border:none;cursor:pointer;border-radius:var(--radius-button);font-weight:800;' +
+          'background:var(--color-divider);color:var(--color-text-secondary);height:44px;}' +
+        '.main-tab.active{background:var(--color-text-primary);color:var(--color-white);}' +
+        '.main-tab-menu{flex:2;font-size:var(--font-size-body);}' +
+        '.main-tab-option{flex:1;font-size:var(--font-size-caption);}' +
+        '.option-library-list{padding-bottom:24px;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="menu-back">←</button></div>' +
         '<div class="topbar-title">메뉴 관리</div>' +
-        '<div class="topbar-side"><button type="button" class="menu-add-btn" id="menu-add-btn">+ 메뉴 추가</button></div>' +
+        '<div class="topbar-side"><button type="button" class="menu-add-btn" id="menu-topbar-action-btn">+ 메뉴 추가</button></div>' +
+      '</div>' +
+      '<div class="main-tab-row">' +
+        '<button type="button" class="main-tab main-tab-menu active" data-main-tab="menu">메뉴 목록</button>' +
+        '<button type="button" class="main-tab main-tab-option" data-main-tab="option">옵션 목록</button>' +
       '</div>' +
       '<div class="screen-scroll"><div id="menu-list-wrap"></div></div>'
     );
@@ -106,23 +169,105 @@
   function mountMenuList(root) {
     var storeId = currentStoreId();
     var selectedCategoryId = null; // null = 전체
+    var activeMainTab = 'menu'; // 'menu' | 'option'
 
     function refresh() {
-      var categories = getAllCategories(storeId);
-      var isSpecific = selectedCategoryId !== null;
-      var items = window.MockApi.getMenuItems(storeId, isSpecific ? selectedCategoryId : undefined);
+      root.querySelectorAll('[data-main-tab]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-main-tab') === activeMainTab);
+      });
+      root.querySelector('#menu-topbar-action-btn').textContent = activeMainTab === 'menu' ? '+ 메뉴 추가' : '+ 옵션 추가';
+
       var wrap = root.querySelector('#menu-list-wrap');
-      wrap.innerHTML = tabsHtml(categories, selectedCategoryId) + listBodyHtml(items, categories, isSpecific);
+      if (activeMainTab === 'menu') {
+        var categories = getAllCategories(storeId);
+        var isSpecific = selectedCategoryId !== null;
+        var items = window.MockApi.getMenuItems(storeId, isSpecific ? selectedCategoryId : undefined);
+        wrap.innerHTML = tabsHtml(categories, selectedCategoryId) + listBodyHtml(items, categories, isSpecific);
+      } else {
+        wrap.innerHTML = optionLibraryHtml(window.MockApi.getOptionGroups(storeId));
+      }
     }
 
     root.querySelector('#menu-back').addEventListener('click', function () {
       window.Router.back();
     });
-    root.querySelector('#menu-add-btn').addEventListener('click', function () {
-      window.Router.showScreen('menuEdit', {});
+    root.querySelector('#menu-topbar-action-btn').addEventListener('click', function () {
+      if (activeMainTab === 'menu') {
+        window.Router.showScreen('menuEdit', {});
+      } else {
+        window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
+        refresh();
+      }
     });
 
     root.addEventListener('click', function (e) {
+      var mainTabBtn = e.target.closest('[data-main-tab]');
+      if (mainTabBtn) {
+        activeMainTab = mainTabBtn.getAttribute('data-main-tab');
+        refresh();
+        return;
+      }
+
+      if (activeMainTab === 'option') {
+        var addGroupLibBtn = e.target.closest('[data-action="lib-add-option"]');
+        var removeGroupLibBtn = e.target.closest('[data-action="lib-remove-group"]');
+        var reqLibBtn = e.target.closest('[data-action="lib-toggle-required"]');
+        var singleLibBtn = e.target.closest('[data-action="lib-set-select-single"]');
+        var multiLibBtn = e.target.closest('[data-action="lib-set-select-multi"]');
+        var statusLibBtn = e.target.closest('[data-action="lib-set-option-status"]');
+        var visLibBtn = e.target.closest('[data-action="lib-set-option-visibility"]');
+        var removeOptLibBtn = e.target.closest('[data-action="lib-remove-option"]');
+
+        if (addGroupLibBtn) {
+          window.MockApi.addOptionGroupOption(addGroupLibBtn.getAttribute('data-group-id'), { name: '', price: 0 });
+          refresh();
+          return;
+        }
+        if (removeGroupLibBtn) {
+          var delGroupId = removeGroupLibBtn.getAttribute('data-group-id');
+          var result = window.MockApi.deleteOptionGroup(delGroupId);
+          if (!result.ok) {
+            window.UI.toast('이 옵션 그룹은 ' + result.usage + '개 메뉴에서 사용 중이라 삭제할 수 없어요');
+          } else {
+            window.UI.toast('옵션 그룹을 삭제했어요');
+          }
+          refresh();
+          return;
+        }
+        if (reqLibBtn) {
+          var reqGroup = window.MockApi.getOptionGroup(reqLibBtn.getAttribute('data-group-id'));
+          window.MockApi.updateOptionGroup(reqLibBtn.getAttribute('data-group-id'), { required: !reqGroup.required });
+          refresh();
+          return;
+        }
+        if (singleLibBtn) {
+          window.MockApi.updateOptionGroup(singleLibBtn.getAttribute('data-group-id'), { multiSelect: false });
+          refresh();
+          return;
+        }
+        if (multiLibBtn) {
+          window.MockApi.updateOptionGroup(multiLibBtn.getAttribute('data-group-id'), { multiSelect: true });
+          refresh();
+          return;
+        }
+        if (statusLibBtn) {
+          window.MockApi.updateOptionGroupOption(statusLibBtn.getAttribute('data-group-id'), Number(statusLibBtn.getAttribute('data-opt-idx')), { soldOut: statusLibBtn.getAttribute('data-value') === 'soldout' });
+          refresh();
+          return;
+        }
+        if (visLibBtn) {
+          window.MockApi.updateOptionGroupOption(visLibBtn.getAttribute('data-group-id'), Number(visLibBtn.getAttribute('data-opt-idx')), { exposed: visLibBtn.getAttribute('data-value') !== 'hidden' });
+          refresh();
+          return;
+        }
+        if (removeOptLibBtn) {
+          window.MockApi.removeOptionGroupOption(removeOptLibBtn.getAttribute('data-group-id'), Number(removeOptLibBtn.getAttribute('data-opt-idx')));
+          refresh();
+          return;
+        }
+        return;
+      }
+
       var toggleBtn = e.target.closest('[data-action="toggle-soldout"]');
       if (toggleBtn) {
         var tid = toggleBtn.getAttribute('data-menu-id');
@@ -154,6 +299,18 @@
       }
     });
 
+    root.addEventListener('input', function (e) {
+      if (activeMainTab !== 'option') return;
+      var t = e.target;
+      if (t.matches('[data-field="lib-group-name"]')) {
+        window.MockApi.updateOptionGroup(t.getAttribute('data-group-id'), { name: t.value });
+      } else if (t.matches('[data-field="lib-opt-name"]')) {
+        window.MockApi.updateOptionGroupOption(t.getAttribute('data-group-id'), Number(t.getAttribute('data-opt-idx')), { name: t.value });
+      } else if (t.matches('[data-field="lib-opt-price"]')) {
+        window.MockApi.updateOptionGroupOption(t.getAttribute('data-group-id'), Number(t.getAttribute('data-opt-idx')), { price: Number(t.value) || 0 });
+      }
+    });
+
     refresh();
   }
 
@@ -162,18 +319,6 @@
   /* =========================================================
    * 2) 메뉴 추가/수정 폼 화면 ('menuEdit')
    * ========================================================= */
-
-  // 기존 데이터에 옵션별 품절/노출 필드가 없을 수 있어 기본값을 채워준다
-  function normalizeOptionGroups(groups) {
-    return (groups || []).map(function (g) {
-      g.options = (g.options || []).map(function (o) {
-        if (o.soldOut == null) o.soldOut = false;
-        if (o.exposed == null) o.exposed = true;
-        return o;
-      });
-      return g;
-    });
-  }
 
   function buildInitialState(params) {
     params = params || {};
@@ -205,8 +350,9 @@
         autoSoldoutEnabled: item.autoSoldoutEnabled !== false,
         exposed: item.exposed !== false,
         soldOut: !!item.soldOut,
-        useOptionGroups: !!(item.optionGroups && item.optionGroups.length),
-        optionGroups: normalizeOptionGroups(JSON.parse(JSON.stringify(item.optionGroups || []))),
+        useOptionGroups: !!(item.optionGroupIds && item.optionGroupIds.length),
+        selectedGroupIds: (item.optionGroupIds || []).slice(),
+        optionGroups: [],
       };
     }
     return {
@@ -235,6 +381,7 @@
       exposed: true,
       soldOut: false,
       useOptionGroups: false,
+      selectedGroupIds: [],
       optionGroups: [],
     };
   }
@@ -246,6 +393,24 @@
     });
     options += '<option value="__new__"' + (state.categoryId === '__new__' ? ' selected' : '') + '>+ 새 카테고리 추가</option>';
     return '<select class="input-field" id="category-select">' + options + '</select>';
+  }
+
+  // 매장에 등록된 옵션 그룹(옵션 목록 탭에서 관리) 중 이 메뉴에 붙일 것을 고르는 칩 목록
+  function existingGroupChipsHtml(storeId, state) {
+    var groups = window.MockApi.getOptionGroups(storeId);
+    if (!groups.length) {
+      return '<div class="section-caption" style="padding:0 0 12px;">옵션 목록에 등록된 옵션 그룹이 없어요</div>';
+    }
+    return '<div class="existing-group-chip-row">' + groups.map(function (g) {
+      var on = state.selectedGroupIds.indexOf(g.id) !== -1;
+      var modeLabel = g.multiSelect ? '중복 선택' : '1개 선택';
+      return (
+        '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-action="toggle-existing-group" data-group-id="' + g.id + '">' +
+          '<span class="name">' + esc(g.name || '(이름 없음)') + '</span>' +
+          '<span class="meta">' + modeLabel + ' · 옵션 ' + (g.options || []).length + '개</span>' +
+        '</button>'
+      );
+    }).join('') + '</div>';
   }
 
   function renderOptionGroupsList(state) {
@@ -381,20 +546,23 @@
       extraCategories.push({ id: categoryId, storeId: state.storeId, name: categoryName, sortOrder: 999 });
     }
 
-    var cleanGroups = [];
+    // 새로 만든 옵션 그룹은 저장 시점에 매장 공용 옵션 목록에 등록하고, 그 id를 메뉴에 붙인다
+    var optionGroupIds = [];
     if (state.useOptionGroups) {
-      cleanGroups = state.optionGroups
+      optionGroupIds = state.selectedGroupIds.slice();
+      state.optionGroups
         .filter(function (g) { return g.name && g.name.trim(); })
-        .map(function (g) {
-          return {
-            id: g.id || ('og-' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        .forEach(function (g) {
+          var cleanOptions = (g.options || [])
+            .filter(function (o) { return o.name && o.name.trim(); })
+            .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0, soldOut: !!o.soldOut, exposed: o.exposed !== false }; });
+          var created = window.MockApi.addOptionGroup(state.storeId, {
             name: g.name.trim(),
             required: !!g.required,
             multiSelect: !!g.multiSelect,
-            options: (g.options || [])
-              .filter(function (o) { return o.name && o.name.trim(); })
-              .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0, soldOut: !!o.soldOut, exposed: o.exposed !== false }; }),
-          };
+            options: cleanOptions,
+          });
+          optionGroupIds.push(created.id);
         });
     }
 
@@ -417,7 +585,7 @@
       stockQuantity: state.stockQuantity === '' ? 0 : Number(state.stockQuantity),
       autoSoldoutEnabled: !!state.autoSoldoutEnabled,
       exposed: !!state.exposed,
-      optionGroups: cleanGroups,
+      optionGroupIds: optionGroupIds,
     };
     if (categoryName) payload.categoryName = categoryName;
 
@@ -458,22 +626,13 @@
         '.info-memo{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
           'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin-top:10px;}' +
         '.promo-price-net{font-size:var(--font-size-caption);color:var(--color-text-secondary);margin-bottom:8px;}' +
-        '.option-group-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}' +
-        '.option-select-mode{display:flex;border:1px solid var(--color-disabled);border-radius:var(--radius-pill);padding:2px;}' +
-        '.segment-tab-sm{border:none;background:transparent;padding:6px 12px;font-size:var(--font-size-micro);font-weight:700;' +
-          'color:var(--color-text-secondary);border-radius:var(--radius-pill);cursor:pointer;}' +
-        '.segment-tab-sm.active{background:var(--color-text-primary);color:var(--color-white);}' +
-        '.option-required-row{display:flex;align-items:center;gap:8px;}' +
-        '.option-required-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
-        '.option-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;}' +
-        '.option-seg-pair{display:flex;border:1px solid var(--color-disabled);border-radius:8px;overflow:hidden;flex-shrink:0;}' +
-        '.option-seg-btn{border:none;background:var(--color-white);color:var(--color-text-secondary);' +
-          'font-size:10px;font-weight:700;padding:0 6px;height:36px;cursor:pointer;white-space:nowrap;}' +
-        '.option-seg-btn.active{background:var(--color-text-primary);color:var(--color-white);}' +
-        '.option-seg-btn.tone-red.active{background:var(--color-accent-red);color:var(--color-white);}' +
-        '.option-seg-btn.tone-gray.active{background:var(--color-text-secondary);color:var(--color-white);}' +
-        '.option-name-input.input-field{flex:1 1 0;min-width:0;height:36px;padding:0 6px;font-size:12px;}' +
-        '.option-price-input.input-field{flex:0 1 56px;min-width:0;height:36px;padding:0 4px;font-size:12px;text-align:right;}' +
+        '.existing-group-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}' +
+        '.existing-group-chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;' +
+          'border:1.5px solid var(--color-disabled);border-radius:12px;background:var(--color-white);cursor:pointer;text-align:left;}' +
+        '.existing-group-chip.on{border-color:var(--color-accent-blue);background:var(--color-accent-blue-bg);}' +
+        '.existing-group-chip .name{font-size:var(--font-size-caption);font-weight:800;color:var(--color-text-primary);}' +
+        '.existing-group-chip .meta{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
+        '.option-groups-subtitle{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin:14px 0 8px;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="edit-back">←</button></div>' +
@@ -610,6 +769,9 @@
               '<button type="button" class="toggle' + (state.useOptionGroups ? ' on' : '') + '" data-action="toggle-use-option-groups"><span class="toggle-knob"></span></button>' +
             '</div>' +
             '<div id="option-groups-wrap" style="margin-top:12px;' + (state.useOptionGroups ? '' : 'display:none;') + '">' +
+              '<div class="option-groups-subtitle">기존 옵션 그룹에서 선택</div>' +
+              '<div id="existing-group-chips">' + existingGroupChipsHtml(state.storeId, state) + '</div>' +
+              '<div class="option-groups-subtitle">새 옵션 그룹 만들기</div>' +
               '<div id="option-groups-list">' + renderOptionGroupsList(state) + '</div>' +
               '<button type="button" class="btn btn-outline btn-sm" data-action="add-group">+ 옵션 그룹 추가</button>' +
             '</div>' +
@@ -817,6 +979,15 @@
     var groupsWrap = root.querySelector('#option-groups-wrap');
 
     groupsWrap.addEventListener('click', function (e) {
+      var existingChipBtn = e.target.closest('[data-action="toggle-existing-group"]');
+      if (existingChipBtn) {
+        var chipGroupId = existingChipBtn.getAttribute('data-group-id');
+        var idx = state.selectedGroupIds.indexOf(chipGroupId);
+        if (idx === -1) state.selectedGroupIds.push(chipGroupId);
+        else state.selectedGroupIds.splice(idx, 1);
+        root.querySelector('#existing-group-chips').innerHTML = existingGroupChipsHtml(state.storeId, state);
+        return;
+      }
       var addGroupBtn = e.target.closest('[data-action="add-group"]');
       if (addGroupBtn) {
         state.optionGroups.push({ id: 'og-' + Date.now() + Math.random().toString(36).slice(2, 6), name: '', required: false, multiSelect: false, options: [] });

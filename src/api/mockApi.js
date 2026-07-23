@@ -252,7 +252,7 @@
 
   function addMenuItem(storeId, payload) {
     const maxOrder = Math.max(0, ...DB.menuItems.filter(function (m) { return m.storeId === storeId && m.categoryId === payload.categoryId; }).map(function (m) { return m.sortOrder; }));
-    const item = Object.assign({ id: uid('menu'), storeId: storeId, soldOut: false, sortOrder: maxOrder + 1, optionGroups: [] }, payload);
+    const item = Object.assign({ id: uid('menu'), storeId: storeId, soldOut: false, sortOrder: maxOrder + 1, optionGroupIds: [] }, payload);
     const triggered = checkAutoSoldout(item);
     DB.menuItems.push(item);
     persist();
@@ -265,6 +265,66 @@
     const triggered = checkAutoSoldout(item);
     persist();
     return { item: item, autoSoldoutTriggered: triggered ? [item.name] : [] };
+  }
+
+  // ---------------- 옵션 그룹 (매장 단위 공유 라이브러리) ----------------
+  // 완전 연동 모델: 그룹 하나가 storeId 아래 유일하게 존재하고, 메뉴는 optionGroupIds로 그 그룹을 참조한다.
+  // 그룹 내용(이름/옵션/가격/품절/노출)을 수정하면 이 그룹을 쓰는 모든 메뉴에 즉시 반영된다.
+  function getOptionGroups(storeId) {
+    return DB.optionGroups.filter(function (g) { return g.storeId === storeId; });
+  }
+
+  function getOptionGroup(id) { return DB.optionGroups.find(function (g) { return g.id === id; }); }
+
+  function getOptionGroupsByIds(ids) {
+    return (ids || []).map(function (id) { return getOptionGroup(id); }).filter(Boolean);
+  }
+
+  function getOptionGroupUsageCount(id) {
+    return DB.menuItems.filter(function (m) { return (m.optionGroupIds || []).indexOf(id) !== -1; }).length;
+  }
+
+  function addOptionGroup(storeId, payload) {
+    const group = Object.assign({ id: uid('og'), storeId: storeId, name: '', required: false, multiSelect: false, options: [] }, payload);
+    DB.optionGroups.push(group);
+    persist();
+    return group;
+  }
+
+  function updateOptionGroup(id, payload) {
+    const group = getOptionGroup(id);
+    Object.assign(group, payload);
+    persist();
+    return group;
+  }
+
+  function deleteOptionGroup(id) {
+    const usage = getOptionGroupUsageCount(id);
+    if (usage > 0) return { ok: false, usage: usage };
+    DB.optionGroups = DB.optionGroups.filter(function (g) { return g.id !== id; });
+    persist();
+    return { ok: true };
+  }
+
+  function addOptionGroupOption(groupId, payload) {
+    const group = getOptionGroup(groupId);
+    group.options.push(Object.assign({ name: '', price: 0, soldOut: false, exposed: true }, payload));
+    persist();
+    return group;
+  }
+
+  function updateOptionGroupOption(groupId, optIndex, payload) {
+    const group = getOptionGroup(groupId);
+    Object.assign(group.options[optIndex], payload);
+    persist();
+    return group;
+  }
+
+  function removeOptionGroupOption(groupId, optIndex) {
+    const group = getOptionGroup(groupId);
+    group.options.splice(optIndex, 1);
+    persist();
+    return group;
   }
 
   function toggleSoldOut(id, soldOut) {
@@ -305,9 +365,9 @@
     const seatCodes = ['A-3', 'A-12', 'B-2', 'B-7', 'C-1', 'D-5'];
     const isReservation = !!opts.isReservation && channelSettings.acceptReservationOrders;
 
-    // 옵션 있음: 옵션 그룹(+ 옵션값)이 실제로 등록된 메뉴만 후보로 삼는다.
+    // 옵션 있음: 옵션 그룹(+ 옵션값)이 실제로 연결된 메뉴만 후보로 삼는다.
     const itemsWithOption = menuItems.filter(function (m) {
-      return (m.optionGroups || []).some(function (g) { return (g.options || []).length; });
+      return getOptionGroupsByIds(m.optionGroupIds).some(function (g) { return (g.options || []).length; });
     });
     function buildLine(preferOption) {
       const pool = (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
@@ -315,7 +375,7 @@
       const qty = 1 + Math.floor(Math.random() * 2);
       let optionNames = [];
       if (preferOption) {
-        const group = (menu.optionGroups || []).find(function (g) { return (g.options || []).length; });
+        const group = getOptionGroupsByIds(menu.optionGroupIds).find(function (g) { return (g.options || []).length; });
         if (group) optionNames = [group.options[Math.floor(Math.random() * group.options.length)].name];
       }
       return { menuName: menu.name, optionNames: optionNames, quantity: qty, price: menu.price };
@@ -780,6 +840,10 @@
     clearPermissionLockPassword: clearPermissionLockPassword, verifyPermissionLockPassword: verifyPermissionLockPassword,
     getCategories: getCategories, getMenuItems: getMenuItems, getMenuItem: getMenuItem,
     addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut, moveMenuItem: moveMenuItem,
+    getOptionGroups: getOptionGroups, getOptionGroup: getOptionGroup, getOptionGroupsByIds: getOptionGroupsByIds,
+    getOptionGroupUsageCount: getOptionGroupUsageCount, addOptionGroup: addOptionGroup, updateOptionGroup: updateOptionGroup,
+    deleteOptionGroup: deleteOptionGroup, addOptionGroupOption: addOptionGroupOption,
+    updateOptionGroupOption: updateOptionGroupOption, removeOptionGroupOption: removeOptionGroupOption,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,
     createCustomOrder: createCustomOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
     callCustomer: callCustomer, completeOrder: completeOrder, cancelPayment: cancelPayment,

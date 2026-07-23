@@ -530,11 +530,24 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .menu-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
 .menu-row-order-btns { display: flex; flex-direction: column; gap: 2px; }
 
-/* ---------- Option Group Editor ---------- */
+/* ---------- Option Group Editor (메뉴 관리 화면의 '메뉴 추가' 폼과 '옵션 목록' 탭이 함께 쓴다) ---------- */
 .option-group-card { border: 1px solid var(--color-divider); border-radius: var(--radius-card); padding: var(--space-4); margin-bottom: var(--space-3); }
 .option-group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
-.option-row { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); align-items: center; }
-.option-row .input-field { flex: 1; height: 44px; }
+.option-group-usage { font-size: var(--font-size-micro); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
+.option-group-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: var(--space-3); }
+.option-select-mode { display: flex; border: 1px solid var(--color-disabled); border-radius: var(--radius-pill); padding: 2px; }
+.segment-tab-sm { border: none; background: transparent; padding: 6px 12px; font-size: var(--font-size-micro); font-weight: 700; color: var(--color-text-secondary); border-radius: var(--radius-pill); cursor: pointer; }
+.segment-tab-sm.active { background: var(--color-text-primary); color: var(--color-white); }
+.option-required-row { display: flex; align-items: center; gap: var(--space-2); }
+.option-required-label { font-size: var(--font-size-micro); color: var(--color-text-secondary); font-weight: 600; }
+.option-row { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; margin-bottom: var(--space-2); }
+.option-seg-pair { display: flex; border: 1px solid var(--color-disabled); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.option-seg-btn { border: none; background: var(--color-white); color: var(--color-text-secondary); font-size: 10px; font-weight: 700; padding: 0 6px; height: 36px; cursor: pointer; white-space: nowrap; }
+.option-seg-btn.active { background: var(--color-text-primary); color: var(--color-white); }
+.option-seg-btn.tone-red.active { background: var(--color-accent-red); color: var(--color-white); }
+.option-seg-btn.tone-gray.active { background: var(--color-text-secondary); color: var(--color-white); }
+.option-name-input.input-field { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 6px; font-size: 12px; }
+.option-price-input.input-field { flex: 0 1 56px; min-width: 0; height: 36px; padding: 0 4px; font-size: 12px; text-align: right; }
 
 /* ---------- Misc ---------- */
 .link-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); background: var(--color-divider); border-radius: var(--radius-card); }
