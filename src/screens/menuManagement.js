@@ -46,6 +46,12 @@
     var catName = cat ? cat.name : (item.categoryName || '미분류');
     return (
       '<div class="menu-row" data-menu-id="' + item.id + '">' +
+        (isSpecific ?
+          '<div class="menu-row-order-btns">' +
+            '<button type="button" class="icon-btn-sm" data-action="move-up" data-menu-id="' + item.id + '">▲</button>' +
+            '<button type="button" class="icon-btn-sm" data-action="move-down" data-menu-id="' + item.id + '">▼</button>' +
+          '</div>' : ''
+        ) +
         '<div class="menu-row-thumb">' + (item.imageUrl ? '<img src="' + esc(item.imageUrl) + '" alt="" />' : '🍽️') + '</div>' +
         '<div class="menu-row-body">' +
           '<div class="menu-row-name">' + esc(item.name) +
@@ -63,12 +69,6 @@
           '</div>' +
         '</div>' +
         '<div class="menu-row-side">' +
-          (isSpecific ?
-            '<div class="menu-row-order-btns">' +
-              '<button type="button" class="icon-btn-sm" data-action="move-up" data-menu-id="' + item.id + '">▲</button>' +
-              '<button type="button" class="icon-btn-sm" data-action="move-down" data-menu-id="' + item.id + '">▼</button>' +
-            '</div>' : ''
-          ) +
           '<div class="menu-row-soldout-toggle">' +
             '<span class="menu-row-toggle-label">품절</span>' +
             '<button type="button" class="toggle' + (item.soldOut ? ' on' : '') + '" data-action="toggle-soldout" data-menu-id="' + item.id + '"><span class="toggle-knob"></span></button>' +
@@ -254,17 +254,21 @@
     }
     return state.optionGroups.map(function (g, gi) {
       var optionsHtml = (g.options || []).map(function (o, oi) {
+        var soldOut = !!o.soldOut;
+        var hidden = o.exposed === false;
         return (
-          '<div class="option-row-block">' +
-            '<div class="option-row">' +
-              '<input class="input-field" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-              '<input class="input-field" type="number" placeholder="추가 금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-              '<button type="button" class="icon-btn-sm" data-action="remove-option" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">✕</button>' +
+          '<div class="option-row">' +
+            '<div class="option-seg-pair">' +
+              '<button type="button" class="option-seg-btn' + (!soldOut ? ' active' : '') + '" data-action="set-option-status" data-value="available" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">판매</button>' +
+              '<button type="button" class="option-seg-btn tone-red' + (soldOut ? ' active' : '') + '" data-action="set-option-status" data-value="soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">품절</button>' +
             '</div>' +
-            '<div class="option-avail-row">' +
-              '<button type="button" class="option-avail-toggle' + (o.soldOut ? ' is-soldout' : '') + '" data-action="toggle-option-soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">' + (o.soldOut ? '품절' : '판매중') + '</button>' +
-              '<button type="button" class="option-avail-toggle' + (o.exposed === false ? ' is-hidden' : '') + '" data-action="toggle-option-exposed" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">' + (o.exposed === false ? '숨김' : '노출') + '</button>' +
+            '<div class="option-seg-pair">' +
+              '<button type="button" class="option-seg-btn' + (!hidden ? ' active' : '') + '" data-action="set-option-visibility" data-value="visible" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">노출</button>' +
+              '<button type="button" class="option-seg-btn tone-gray' + (hidden ? ' active' : '') + '" data-action="set-option-visibility" data-value="hidden" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">숨김</button>' +
             '</div>' +
+            '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
+            '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
+            '<button type="button" class="icon-btn-sm" data-action="remove-option" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">✕</button>' +
           '</div>'
         );
       }).join('');
@@ -461,13 +465,15 @@
         '.segment-tab-sm.active{background:var(--color-text-primary);color:var(--color-white);}' +
         '.option-required-row{display:flex;align-items:center;gap:8px;}' +
         '.option-required-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
-        '.option-row-block{margin-bottom:10px;}' +
-        '.option-row-block .option-row{margin-bottom:6px;}' +
-        '.option-avail-row{display:flex;gap:6px;padding-left:2px;}' +
-        '.option-avail-toggle{border:1.5px solid var(--color-disabled);background:var(--color-white);color:var(--color-text-secondary);' +
-          'font-size:var(--font-size-micro);font-weight:700;padding:4px 10px;border-radius:var(--radius-pill);cursor:pointer;}' +
-        '.option-avail-toggle.is-soldout{border-color:var(--color-accent-red);color:var(--color-accent-red);background:var(--color-accent-red-bg);}' +
-        '.option-avail-toggle.is-hidden{border-color:var(--color-text-secondary);color:var(--color-text-secondary);background:var(--color-divider);}' +
+        '.option-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;}' +
+        '.option-seg-pair{display:flex;border:1px solid var(--color-disabled);border-radius:8px;overflow:hidden;flex-shrink:0;}' +
+        '.option-seg-btn{border:none;background:var(--color-white);color:var(--color-text-secondary);' +
+          'font-size:10px;font-weight:700;padding:0 6px;height:36px;cursor:pointer;white-space:nowrap;}' +
+        '.option-seg-btn.active{background:var(--color-text-primary);color:var(--color-white);}' +
+        '.option-seg-btn.tone-red.active{background:var(--color-accent-red);color:var(--color-white);}' +
+        '.option-seg-btn.tone-gray.active{background:var(--color-text-secondary);color:var(--color-white);}' +
+        '.option-name-input.input-field{flex:1 1 0;min-width:0;height:36px;padding:0 6px;font-size:12px;}' +
+        '.option-price-input.input-field{flex:0 1 56px;min-width:0;height:36px;padding:0 4px;font-size:12px;text-align:right;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="edit-back">←</button></div>' +
@@ -857,21 +863,19 @@
         renderGroupsList();
         return;
       }
-      var soldoutBtn = e.target.closest('[data-action="toggle-option-soldout"]');
-      if (soldoutBtn) {
-        var giSo = Number(soldoutBtn.getAttribute('data-group-idx'));
-        var oiSo = Number(soldoutBtn.getAttribute('data-opt-idx'));
-        var opt = state.optionGroups[giSo].options[oiSo];
-        opt.soldOut = !opt.soldOut;
+      var statusBtn = e.target.closest('[data-action="set-option-status"]');
+      if (statusBtn) {
+        var giSt = Number(statusBtn.getAttribute('data-group-idx'));
+        var oiSt = Number(statusBtn.getAttribute('data-opt-idx'));
+        state.optionGroups[giSt].options[oiSt].soldOut = statusBtn.getAttribute('data-value') === 'soldout';
         renderGroupsList();
         return;
       }
-      var exposedBtn = e.target.closest('[data-action="toggle-option-exposed"]');
-      if (exposedBtn) {
-        var giEx = Number(exposedBtn.getAttribute('data-group-idx'));
-        var oiEx = Number(exposedBtn.getAttribute('data-opt-idx'));
-        var optEx = state.optionGroups[giEx].options[oiEx];
-        optEx.exposed = optEx.exposed === false ? true : false;
+      var visBtn = e.target.closest('[data-action="set-option-visibility"]');
+      if (visBtn) {
+        var giVis = Number(visBtn.getAttribute('data-group-idx'));
+        var oiVis = Number(visBtn.getAttribute('data-opt-idx'));
+        state.optionGroups[giVis].options[oiVis].exposed = visBtn.getAttribute('data-value') !== 'hidden';
         renderGroupsList();
         return;
       }

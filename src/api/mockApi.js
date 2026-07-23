@@ -300,37 +300,22 @@
     const channelSettings = getOrderChannelSettings(storeId);
     const identifierType = (opts.identifierType === 'SEAT' && channelSettings.acceptSeatOrders) ? 'SEAT' : 'PICKUP';
     const phones = ['01011112222', '01022223333', '01033334444', '01044445555', '01055556666', '01066667777', '01077778888'];
+    const emails = ['guest01@example.com', 'guest02@example.com', 'guest03@example.com', 'guest04@example.com'];
     const payments = ['카드', '간편결제', '쿠폰'];
-    const sampleNotes = ['빨대는 안 주셔도 돼요', '얼음 적게 넣어주세요', '많이 매워도 괜찮아요', '포장해주세요'];
     const seatCodes = ['A-3', 'A-12', 'B-2', 'B-7', 'C-1', 'D-5'];
     const isReservation = !!opts.isReservation && channelSettings.acceptReservationOrders;
-    const hasNote = !!opts.hasNote && channelSettings.acceptCustomerNotes;
 
-    // 옵션 있음: 옵션 그룹(+ 옵션값)이 실제로 등록된 메뉴만 후보로 삼는다.
-    const itemsWithOption = menuItems.filter(function (m) {
-      return (m.optionGroups || []).some(function (g) { return (g.options || []).length; });
-    });
-    function pickMenu(preferOption) {
-      const pool = (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-    function buildLine(preferOption) {
-      const menu = pickMenu(preferOption);
+    function buildLine() {
+      const menu = menuItems[Math.floor(Math.random() * menuItems.length)];
       const qty = 1 + Math.floor(Math.random() * 2);
-      let optionNames = [];
-      if (preferOption) {
-        const group = (menu.optionGroups || []).find(function (g) { return (g.options || []).length; });
-        if (group) optionNames = [group.options[Math.floor(Math.random() * group.options.length)].name];
-      }
-      return { menuName: menu.name, optionNames: optionNames, quantity: qty, price: menu.price };
+      return { menuName: menu.name, optionNames: [], quantity: qty, price: menu.price };
     }
 
-    const lineCount = opts.multiMenu ? (2 + Math.floor(Math.random() * 2)) : 1;
+    const lineCount = Math.max(1, opts.lineCount || 1);
     const lines = [];
     let amount = 0;
     for (let i = 0; i < lineCount; i++) {
-      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서 우선 배정한다.
-      const line = buildLine(!!opts.hasOption && i === 0);
+      const line = buildLine();
       lines.push({ menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity });
       amount += line.price * line.quantity;
     }
@@ -346,6 +331,9 @@
     }
 
     const autoAccept = !!(store && store.autoAcceptOrders);
+    // VAN 결제는 QA에서 태블릿오더 취소 예외팝업(실물 카드 필요)을 재현하기 위한 강제 지정값이라 랜덤 후보에 넣지 않는다.
+    const paymentMethod = opts.paymentMethod === 'VAN' ? 'VAN' : payments[Math.floor(Math.random() * payments.length)];
+    const promoType = opts.hasFirstCome ? 'FIRST_COME' : (opts.hasHappyHour ? 'HAPPY_HOUR' : null);
 
     const order = {
       id: uid('order'), storeId: storeId,
@@ -353,23 +341,34 @@
       pickupNo: identifierValue,
       identifierType: identifierType,
       channel: opts.channel === 'TABLET' ? 'TABLET' : 'QR',
-      paymentMethod: payments[Math.floor(Math.random() * payments.length)],
+      paymentMethod: paymentMethod,
       amount: amount,
       items: lines,
-      customerContact: phones[Math.floor(Math.random() * phones.length)],
+      customerContact: opts.contactType === 'EMAIL' ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)],
       orderedAt: new Date().toISOString(),
       acceptedAt: autoAccept ? new Date().toISOString() : null, doneAt: null,
       status: autoAccept ? 'PROCESSING' : 'WAITING', called: false, calledCount: 0, completeCount: 0,
       canceled: false, cancelReason: null, cancelType: null,
       isReservation: isReservation,
       reservationTime: isReservation ? new Date(Date.now() + (20 + Math.floor(Math.random() * 100)) * 60000).toISOString() : null,
-      customerNote: hasNote ? sampleNotes[Math.floor(Math.random() * sampleNotes.length)] : null,
+      customerNote: null,
       isReusableContainer: !!opts.isReusableContainer,
-      promoType: opts.promoType || null,
+      promoType: promoType,
     };
     DB.orders.unshift(order);
     persist();
     return order;
+  }
+
+  // 개발자 도구 > 메뉴 자동품절 시뮬레이션: 재고 감소 없이 즉시 품절 처리하고 실제 자동품절과 같은 이벤트를 쏜다.
+  function triggerRandomAutoSoldout(storeId) {
+    const candidates = DB.menuItems.filter(function (m) { return m.storeId === storeId && !m.soldOut; });
+    if (!candidates.length) return null;
+    const item = candidates[Math.floor(Math.random() * candidates.length)];
+    item.soldOut = true;
+    persist();
+    window.dispatchEvent(new CustomEvent('mock:auto-soldout', { detail: { names: [item.name] } }));
+    return item.name;
   }
 
   // 유형별 필터 각 항목이 실제 주문에 해당하는지 판정
@@ -771,7 +770,7 @@
     getCategories: getCategories, getMenuItems: getMenuItems, getMenuItem: getMenuItem,
     addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut, moveMenuItem: moveMenuItem,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,
-    createCustomOrder: createCustomOrder,
+    createCustomOrder: createCustomOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
     callCustomer: callCustomer, completeOrder: completeOrder, cancelPayment: cancelPayment,
     revertOrder: revertOrder, returnOrder: returnOrder, bulkAction: bulkAction,
     getSalesByChannel: getSalesByChannel, getSalesByPayment: getSalesByPayment, getSalesByHour: getSalesByHour,

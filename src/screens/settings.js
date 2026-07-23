@@ -13,18 +13,18 @@
 
   function actionButtonsHtml(status) {
     if (status === 'CLOSED') {
-      return '<button type="button" class="btn btn-sm btn-success" data-status-action="OPEN">개점</button>';
+      return '<button type="button" class="status-action-btn pastel-green" data-status-action="OPEN">개점</button>';
     }
     if (status === 'OPEN') {
       return (
-        '<button type="button" class="btn btn-sm btn-warning" data-status-action="PAUSED">일시중지</button>' +
-        '<button type="button" class="btn btn-sm btn-danger-solid" data-status-action="CLOSED">마감</button>'
+        '<button type="button" class="status-action-btn pastel-amber" data-status-action="PAUSED">일시중지</button>' +
+        '<button type="button" class="status-action-btn pastel-red" data-status-action="CLOSED">마감</button>'
       );
     }
     // PAUSED
     return (
-      '<button type="button" class="btn btn-sm btn-success" data-status-action="OPEN">일시중지 해제</button>' +
-      '<button type="button" class="btn btn-sm btn-danger-solid" data-status-action="CLOSED">마감</button>'
+      '<button type="button" class="status-action-btn pastel-green" data-status-action="OPEN">일시중지 해제</button>' +
+      '<button type="button" class="status-action-btn pastel-red" data-status-action="CLOSED">마감</button>'
     );
   }
 
@@ -52,15 +52,15 @@
     var notificationOn = store.notificationEnabled !== false;
     var volume = store.notificationVolume != null ? store.notificationVolume : 70;
     return (
-      '<div class="settings-list-item no-toggle-click">' +
+      '<div class="settings-list-item no-toggle-click status-list-item">' +
         '<div class="icon">🏪</div>' +
         '<div class="label-group">' +
           '<div class="label">영업 상태</div>' +
           '<div class="status-subtitle-row">' + window.UI.statusPillHtml(store.operatingStatus) +
             '<span class="status-time-sub">' + statusTimeSubtitle(store) + '</span></div>' +
         '</div>' +
-        '<div class="settings-inline-actions">' + actionButtonsHtml(store.operatingStatus) + '</div>' +
       '</div>' +
+      '<div class="status-action-row">' + actionButtonsHtml(store.operatingStatus) + '</div>' +
 
       '<div class="settings-list-item no-toggle-click">' +
         '<div class="icon">⚡</div>' +
@@ -124,13 +124,18 @@
         '.settings-list-item .label-group{display:flex;flex-direction:column;gap:4px;flex:0 1 auto;min-width:0;}' +
         '.settings-list-item .label-group .label{flex:none;}' +
         '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
-        '.settings-inline-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;}' +
-        '.settings-inline-actions .btn{height:32px;min-height:32px;padding:0 10px;font-size:12px;border-radius:10px;width:auto;white-space:nowrap;}' +
         '.settings-list-item .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:20px;margin-left:auto;}' +
         '.settings-logout .label{color:var(--color-accent-red);}' +
         '.settings-logout .icon{filter:none;}' +
+        '.status-list-item{padding-bottom:var(--space-2);}' +
         '.status-subtitle-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}' +
         '.status-time-sub{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
+        '.status-action-row{display:flex;gap:var(--space-2);padding:0 var(--space-5) var(--space-4);}' +
+        '.status-action-btn{flex:1;height:48px;border:none;border-radius:var(--radius-button);' +
+          'font-size:var(--font-size-body);font-weight:800;cursor:pointer;}' +
+        '.status-action-btn.pastel-green{background:var(--color-accent-green-bg);color:var(--color-accent-green);}' +
+        '.status-action-btn.pastel-amber{background:var(--color-accent-amber-bg);color:#a15c00;}' +
+        '.status-action-btn.pastel-red{background:var(--color-accent-red-bg);color:var(--color-accent-red);}' +
         '.notification-volume-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;}' +
         '.notification-volume-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.notification-volume-label{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:600;flex-shrink:0;white-space:nowrap;}' +

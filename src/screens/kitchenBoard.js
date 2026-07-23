@@ -29,19 +29,16 @@
 
   function menuCardHtml(name, total, called, idx) {
     var remaining = total - called;
-    var done = remaining === 0;
     var calledPct = total ? Math.round((called / total) * 100) : 0;
     return (
-      '<div class="kb-card' + (done ? ' all-called' : '') + '" style="--i:' + idx + '">' +
+      '<div class="kb-card" style="--i:' + idx + '">' +
         '<div class="kb-card-name">' + esc(name) + '</div>' +
         '<div class="kb-card-total">' + total + '<span class="unit">개</span></div>' +
         '<div class="kb-ratio-bar">' +
           '<div class="fill-called" style="width:' + calledPct + '%"></div>' +
           '<div class="fill-remaining" style="width:' + (100 - calledPct) + '%"></div>' +
         '</div>' +
-        (done
-          ? '<div class="kb-card-tags"><span class="kb-tag kb-tag-done">✓ 호출 완료</span></div>'
-          : '<div class="kb-card-tags"><span class="kb-tag kb-tag-called">호출 ' + called + '</span><span class="kb-tag kb-tag-remaining">남음 ' + remaining + '</span></div>')  +
+        '<div class="kb-card-tags"><span class="kb-tag kb-tag-called">호출 ' + called + '</span><span class="kb-tag kb-tag-remaining">남음 ' + remaining + '</span></div>' +
       '</div>'
     );
   }
@@ -51,17 +48,16 @@
     var categories = window.MockApi.getCategories(storeId);
     var menuItems = window.MockApi.getMenuItems(storeId);
 
-    var totalAll = 0;
-    Object.keys(stats).forEach(function (name) { totalAll += stats[name].total; });
+    var hasRemaining = Object.keys(stats).some(function (name) { return stats[name].total > stats[name].called; });
 
-    if (!totalAll) {
-      return '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>오늘 집계된 주문이 없어요</div></div>';
+    if (!hasRemaining) {
+      return '<div class="empty-state"><div class="empty-state-emoji">✅</div><div>호출 대기 중인 메뉴가 없어요</div></div>';
     }
 
     var idx = 0;
     var html = '';
     categories.forEach(function (cat) {
-      var itemsInCat = menuItems.filter(function (m) { return m.categoryId === cat.id && stats[m.name] && stats[m.name].total > 0; });
+      var itemsInCat = menuItems.filter(function (m) { return m.categoryId === cat.id && stats[m.name] && stats[m.name].total > stats[m.name].called; });
       if (!itemsInCat.length) return;
       html += '<div class="section-title">' + esc(cat.name) + '</div>';
       html += '<div class="kb-grid">' +
@@ -73,7 +69,7 @@
     });
 
     var categorizedNames = menuItems.map(function (m) { return m.name; });
-    var uncategorized = Object.keys(stats).filter(function (name) { return categorizedNames.indexOf(name) === -1 && stats[name].total > 0; });
+    var uncategorized = Object.keys(stats).filter(function (name) { return categorizedNames.indexOf(name) === -1 && stats[name].total > stats[name].called; });
     if (uncategorized.length) {
       html += '<div class="section-title">기타</div>';
       html += '<div class="kb-grid">' +
@@ -91,11 +87,9 @@
         '.kb-card{background:var(--color-white);border:1px solid var(--color-divider);border-radius:16px;padding:13px 14px;' +
           'display:flex;flex-direction:column;gap:9px;' +
           'opacity:0;transform:translateY(8px);animation:kbFadeUp .4s ease forwards;animation-delay:calc(.05s + var(--i,0)*35ms);}' +
-        '.kb-card.all-called{background:var(--color-divider);border-color:transparent;}' +
         '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
         '.kb-card-total .unit{font-size:11px;font-weight:600;color:var(--color-text-secondary);margin-left:2px;}' +
-        '.kb-card.all-called .kb-card-total{color:var(--color-text-secondary);}' +
         '.kb-ratio-bar{height:6px;background:var(--color-disabled);border-radius:999px;overflow:hidden;display:flex;}' +
         '.kb-ratio-bar .fill-called{background:var(--color-accent-green);height:100%;}' +
         '.kb-ratio-bar .fill-remaining{background:var(--color-accent-amber);height:100%;}' +
@@ -103,7 +97,6 @@
         '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}' +
         '.kb-tag-called{background:var(--color-accent-green-bg);color:var(--color-accent-green);}' +
         '.kb-tag-remaining{background:var(--color-accent-amber-bg);color:#a15c00;}' +
-        '.kb-tag-done{background:var(--color-text-primary);color:var(--color-white);}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +
       '<div class="topbar">' +
