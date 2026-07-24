@@ -18,7 +18,7 @@
   let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
   let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 상단 필터 배지가 있던 자리에 노출
   let selectedIds = new Set();
-  let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 펼쳐짐)
+  let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
   let autoSoldoutNames = [];   // 자동 품절 배너에 노출 중인 메뉴명 목록 (X로 닫으면 비움)
   let root = null;
@@ -58,7 +58,7 @@
     '.toolbar-row-left { display: flex; align-items: center; gap: var(--space-2); }' +
     '.kitchen-board-btn { background: var(--color-text-primary); color: var(--color-white); flex-shrink: 0; }' +
     '.called-filter-seg { display: flex; gap: 2px; background: var(--color-divider); border-radius: var(--radius-pill); padding: 3px; }' +
-    '.called-filter-seg .segment-tab-sm { padding: 6px 10px; }' +
+    '.called-filter-seg .segment-tab-sm { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 var(--space-3); font-size: var(--font-size-caption); }' +
     '.called-filter-seg .segment-tab-sm.active { background: var(--color-white); color: var(--color-text-primary); box-shadow: 0 1px 3px rgba(30,29,43,0.12); }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
@@ -101,10 +101,10 @@
   }
 
   // ---------------- 펼침 상태 ----------------
-  // 시간대 그룹 단위 간단히보기/펼쳐보기는 삭제하고, 카드마다 개별 화살표로만 펼침 상태를 다룬다 (기본값: 펼쳐짐)
+  // 시간대 그룹 단위 간단히보기/펼쳐보기는 삭제하고, 카드마다 개별 화살표로만 펼침 상태를 다룬다 (기본값: 간단히 보기)
   function isCardExpanded(orderId) {
     if (Object.prototype.hasOwnProperty.call(cardOverrides, orderId)) return cardOverrides[orderId];
-    return true;
+    return false;
   }
 
   function toggleCardExpand(orderId) {

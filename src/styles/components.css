@@ -124,7 +124,7 @@
 .badge-success-soft { background: var(--color-accent-green-bg); color: #0b6b5c; border: 1px solid rgba(79,201,184,0.4); }
 .badge-warning-soft { background: var(--color-accent-amber-bg); color: #a15c00; border: 1px solid rgba(161,92,0,0.3); }
 
-.status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-pill); font-size: var(--font-size-caption); font-weight: 800; }
+.status-pill { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); font-size: var(--font-size-caption); font-weight: 800; }
 .status-pill.open { background: var(--color-accent-green-bg); color: #0b6b5c; }
 .status-pill.paused { background: var(--color-accent-amber-bg); color: #a15c00; }
 .status-pill.closed { background: var(--color-accent-red-bg); color: #b02850; }
@@ -231,8 +231,8 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 }
 .segment-tab {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 44px;
-  padding: 8px 16px;
+  height: 36px;
+  padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--color-divider);
   color: var(--color-text-secondary);
