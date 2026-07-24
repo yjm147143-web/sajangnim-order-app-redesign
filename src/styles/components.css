@@ -514,7 +514,6 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .menu-preview-promo-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 .menu-preview-price-promo { color: var(--color-accent-red); font-weight: 800; font-size: var(--font-size-caption); }
 .menu-preview-promo-caption { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
-.menu-row-price-promo { color: var(--color-accent-red); font-weight: 800; }
 .menu-preview-origin { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 .menu-preview-soldout { position: relative; }
 .menu-preview-soldout::after { content: '품절'; position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--font-size-title); }
@@ -559,7 +558,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .option-preset-chip.ghost { background: var(--color-divider); color: var(--color-text-secondary); }
 
 /* ---------- Misc ---------- */
-.link-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); background: var(--color-divider); border-radius: var(--radius-card); }
+.link-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: var(--color-divider); border-radius: var(--radius-card); }
 .link-row-text { font-size: var(--font-size-caption); color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .qr-image-wrap { display: flex; justify-content: center; padding: var(--space-6) 0; }
 .qr-image-wrap img { width: 200px; height: 200px; border-radius: var(--space-3); border: 1px solid var(--color-divider); }

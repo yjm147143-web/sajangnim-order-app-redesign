@@ -6,6 +6,7 @@
 (function () {
   function render() {
     return (
+      '<style>.settings-list-item .label-group{flex:1;}</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="om-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">주문 관리</div>' +
@@ -13,10 +14,14 @@
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="settings-list-item" data-nav="minOrderAmount">' +
-          '<div class="icon">💵</div><div class="label">최소 주문 금액 설정</div><div class="chevron">›</div>' +
+          '<div class="icon">💵</div>' +
+          '<div class="label-group"><div class="label">최소 주문 금액 설정</div><div class="label-sub">이 금액 미만이면 주문을 받지 않아요</div></div>' +
+          '<div class="chevron">›</div>' +
         '</div>' +
         '<div class="settings-list-item" data-nav="orderChannelSettings">' +
-          '<div class="icon">🧾</div><div class="label">주문 방식 관리</div><div class="chevron">›</div>' +
+          '<div class="icon">🧾</div>' +
+          '<div class="label-group"><div class="label">주문 방식 관리</div><div class="label-sub">포장 · 배달 · 매장 등 받을 주문 방식을 설정해요</div></div>' +
+          '<div class="chevron">›</div>' +
         '</div>' +
       '</div>'
     );

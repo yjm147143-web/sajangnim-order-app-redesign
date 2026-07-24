@@ -62,8 +62,6 @@
           '<div class="menu-row-sub">' + esc(catName) + (item.description ? ' · ' + esc(item.description) : '') + '</div>' +
           '<div class="menu-row-price">' +
             money(item.price) +
-            (item.happyHourEnabled && item.happyHourPrice != null ? ' · <span class="menu-row-price-promo">해피아워 ' + money(item.happyHourPrice) + '</span>' : '') +
-            (item.firstComeEnabled && item.firstComePrice != null ? ' · <span class="menu-row-price-promo">선착순 ' + money(item.firstComePrice) + '</span>' : '') +
             ' · 준비량 ' + (item.stockQuantity != null ? item.stockQuantity + '개' : '-') +
           '</div>' +
         '</div>' +
@@ -84,53 +82,58 @@
     return '<div class="menu-list">' + items.map(function (item, idx) { return menuRowHtml(item, categories, isSpecific, idx + 1); }).join('') + '</div>';
   }
 
-  // 옵션 목록 탭 — 매장에 등록된 옵션 그룹을 직접 편집한다 (메뉴 추가 폼과 달리 저장 버튼 없이 즉시 반영됨)
-  function optionGroupCardHtml(g) {
-    var usage = window.MockApi.getOptionGroupUsageCount(g.id);
+  // 옵션 그룹 카드 — 옵션 목록 탭(라이브러리)과 메뉴 수정 > 옵션 탭에서 동일한 UI/UX로 공유해서 쓴다.
+  // identifierAttr로 각 컨텍스트의 식별자(data-group-id vs data-group-idx)를, actionPrefix로 각자의
+  // 이벤트 위임 스코프(lib-* vs 접두어 없음)를 주입해 마크업만 통일하고 동작은 기존 그대로 유지한다.
+  function optionGroupCardHtml(g, identifierAttr, actionPrefix, showUsage) {
+    var usage = showUsage ? window.MockApi.getOptionGroupUsageCount(g.id) : null;
     var optionsHtml = (g.options || []).map(function (o, oi) {
       var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
       return (
         '<div class="option-row">' +
           '<div class="option-seg-pair">' +
-            '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="available" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">판매중</button>' +
-            '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="soldout" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">품절</button>' +
-            '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="hidden" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">숨김</button>' +
+            '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="available" ' + identifierAttr + ' data-opt-idx="' + oi + '">판매중</button>' +
+            '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '">품절</button>' +
+            '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="hidden" ' + identifierAttr + ' data-opt-idx="' + oi + '">숨김</button>' +
           '</div>' +
-          '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="lib-opt-name" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
-          '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="lib-opt-price" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
-          '<button type="button" class="icon-btn-sm" data-action="lib-remove-option" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">✕</button>' +
+          '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="' + actionPrefix + 'opt-name" ' + identifierAttr + ' data-opt-idx="' + oi + '" />' +
+          '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="' + actionPrefix + 'opt-price" ' + identifierAttr + ' data-opt-idx="' + oi + '" />' +
+          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">✕</button>' +
         '</div>'
       );
     }).join('');
     return (
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
-          '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="lib-group-name" data-group-id="' + g.id + '" />' +
-          '<button type="button" class="icon-btn-sm" data-action="lib-remove-group" data-group-id="' + g.id + '" style="margin-left:8px;">✕</button>' +
+          '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
+          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">✕</button>' +
         '</div>' +
-        '<div class="option-group-usage">' + (usage > 0 ? usage + '개 메뉴에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' +
+        (showUsage ? '<div class="option-group-usage">' + (usage > 0 ? usage + '개 메뉴에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
         '<div class="option-group-controls">' +
           '<div class="option-select-mode">' +
-            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-single" data-group-id="' + g.id + '">1개만 선택</button>' +
-            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-multi" data-group-id="' + g.id + '">여러개 선택</button>' +
+            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-single" ' + identifierAttr + '>1개만 선택</button>' +
+            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-multi" ' + identifierAttr + '>여러개 선택</button>' +
           '</div>' +
           '<div class="option-required-row">' +
             '<span class="option-required-label">필수 여부</span>' +
-            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="lib-toggle-required" data-group-id="' + g.id + '"><span class="toggle-knob"></span></button>' +
+            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
           '</div>' +
         '</div>' +
         optionsHtml +
-        '<button type="button" class="btn btn-secondary btn-sm" data-action="lib-add-option" data-group-id="' + g.id + '">+ 옵션 추가</button>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-action="' + actionPrefix + 'add-option" ' + identifierAttr + '>+ 옵션 추가</button>' +
       '</div>'
     );
   }
 
   function optionLibraryHtml(groups) {
-    if (!groups.length) {
-      return '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>';
-    }
+    var listHtml = !groups.length
+      ? '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>'
+      : groups.map(function (g) {
+          return optionGroupCardHtml(g, 'data-group-id="' + g.id + '"', 'lib-', true);
+        }).join('');
     // 옵션 목록은 이미 각 입력마다 즉시 저장되지만, 사장님이 안심할 수 있도록 확인용 저장 버튼을 둔다
-    return '<div class="option-library-list">' + groups.map(optionGroupCardHtml).join('') +
+    return '<div class="option-library-list">' + listHtml +
+      '<button type="button" class="btn btn-secondary" id="add-option-group-btn">+ 옵션 목록 추가</button>' +
       '<button type="button" class="btn btn-primary" id="option-library-save-btn">저장</button>' +
       '</div>';
   }
@@ -235,7 +238,9 @@
       root.querySelectorAll('[data-main-tab]').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-main-tab') === activeMainTab);
       });
-      root.querySelector('#menu-topbar-action-btn').textContent = activeMainTab === 'menu' ? '+ 메뉴 추가' : '+ 옵션 추가';
+      // '+ 옵션 추가'는 옵션 목록 아래의 '+ 옵션 목록 추가' 버튼으로 이동했으므로, 상단바 액션 버튼은
+      // 메뉴 목록 탭에서만 노출한다.
+      root.querySelector('#menu-topbar-action-btn').style.display = activeMainTab === 'menu' ? '' : 'none';
 
       var wrap = root.querySelector('#menu-list-wrap');
       if (activeMainTab === 'menu') {
@@ -253,12 +258,7 @@
       window.Router.back();
     });
     root.querySelector('#menu-topbar-action-btn').addEventListener('click', function () {
-      if (activeMainTab === 'menu') {
-        window.Router.showScreen('menuEdit', {});
-      } else {
-        window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
-        refresh();
-      }
+      window.Router.showScreen('menuEdit', {});
     });
 
     root.addEventListener('click', function (e) {
@@ -270,6 +270,11 @@
       }
 
       if (activeMainTab === 'option') {
+        if (e.target.closest('#add-option-group-btn')) {
+          window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
+          refresh();
+          return;
+        }
         var addGroupLibBtn = e.target.closest('[data-action="lib-add-option"]');
         var removeGroupLibBtn = e.target.closest('[data-action="lib-remove-group"]');
         var reqLibBtn = e.target.closest('[data-action="lib-toggle-required"]');
@@ -391,7 +396,6 @@
         origin: item.origin || '',
         nutritionInfo: item.nutritionInfo || '',
         allergyInfo: item.allergyInfo || '',
-        pricePromoEnabled: !!(item.happyHourEnabled || item.firstComeEnabled),
         happyHourEnabled: !!item.happyHourEnabled,
         happyHourPrice: item.happyHourPrice != null ? item.happyHourPrice : '',
         happyHourStart: item.happyHourStart || '15:00',
@@ -421,7 +425,6 @@
       origin: '',
       nutritionInfo: '',
       allergyInfo: '',
-      pricePromoEnabled: false,
       happyHourEnabled: false,
       happyHourPrice: '',
       happyHourStart: '15:00',
@@ -430,7 +433,7 @@
       firstComePrice: '',
       firstComeQty: '',
       stockQuantity: '',
-      autoSoldoutEnabled: true,
+      autoSoldoutEnabled: false,
       exposed: true,
       soldOut: false,
       useOptionGroups: false,
@@ -471,41 +474,7 @@
       return '<div class="section-caption" style="padding:0 0 12px;">아직 추가된 옵션 그룹이 없어요</div>';
     }
     return state.optionGroups.map(function (g, gi) {
-      var optionsHtml = (g.options || []).map(function (o, oi) {
-        var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
-        return (
-          '<div class="option-row">' +
-            '<div class="option-seg-pair">' +
-              '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="set-option-tri" data-value="available" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">판매중</button>' +
-              '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="set-option-tri" data-value="soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">품절</button>' +
-              '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="set-option-tri" data-value="hidden" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">숨김</button>' +
-            '</div>' +
-            '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-            '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
-            '<button type="button" class="icon-btn-sm" data-action="remove-option" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">✕</button>' +
-          '</div>'
-        );
-      }).join('');
-      return (
-        '<div class="option-group-card">' +
-          '<div class="option-group-head">' +
-            '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="group-name" data-group-idx="' + gi + '" />' +
-            '<button type="button" class="icon-btn-sm" data-action="remove-group" data-group-idx="' + gi + '" style="margin-left:8px;">✕</button>' +
-          '</div>' +
-          '<div class="option-group-controls">' +
-            '<div class="option-select-mode">' +
-              '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="set-select-single" data-group-idx="' + gi + '">1개만 선택</button>' +
-              '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="set-select-multi" data-group-idx="' + gi + '">여러개 선택</button>' +
-            '</div>' +
-            '<div class="option-required-row">' +
-              '<span class="option-required-label">필수 여부</span>' +
-              '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="toggle-required" data-group-idx="' + gi + '"><span class="toggle-knob"></span></button>' +
-            '</div>' +
-          '</div>' +
-          optionsHtml +
-          '<button type="button" class="btn btn-secondary btn-sm" data-action="add-option" data-group-idx="' + gi + '">+ 옵션 추가</button>' +
-        '</div>'
-      );
+      return optionGroupCardHtml(g, 'data-group-idx="' + gi + '"', '', false);
     }).join('');
   }
 
@@ -668,7 +637,6 @@
         '.menu-image-thumb img{width:100%;height:100%;object-fit:cover;}' +
         '.menu-image-upload-actions{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;}' +
         '.menu-image-upload-actions label.btn{cursor:pointer;height:36px;min-height:36px;padding:0 12px;font-size:var(--font-size-caption);}' +
-        '.pricing-promo-section{margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-disabled);}' +
         '.time-range-row{display:flex;align-items:center;gap:8px;}' +
         '.time-range-row .input-field{flex:1;}' +
         '.time-range-sep{color:var(--color-text-secondary);flex-shrink:0;}' +
@@ -683,6 +651,7 @@
         '.existing-group-chip .meta{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
         '.option-groups-subtitle{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin:14px 0 8px;}' +
         '.menu-edit-tab-bar{padding:0 var(--space-5) var(--space-3);}' +
+        '.menu-edit-tab-bar .segment-tab{flex:1;}' +
         '.edit-tab-panel{display:none;}' +
         '.edit-tab-panel.active{display:block;}' +
       '</style>' +
@@ -692,9 +661,9 @@
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="segment-tabs menu-edit-tab-bar">' +
-        '<button type="button" class="segment-tab active" data-edit-tab="basic">기본 정보</button>' +
-        '<button type="button" class="segment-tab" data-edit-tab="etc">기타 설정</button>' +
-        '<button type="button" class="segment-tab" data-edit-tab="option">옵션</button>' +
+        '<button type="button" class="segment-tab active" data-edit-tab="basic">📝 기본 정보</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="etc">⚙️ 기타 설정</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="option">🧩 옵션</button>' +
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="menu-edit-form-pad">' +
@@ -764,11 +733,15 @@
             '</div>' +
           '</div>' +
 
+          '<div class="divider-line"></div>' +
+
           '<div class="input-group">' +
             '<div class="input-label">준비량<span id="stock-required-hint" style="color:var(--color-accent-red);' + (state.autoSoldoutEnabled ? '' : 'display:none;') + '"> · 자동품절 ON 시 필수</span></div>' +
             '<input class="input-field" type="number" id="f-stock" placeholder="준비량을 입력해주세요" value="' + (state.stockQuantity === '' ? '' : state.stockQuantity) + '" />' +
             '<div class="input-error" id="err-stock" style="display:none;"></div>' +
           '</div>' +
+
+          '<div class="divider-line"></div>' +
 
           '<div class="input-group">' +
             '<div class="toggle-row">' +
@@ -780,66 +753,67 @@
             '</div>' +
           '</div>' +
 
+          '<div class="divider-line"></div>' +
+
           '<div class="input-group">' +
             '<div class="toggle-row">' +
               '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">가격 프로모션 설정</span>' +
-                '<span class="menu-edit-subcaption">해피아워 · 선착순 할인가를 설정할 수 있어요</span>' +
+                '<span class="input-label" style="margin:0;">해피아워 가격 설정</span>' +
+                '<span class="menu-edit-subcaption">정해진 시간 동안만 할인 가격으로 판매해요</span>' +
               '</div>' +
-              '<button type="button" class="toggle' + (state.pricePromoEnabled ? ' on' : '') + '" id="toggle-price-promo"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
             '</div>' +
-            '<div id="price-promo-section" class="pricing-promo-section" style="' + (state.pricePromoEnabled ? '' : 'display:none;') + '">' +
-
-              '<div class="toggle-row">' +
-                '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                  '<span class="input-label" style="margin:0;">해피아워 가격 설정</span>' +
-                  '<span class="menu-edit-subcaption">정해진 시간 동안만 할인 가격으로 판매해요</span>' +
-                '</div>' +
-                '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
+            '<div id="happy-hour-detail" style="margin-top:12px;' + (state.happyHourEnabled ? '' : 'display:none;') + '">' +
+              '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
+              '<div class="input-label">해피아워 가격</div>' +
+              '<input class="input-field" type="number" id="f-happy-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.happyHourPrice === '' ? '' : state.happyHourPrice) + '" />' +
+              '<div class="input-error" id="err-happyHourPrice" style="display:none;"></div>' +
+              '<div class="input-label" style="margin-top:10px;">해피아워 시간</div>' +
+              '<div class="time-range-row">' +
+                '<input type="time" class="input-field" id="f-happy-start" value="' + esc(state.happyHourStart) + '" />' +
+                '<span class="time-range-sep">~</span>' +
+                '<input type="time" class="input-field" id="f-happy-end" value="' + esc(state.happyHourEnd) + '" />' +
               '</div>' +
-              '<div id="happy-hour-detail" style="margin-top:12px;' + (state.happyHourEnabled ? '' : 'display:none;') + '">' +
-                '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
-                '<div class="input-label">해피아워 가격</div>' +
-                '<input class="input-field" type="number" id="f-happy-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.happyHourPrice === '' ? '' : state.happyHourPrice) + '" />' +
-                '<div class="input-error" id="err-happyHourPrice" style="display:none;"></div>' +
-                '<div class="input-label" style="margin-top:10px;">해피아워 시간</div>' +
-                '<div class="time-range-row">' +
-                  '<input type="time" class="input-field" id="f-happy-start" value="' + esc(state.happyHourStart) + '" />' +
-                  '<span class="time-range-sep">~</span>' +
-                  '<input type="time" class="input-field" id="f-happy-end" value="' + esc(state.happyHourEnd) + '" />' +
-                '</div>' +
-                '<div class="info-memo">💡 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
-              '</div>' +
-
-              '<div class="toggle-row" style="margin-top:16px;">' +
-                '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                  '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
-                  '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
-                '</div>' +
-                '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
-              '</div>' +
-              '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
-                '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
-                '<div class="input-label">선착순 가격</div>' +
-                '<input class="input-field" type="number" id="f-first-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.firstComePrice === '' ? '' : state.firstComePrice) + '" />' +
-                '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
-                '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
-                '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
-                '<div class="info-memo">💡 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
-              '</div>' +
-
+              '<div class="info-memo">💡 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
             '</div>' +
           '</div>' +
+
+          '<div class="divider-line"></div>' +
+
+          '<div class="input-group">' +
+            '<div class="toggle-row">' +
+              '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
+                '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
+              '</div>' +
+              '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
+            '</div>' +
+            '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
+              '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
+              '<div class="input-label">선착순 가격</div>' +
+              '<input class="input-field" type="number" id="f-first-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.firstComePrice === '' ? '' : state.firstComePrice) + '" />' +
+              '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
+              '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
+              '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
+              '<div class="info-memo">💡 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="divider-line"></div>' +
 
           '<div class="input-group">' +
             '<div class="input-label">원산지 (선택)</div>' +
             '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
           '</div>' +
 
+          '<div class="divider-line"></div>' +
+
           '<div class="input-group">' +
             '<div class="input-label">영양 정보 (선택)</div>' +
             '<textarea class="input-field" id="f-nutrition" placeholder="예: 열량 350kcal, 당류 20g">' + esc(state.nutritionInfo) + '</textarea>' +
           '</div>' +
+
+          '<div class="divider-line"></div>' +
 
           '<div class="input-group">' +
             '<div class="input-label">알레르기 정보 (선택)</div>' +
@@ -930,31 +904,6 @@
     root.querySelector('#f-nutrition').addEventListener('input', function (e) { state.nutritionInfo = e.target.value; updatePreview(); });
     root.querySelector('#f-allergy').addEventListener('input', function (e) { state.allergyInfo = e.target.value; updatePreview(); });
     root.querySelector('#f-stock').addEventListener('input', function (e) { state.stockQuantity = e.target.value; updatePreview(); });
-
-    var pricePromoToggle = root.querySelector('#toggle-price-promo');
-    var pricePromoSection = root.querySelector('#price-promo-section');
-    pricePromoToggle.addEventListener('click', function () {
-      state.pricePromoEnabled = !state.pricePromoEnabled;
-      pricePromoToggle.classList.toggle('on', state.pricePromoEnabled);
-      pricePromoSection.style.display = state.pricePromoEnabled ? '' : 'none';
-      if (!state.pricePromoEnabled) {
-        // 마스터 토글을 끄면 하위 해피아워/선착순도 함께 꺼서 숨겨진 상태로 값이 남지 않게 한다
-        state.happyHourEnabled = false;
-        state.happyHourPrice = '';
-        state.firstComeEnabled = false;
-        state.firstComePrice = '';
-        state.firstComeQty = '';
-        var hToggle = root.querySelector('#toggle-happy-hour');
-        var hDetail = root.querySelector('#happy-hour-detail');
-        if (hToggle) hToggle.classList.remove('on');
-        if (hDetail) hDetail.style.display = 'none';
-        var fToggle = root.querySelector('#toggle-first-come');
-        var fDetail = root.querySelector('#first-come-detail');
-        if (fToggle) fToggle.classList.remove('on');
-        if (fDetail) fDetail.style.display = 'none';
-      }
-      updatePreview();
-    });
 
     var happyToggle = root.querySelector('#toggle-happy-hour');
     var happyDetail = root.querySelector('#happy-hour-detail');
