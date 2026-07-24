@@ -12,9 +12,6 @@
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll">' +
-        '<div class="settings-list-item" data-nav="orderCreate">' +
-          '<div class="icon">🧾</div><div class="label">주문 생성</div><div class="chevron">›</div>' +
-        '</div>' +
         '<div class="settings-list-item" data-nav="minOrderAmount">' +
           '<div class="icon">💵</div><div class="label">최소 주문 금액 설정</div><div class="chevron">›</div>' +
         '</div>' +

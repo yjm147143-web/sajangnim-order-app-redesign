@@ -79,7 +79,6 @@
   // ---------------- Channel / status badges ----------------
   function channelBadgeHtml(channel) {
     if (channel === 'QR') return '<span class="channel-badge channel-qr">🔳 QR오더</span>';
-    if (channel === 'MANUAL') return '<span class="channel-badge channel-manual">💵 현장결제</span>';
     return '<span class="channel-badge channel-tablet">🖥️ 키오스크</span>';
   }
 

@@ -240,15 +240,10 @@
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
     if (expanded) {
-      let contactHtml;
-      if (!order.customerContact && order.channel === 'MANUAL') {
-        contactHtml = '<button type="button" class="phone-btn" data-action="show-contact-qr" data-id="' + order.id + '">📱 QR로 받기</button>';
-      } else {
-        const contact = window.UI.formatContact(order.customerContact);
-        const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
-        const contactIcon = isEmailContact ? '✉️' : '📞';
-        contactHtml = '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
-      }
+      const contact = window.UI.formatContact(order.customerContact);
+      const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
+      const contactIcon = isEmailContact ? '✉️' : '📞';
+      const contactHtml = '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
       html += '<div class="order-card-meta">' +
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">결제</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
@@ -608,20 +603,6 @@
   }
 
   // 실수로 전화가 걸리거나 메일이 열리지 않도록, 이동 전에 한 번 확인한다
-  // 결제 직후 QR을 놓쳤거나 나중에 마음이 바뀐 손님을 위해, 카드에서 언제든 같은 QR을 다시 보여준다
-  function handleShowContactQr(orderId) {
-    const url = window.location.origin + window.location.pathname + '?contactOrder=' + orderId;
-    const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
-    window.UI.showModal({
-      title: '연락처 남기기',
-      bodyHtml: '<div style="text-align:center;">' +
-        '<img src="' + qrSrc + '" alt="연락처 입력 QR" style="width:170px; height:170px; border-radius:12px;" />' +
-        '<div style="font-size:var(--font-size-caption); color:var(--color-text-secondary); margin-top:10px;">스캔하면 완료 알림을 받을 수 있어요</div>' +
-        '</div>',
-      buttons: [{ label: '닫기', variant: 'btn-secondary' }],
-    });
-  }
-
   function handleOpenContact(contact, isEmail) {
     if (!contact) return;
     window.UI.confirmModal(
@@ -753,7 +734,6 @@
     else if (action === 'toggle-operating-status') handleToggleOperatingStatus();
     else if (action === 'dismiss-auto-soldout') { autoSoldoutNames = []; refreshAutoSoldoutBanner(); }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
-    else if (action === 'show-contact-qr') handleShowContactQr(target.getAttribute('data-id'));
     else if (action === 'open-kitchen-board') window.Router.showScreen('kitchenBoard');
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
     else if (action === 'toggle-sort') toggleSort();
