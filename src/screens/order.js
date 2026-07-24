@@ -44,7 +44,7 @@
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
     '.status-pill-btn { background: none; border: none; padding: 0; cursor: pointer; }' +
-    '.search-row { display: flex; align-items: flex-start; gap: var(--space-2); }' +
+    '.search-row { display: flex; align-items: center; gap: var(--space-2); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
@@ -55,8 +55,8 @@
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
-    '.sort-kitchen-col { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }' +
-    '.kitchen-board-btn { font-size: 11.5px; height: 30px; }' +
+    '.toolbar-row-left { display: flex; align-items: center; gap: var(--space-2); }' +
+    '.kitchen-board-btn { background: var(--color-text-primary); color: var(--color-white); flex-shrink: 0; }' +
     '.called-filter-seg { display: flex; gap: 2px; background: var(--color-divider); border-radius: var(--radius-pill); padding: 3px; }' +
     '.called-filter-seg .segment-tab-sm { padding: 6px 10px; }' +
     '.called-filter-seg .segment-tab-sm.active { background: var(--color-white); color: var(--color-text-primary); box-shadow: 0 1px 3px rgba(30,29,43,0.12); }' +
@@ -826,14 +826,14 @@
       '<span>🔍</span>' +
       '<input type="text" inputmode="numeric" id="search-input" placeholder="호출번호로 검색" value="' + esc(searchQuery) + '" />' +
       '</div>' +
-      '<div class="sort-kitchen-col">' +
       '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
-      '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
-      '</div>' +
       '</div>' +
       '<div class="toolbar-row">' +
+      '<div class="toolbar-row-left">' +
       '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length) ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
       '<div id="called-filter-slot">' + calledFilterHtml() + '</div>' +
+      '</div>' +
+      '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '</div>' +
       '</div>' +
       '<div class="screen-scroll" id="order-scroll">' +
