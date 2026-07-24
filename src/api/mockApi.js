@@ -355,6 +355,54 @@
   // ---------------- Orders ----------------
   function getOrder(id) { return DB.orders.find(function (o) { return o.id === id; }); }
 
+  function nextPickupNo(storeId) {
+    const existingNums = DB.orders
+      .filter(function (o) { return o.storeId === storeId; })
+      .map(function (o) { return parseInt(o.pickupNo, 10) || 0; });
+    return String((existingNums.length ? Math.max.apply(null, existingNums) : 1000) + 1);
+  }
+
+  // ---------------- 주문 관리 > 주문 생성 (현금/상품권 등 사장님이 현장에서 직접 만드는 주문) ----------------
+  // 연락처는 사장님이 입력하지 않는다 — 결제 완료 후 QR로 손님이 직접 남기게 하고, 그 전까지는 null로 둔다.
+  // 조리 여부와 무관하게 이미 결제까지 끝난 주문이라 대기(수락) 단계 없이 바로 '처리중'으로 들어간다.
+  function createManualOrder(storeId, payload) {
+    const items = (payload.items || []).filter(function (it) { return it.quantity > 0; });
+    if (!items.length) return null;
+    const amount = items.reduce(function (sum, it) { return sum + it.price * it.quantity; }, 0);
+    const now = new Date().toISOString();
+    const order = {
+      id: uid('order'), storeId: storeId,
+      paymentOrderNo: 'CASH-' + Math.floor(800000 + Math.random() * 99999),
+      pickupNo: nextPickupNo(storeId),
+      identifierType: 'PICKUP',
+      channel: 'MANUAL',
+      paymentMethod: payload.paymentMethod,
+      amount: amount,
+      items: items.map(function (it) { return { menuName: it.menuName, optionNames: [], quantity: it.quantity }; }),
+      customerContact: null,
+      orderedAt: now, acceptedAt: now, doneAt: null,
+      status: 'PROCESSING', called: false, calledCount: 0, completeCount: 0,
+      canceled: false, cancelReason: null, cancelType: null,
+      isReservation: false, reservationTime: null,
+      customerNote: null,
+      isReusableContainer: false,
+      promoType: null,
+    };
+    DB.orders.unshift(order);
+    persist();
+    return order;
+  }
+
+  // 손님이 QR로 열어 직접 남긴 연락처를 저장한다. 이 시점이 실질적인 '결제 완료 알림' 발송 시점이다
+  // (그 전엔 보낼 대상이 없었으니까).
+  function setOrderContact(orderId, contact) {
+    const o = getOrder(orderId);
+    if (!o) return { ok: false };
+    o.customerContact = contact;
+    persist();
+    return { ok: true, order: o, notification: '결제 완료' };
+  }
+
   // ---------------- 개발자 도구: 선택한 조건에 맞는 신규 주문 1건 생성 (실시간 주문 유입 시뮬레이션) ----------------
   // opts: { hasNote, isReservation, channel: 'QR'|'TABLET', identifierType: 'PICKUP'|'SEAT', multiMenu, hasOption,
   //         isReusableContainer, promoType: null|'GROUP_COUPON'|'STORE_COUPON'|'HAPPY_HOUR'|'FIRST_COME' }
@@ -401,10 +449,7 @@
     if (identifierType === 'SEAT') {
       identifierValue = seatCodes[Math.floor(Math.random() * seatCodes.length)];
     } else {
-      const existingNums = DB.orders
-        .filter(function (o) { return o.storeId === storeId; })
-        .map(function (o) { return parseInt(o.pickupNo, 10) || 0; });
-      identifierValue = String((existingNums.length ? Math.max.apply(null, existingNums) : 1000) + 1);
+      identifierValue = nextPickupNo(storeId);
     }
 
     const autoAccept = !!(store && store.autoAcceptOrders);
@@ -858,6 +903,7 @@
     updateOptionGroupOption: updateOptionGroupOption, removeOptionGroupOption: removeOptionGroupOption,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,
     createCustomOrder: createCustomOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
+    createManualOrder: createManualOrder, setOrderContact: setOrderContact,
     callCustomer: callCustomer, completeOrder: completeOrder, cancelPayment: cancelPayment,
     revertOrder: revertOrder, returnOrder: returnOrder, bulkAction: bulkAction,
     getSalesByChannel: getSalesByChannel, getSalesByPayment: getSalesByPayment, getSalesByHour: getSalesByHour,

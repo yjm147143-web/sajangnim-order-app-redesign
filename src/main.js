@@ -1,5 +1,15 @@
 (function () {
+  // 결제 후 QR/링크로 들어온 손님용 연락처 입력 화면 — 사장님 로그인 여부와 무관하게 바로 연결한다
+  function contactOrderIdFromUrl() {
+    return new URLSearchParams(window.location.search).get('contactOrder');
+  }
+
   function boot() {
+    const contactOrderId = contactOrderIdFromUrl();
+    if (contactOrderId) {
+      Router.resetTo('customerContact', { orderId: contactOrderId });
+      return;
+    }
     const user = window.MockApi.getCurrentUser();
     if (user) {
       routeToBoardFor(user);
