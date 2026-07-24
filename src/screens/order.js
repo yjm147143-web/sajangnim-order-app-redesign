@@ -86,9 +86,16 @@
     });
   }
 
-  // 호출번호 검색은 탭을 넘나들며 유지되므로, 탭 옆 건수 뱃지도 검색어가 반영된 값으로 보여준다
+  // 검색어뿐 아니라 주문 필터(메뉴/유형/호출여부)도 탭을 넘나들며 유지되므로, 탭 옆 건수 뱃지도
+  // 현재 적용된 필터가 모두 반영된 값으로 보여준다 (fetchOrders와 동일한 조건, status만 다름)
   function tabCount(status) {
-    return window.MockApi.getOrders(storeId, { status: status, search: searchQuery || undefined }).length;
+    return window.MockApi.getOrders(storeId, {
+      status: status,
+      menuFilters: menuFilters,
+      orderTypeFilters: orderTypeFilters,
+      calledFilter: calledFilter,
+      search: searchQuery || undefined,
+    }).length;
   }
 
   // ---------------- 펼침 상태 ----------------
