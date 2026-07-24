@@ -69,7 +69,7 @@
         '.choice-pair button{flex:1;padding:14px 8px;border:1.5px solid var(--color-disabled);border-radius:var(--radius-button);' +
           'background:var(--color-white);font-size:var(--font-size-body);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +
         '.choice-pair button.on{border-color:var(--color-text-primary);background:var(--color-text-primary);color:var(--color-white);}' +
-        '.cg-note{font-size:var(--font-size-caption);color:var(--color-text-secondary);text-align:center;padding:0 var(--space-5) var(--space-4);}' +
+        '.cg-note{font-size:var(--font-size-caption);color:var(--color-text-secondary);text-align:left;padding:0 var(--space-5) var(--space-4);}' +
         '.cg-note b{color:var(--color-text-primary);}' +
         '.cg-hidden{display:none;}' +
         '.auto-note{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
@@ -128,7 +128,7 @@
         '<div id="cook-settings-wrap">' +
 
           '<div class="section-title">얼마나 걸리나요?</div>' +
-          '<div class="cg-note" style="text-align:left;padding-top:0;">메뉴 <b>평균</b>으로 맞춰주세요.</div>' +
+          '<div class="cg-note" style="padding-top:0;">메뉴 <b>평균</b>으로 맞춰주세요.</div>' +
           '<div class="cg-field">' +
             '<span class="cg-field-title">1개 만들 때</span>' +
             '<span class="cg-field-desc">처음 한 개를 만들 때 걸리는 시간이에요.</span>' +
@@ -149,7 +149,7 @@
           '<div class="divider-line"></div>' +
 
           '<div class="section-title">같이 만드는 사람이 있나요?</div>' +
-          '<div class="cg-note" style="text-align:left;">함께 만들면 시간이 줄어들어요. 잠깐 돕는 정도면 0.5명으로 넣어주세요.</div>' +
+          '<div class="cg-note">함께 만들면 시간이 줄어들어요. 잠깐 돕는 정도면 0.5명으로 넣어주세요.</div>' +
           '<div class="choice-pair" id="helper-choice">' +
             '<button type="button" data-helper="solo">혼자 해요</button>' +
             '<button type="button" data-helper="together">같이 해요</button>' +
@@ -163,7 +163,7 @@
           '<div class="divider-line"></div>' +
 
           '<div class="section-title">얼마나 넉넉하게 보여줄까요?</div>' +
-          '<div class="cg-note" style="text-align:left;">계산된 시간보다 <b>조금 넉넉하게</b> 보여줘요. 예상보다 빨리 나오면 손님이 더 만족해요.</div>' +
+          '<div class="cg-note">계산된 시간보다 <b>조금 넉넉하게</b> 보여줘요. 예상보다 빨리 나오면 손님이 더 만족해요.</div>' +
           '<div class="cg-field">' +
             '<span class="cg-field-title">더할 여유 시간</span>' +
             stepperRowHtml('buffer', 0, '분', 0) +
