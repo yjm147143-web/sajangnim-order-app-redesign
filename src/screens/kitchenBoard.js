@@ -30,43 +30,48 @@
     return stats;
   }
 
+  // 가장 눈에 띄는 큰 숫자는 '남은 주문'(아직 호출되지 않은 수량)이고, 호출/누적 수량은 아래
+  // 배지 두 개로만 보조 표시한다. 남은 주문이 있어야만(=아직 조리·호출할 게 남아야만) 파란
+  // 음영으로 강조한다 — 누적 수량이 있어도 이미 다 호출됐다면 더 이상 강조하지 않는다.
   function menuCardHtml(name, total, called, idx) {
     var remaining = total - called;
-    var hasOrders = total > 0;
+    var hasRemaining = remaining > 0;
     var calledPct = total ? Math.round((called / total) * 100) : 0;
     return (
-      '<div class="kb-card' + (hasOrders ? ' active' : '') + '" style="--i:' + idx + '">' +
+      '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
         '<div class="kb-card-name">' + esc(name) + '</div>' +
-        '<div class="kb-card-total">' + total + '<span class="unit">개</span></div>' +
-        '<div class="kb-card-total-label">누적 수량</div>' +
+        '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
+        '<div class="kb-card-total-label">남은 주문</div>' +
         '<div class="kb-ratio-bar">' +
           '<div class="fill-called" style="width:' + calledPct + '%"></div>' +
           '<div class="fill-remaining" style="width:' + (100 - calledPct) + '%"></div>' +
         '</div>' +
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-called">호출 ' + called + '</span>' +
-          '<span class="kb-tag kb-tag-remaining">남은 수량 ' + remaining + '</span>' +
+          '<span class="kb-tag kb-tag-total">누적 ' + total + '</span>' +
         '</div>' +
       '</div>'
     );
   }
 
-  // 오늘 주문이 들어온 메뉴(강조 대상)를 카테고리 내에서 앞쪽으로 정렬한다
+  // 아직 호출되지 않은(남은) 수량이 많은 메뉴를 카테고리 내에서 앞쪽으로 정렬한다
   function sortByActivity(names, stats) {
     return names.slice().sort(function (a, b) {
-      var aTotal = (stats[a] && stats[a].total) || 0;
-      var bTotal = (stats[b] && stats[b].total) || 0;
-      return bTotal - aTotal;
+      var aRemaining = stats[a] ? stats[a].total - stats[a].called : 0;
+      var bRemaining = stats[b] ? stats[b].total - stats[b].called : 0;
+      return bRemaining - aRemaining;
     });
   }
 
   function contentHtml(storeId) {
     var stats = aggregateByMenu(storeId);
     var categories = window.MockApi.getCategories(storeId);
-    var menuItems = window.MockApi.getMenuItems(storeId);
+    var allMenuItems = window.MockApi.getMenuItems(storeId);
+    // 조리 현황판은 지금 판매되고 있는(품절이 아닌) 메뉴만 대상으로 한다
+    var menuItems = allMenuItems.filter(function (m) { return !m.soldOut; });
 
     if (!menuItems.length) {
-      return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>등록된 메뉴가 없어요</div></div>';
+      return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>판매 중인 메뉴가 없어요</div></div>';
     }
 
     var idx = 0;
@@ -84,8 +89,10 @@
         '</div>';
     });
 
-    var categorizedNames = menuItems.map(function (m) { return m.name; });
-    var uncategorized = sortByActivity(Object.keys(stats).filter(function (name) { return categorizedNames.indexOf(name) === -1; }), stats);
+    // '기타'(미분류) 후보는 카탈로그(품절 포함) 전체 기준으로 걸러낸다 — 품절 메뉴는 여기로도 새어
+    // 들어오면 안 되므로, 카테고리가 없는 진짜 미분류 메뉴만 남긴다.
+    var knownNames = allMenuItems.map(function (m) { return m.name; });
+    var uncategorized = sortByActivity(Object.keys(stats).filter(function (name) { return knownNames.indexOf(name) === -1; }), stats);
     if (uncategorized.length) {
       html += '<div class="section-title">기타</div>';
       html += '<div class="kb-grid">' +
@@ -114,7 +121,7 @@
         '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;}' +
         '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-pill);font-size:var(--font-size-caption);font-weight:700;white-space:nowrap;}' +
         '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
-        '.kb-tag-remaining{background:var(--color-accent-amber-bg);color:#a15c00;}' +
+        '.kb-tag-total{background:var(--color-accent-amber-bg);color:#a15c00;}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +
       '<div class="topbar">' +
