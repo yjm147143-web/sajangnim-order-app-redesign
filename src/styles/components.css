@@ -119,23 +119,15 @@
   color: var(--color-text-primary);
   white-space: nowrap;
 }
-.badge-neutral { background: var(--color-divider); color: var(--color-text-secondary); border: 1px solid rgba(110,116,136,0.3); }
-.badge-dark { background: var(--color-text-primary); color: var(--color-white); }
-.badge-danger { background: var(--color-accent-red); color: var(--color-white); }
-.badge-danger-soft { background: var(--color-accent-red-bg); color: var(--color-accent-red); border: 1px solid rgba(240,66,107,0.3); }
-.badge-success-soft { background: var(--color-accent-green-bg); color: var(--color-accent-green); border: 1px solid rgba(79,201,184,0.4); }
+.badge-neutral { background: var(--color-divider); color: #5a6070; border: 1px solid rgba(110,116,136,0.3); }
+.badge-danger-soft { background: var(--color-accent-red-bg); color: #b02850; border: 1px solid rgba(240,66,107,0.3); }
+.badge-success-soft { background: var(--color-accent-green-bg); color: #0b6b5c; border: 1px solid rgba(79,201,184,0.4); }
 .badge-warning-soft { background: var(--color-accent-amber-bg); color: #a15c00; border: 1px solid rgba(161,92,0,0.3); }
-.badge-reservation { background: var(--color-accent-blue); color: var(--color-white); }
-
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.status-dot.open { background: var(--color-accent-green); }
-.status-dot.paused { background: var(--color-accent-amber); }
-.status-dot.closed { background: var(--color-accent-red); }
 
 .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-pill); font-size: var(--font-size-caption); font-weight: 800; }
-.status-pill.open { background: var(--color-accent-green-bg); color: var(--color-accent-green); }
+.status-pill.open { background: var(--color-accent-green-bg); color: #0b6b5c; }
 .status-pill.paused { background: var(--color-accent-amber-bg); color: #a15c00; }
-.status-pill.closed { background: var(--color-accent-red-bg); color: var(--color-accent-red); }
+.status-pill.closed { background: var(--color-accent-red-bg); color: #b02850; }
 
 .channel-badge {
   display: inline-flex;
@@ -143,7 +135,7 @@
   height: 26px;
   padding: 0 10px;
   border-radius: var(--radius-pill);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   font-weight: 800;
   white-space: nowrap;
   box-sizing: border-box;
@@ -385,7 +377,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   background: var(--color-accent-amber-bg); color: #a15c00;
   border: 1px solid rgba(161,92,0,0.3);
 }
-.elapsed-badge.urgent { background: var(--color-accent-red-bg); color: var(--color-accent-red); border-color: rgba(240,66,107,0.3); }
+.elapsed-badge.urgent { background: var(--color-accent-red-bg); color: #b02850; border-color: rgba(240,66,107,0.3); }
 .pickup-inline { display: flex; align-items: baseline; gap: 4px; }
 .pickup-label { font-size: 11px; color: var(--color-text-secondary); font-weight: 600; }
 .pickup-value { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }

@@ -54,13 +54,12 @@
       ' color: var(--color-text-secondary); font-size: 10px; line-height: 1;' +
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
-    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); border-color: rgba(92,130,232,0.35); }' +
+    '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
     '.sort-kitchen-col { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }' +
     '.kitchen-board-btn { font-size: 11.5px; height: 30px; }' +
     '.called-filter-seg { display: flex; gap: 2px; background: var(--color-divider); border-radius: var(--radius-pill); padding: 3px; }' +
     '.called-filter-seg .segment-tab-sm { padding: 6px 10px; }' +
     '.called-filter-seg .segment-tab-sm.active { background: var(--color-white); color: var(--color-text-primary); box-shadow: 0 1px 3px rgba(30,29,43,0.12); }' +
-    '.action-count-badge { padding: 1px 7px; font-size: 10px; }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
@@ -155,7 +154,7 @@
 
   // 호출/완료 횟수는 0회일 때는 굳이 보여줄 필요가 없어 숨기고, 1회부터는 버튼 옆 작은 뱃지로 노출한다
   function countBadgeHtml(n) {
-    return n > 0 ? '<span class="badge badge-success-soft action-count-badge">' + n + '회</span>' : '';
+    return n > 0 ? '<span class="badge badge-success-soft">' + n + '회</span>' : '';
   }
 
   function renderActionsHtml(order, tabStatus, disabled) {

@@ -82,10 +82,6 @@
     return '<span class="channel-badge channel-tablet">🖥️ 키오스크</span>';
   }
 
-  function reservationBadgeHtml() {
-    return '<span class="badge badge-reservation">📅 예약</span>';
-  }
-
   const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워', FIRST_COME: '선착순' };
   function promoLabel(promoType) { return PROMO_LABELS[promoType] || ''; }
   function promoBadgeHtml(promoType) {
@@ -342,7 +338,7 @@
     escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, clockLabelWithSeconds: clockLabelWithSeconds, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
     formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
-    channelBadgeHtml: channelBadgeHtml, reservationBadgeHtml: reservationBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
+    channelBadgeHtml: channelBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
     requirePasswordGate: requirePasswordGate, requireLockReauth: requireLockReauth,

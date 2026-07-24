@@ -103,9 +103,9 @@
         '.store-status-name{font-weight:700;font-size:var(--font-size-body);}' +
         '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}' +
         '.store-status-time{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
-        '.network-badge{font-size:var(--font-size-micro);font-weight:700;}' +
-        '.network-badge.online{color:var(--color-accent-green);}' +
-        '.network-badge.offline{color:var(--color-accent-red);}' +
+        '.network-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-pill);font-size:var(--font-size-micro);font-weight:700;white-space:nowrap;}' +
+        '.network-badge.online{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
+        '.network-badge.offline{background:var(--color-accent-red-bg);color:#b02850;}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
       '</style>' +

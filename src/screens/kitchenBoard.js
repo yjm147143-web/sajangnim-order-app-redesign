@@ -112,8 +112,8 @@
         '.kb-ratio-bar .fill-called{background:var(--color-accent-green);height:100%;}' +
         '.kb-ratio-bar .fill-remaining{background:var(--color-accent-amber);height:100%;}' +
         '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;}' +
-        '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}' +
-        '.kb-tag-called{background:var(--color-accent-green-bg);color:var(--color-accent-green);}' +
+        '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-pill);font-size:var(--font-size-caption);font-weight:700;white-space:nowrap;}' +
+        '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
         '.kb-tag-remaining{background:var(--color-accent-amber-bg);color:#a15c00;}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +

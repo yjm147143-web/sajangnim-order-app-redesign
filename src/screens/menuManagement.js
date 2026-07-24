@@ -623,7 +623,7 @@
         '.promo-price-net{font-size:var(--font-size-caption);color:var(--color-text-secondary);margin-bottom:8px;}' +
         '.existing-group-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}' +
         '.existing-group-chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;' +
-          'border:1.5px solid var(--color-disabled);border-radius:12px;background:var(--color-white);cursor:pointer;text-align:left;}' +
+          'border:1.5px solid var(--color-disabled);border-radius:var(--radius-card);background:var(--color-white);cursor:pointer;text-align:left;}' +
         '.existing-group-chip.on{border-color:var(--color-accent-blue);background:var(--color-accent-blue-bg);}' +
         '.existing-group-chip .name{font-size:var(--font-size-caption);font-weight:800;color:var(--color-text-primary);}' +
         '.existing-group-chip .meta{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
