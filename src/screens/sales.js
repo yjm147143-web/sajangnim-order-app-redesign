@@ -5,7 +5,7 @@
  */
 (function () {
   const HUB_CARDS = [
-    { key: 'channel', emoji: '🧾', title: '주문 방식별 매출', sub: 'QR오더 · 태블릿오더 · 현금' },
+    { key: 'channel', emoji: '🧾', title: '주문 방식별 매출', sub: 'QR오더 · 키오스크 · 현금' },
     { key: 'period', emoji: '📅', title: '기간별 매출', sub: '일자별 매출 추이' },
     { key: 'menu', emoji: '🍽️', title: '메뉴별 매출', sub: '메뉴 랭킹' },
     { key: 'hour', emoji: '🕒', title: '시간대별 매출', sub: '시간대별 매출 흐름' },

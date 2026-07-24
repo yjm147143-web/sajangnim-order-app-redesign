@@ -15,6 +15,12 @@
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
+  // 취소/결제취소 완료 배지처럼 초 단위까지 구분해서 보여줘야 하는 곳에서 사용한다
+  function clockLabelWithSeconds(iso) {
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+  }
+
   function elapsedMinutes(iso) {
     return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   }
@@ -73,15 +79,11 @@
   // ---------------- Channel / status badges ----------------
   function channelBadgeHtml(channel) {
     if (channel === 'QR') return '<span class="channel-badge channel-qr">🔳 QR오더</span>';
-    return '<span class="channel-badge channel-tablet">🖥️ 태블릿오더</span>';
+    return '<span class="channel-badge channel-tablet">🖥️ 키오스크</span>';
   }
 
   function reservationBadgeHtml() {
     return '<span class="badge badge-reservation">📅 예약</span>';
-  }
-
-  function reusableContainerBadgeHtml() {
-    return '<span class="badge badge-success-soft">♻️ 다회용기</span>';
   }
 
   const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워', FIRST_COME: '선착순' };
@@ -337,11 +339,11 @@
   }
 
   window.UI = {
-    escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
+    escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, clockLabelWithSeconds: clockLabelWithSeconds, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
     formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
     channelBadgeHtml: channelBadgeHtml, reservationBadgeHtml: reservationBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
-    reusableContainerBadgeHtml: reusableContainerBadgeHtml, promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
+    promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
     requirePasswordGate: requirePasswordGate, requireLockReauth: requireLockReauth,
     barChartHtml: barChartHtml, donutChartHtml: donutChartHtml, rankListHtml: rankListHtml, salesChartHtml: salesChartHtml,

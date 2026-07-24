@@ -37,17 +37,14 @@
     var cook = Math.round(Math.max(Math.min(cfg.base, t), t / staff));
     var batches = Math.ceil(qty / Math.max(1, cfg.batch));
     var rule = batches <= 1 ? '한 판에 다 만들어요' : batches + '판에 나눠 만들어요';
-    return { rule: rule, cook: cook, buffer: state.bufferMinutes, low: cook, high: cook + state.bufferMinutes };
+    var low = Math.min(cook, state.maxEstimateMinutes);
+    var high = Math.min(cook + state.bufferMinutes, state.maxEstimateMinutes);
+    return { rule: rule, cook: cook, buffer: state.bufferMinutes, low: low, high: high, capped: (cook + state.bufferMinutes) > state.maxEstimateMinutes };
   }
 
   function render() {
     return (
       '<style>' +
-        '.settings-list-item.no-toggle-click{cursor:default;flex-wrap:wrap;row-gap:8px;}' +
-        '.settings-list-item.no-toggle-click:active{background:transparent;}' +
-        '.settings-list-item .label-group{display:flex;flex-direction:column;gap:4px;flex:0 1 auto;min-width:0;}' +
-        '.settings-list-item .label-group .label{flex:none;}' +
-        '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
         '.stepper-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}' +
         '.stepper-btn{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--color-disabled);background:var(--color-white);' +
           'font-size:22px;font-weight:700;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
@@ -60,13 +57,14 @@
         '.info-memo{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
           'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin:0 var(--space-5) var(--space-4);}' +
         '.info-memo b{color:var(--color-text-primary);}' +
-        '.mode-select{display:flex;gap:8px;background:var(--color-divider);padding:6px;border-radius:16px;margin:0 var(--space-5) var(--space-2);}' +
-        '.mode-select-btn{flex:1;border:none;background:transparent;border-radius:12px;padding:14px 8px;' +
+        '.mode-select{display:flex;gap:8px;margin:0 var(--space-5) var(--space-2);}' +
+        '.mode-select-btn{flex:1;border:1.5px solid var(--color-disabled);background:var(--color-white);border-radius:var(--radius-button);padding:14px 8px;' +
           'display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}' +
-        '.mode-select-btn.on{background:var(--color-white);box-shadow:0 1px 4px rgba(0,0,0,.08);}' +
+        '.mode-select-btn.on{background:var(--color-text-primary);border-color:var(--color-text-primary);}' +
         '.mode-select-btn .m-title{font-size:var(--font-size-body);font-weight:800;color:var(--color-text-secondary);}' +
-        '.mode-select-btn.on .m-title{color:var(--color-text-primary);}' +
+        '.mode-select-btn.on .m-title{color:var(--color-white);}' +
         '.mode-select-btn .m-sub{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
+        '.mode-select-btn.on .m-sub{color:rgba(255,255,255,0.75);}' +
         '.choice-pair{display:flex;gap:8px;padding:0 var(--space-5) var(--space-4);}' +
         '.choice-pair button{flex:1;padding:14px 8px;border:1.5px solid var(--color-disabled);border-radius:var(--radius-button);' +
           'background:var(--color-white);font-size:var(--font-size-body);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +
@@ -117,11 +115,11 @@
 
         '<div class="section-title">손님에게 무엇을 보여줄까요?</div>' +
         '<div class="mode-select" id="mode-select">' +
-          '<button type="button" class="mode-select-btn" data-mode="time">' +
-            '<span class="m-title">예상 시간</span><span class="m-sub" id="mode-time-sub">-</span>' +
-          '</button>' +
           '<button type="button" class="mode-select-btn" data-mode="queue">' +
             '<span class="m-title">대기 주문 수</span><span class="m-sub">현재 조리중인 주문 건수</span>' +
+          '</button>' +
+          '<button type="button" class="mode-select-btn" data-mode="time">' +
+            '<span class="m-title">예상 시간</span><span class="m-sub" id="mode-time-sub">-</span>' +
           '</button>' +
         '</div>' +
 
@@ -169,6 +167,11 @@
           '<div class="cg-field">' +
             '<span class="cg-field-title">더할 여유 시간</span>' +
             stepperRowHtml('buffer', 0, '분', 0) +
+          '</div>' +
+          '<div class="cg-field">' +
+            '<span class="cg-field-title">최대 예상 시간</span>' +
+            '<span class="cg-field-desc">아무리 밀려도 손님에게는 이 시간을 넘겨 보여주지 않아요.</span>' +
+            stepperRowHtml('max', 60, '분', 10) +
           '</div>' +
 
           '<div class="divider-line"></div>' +
@@ -237,6 +240,7 @@
       hasHelper: settings.hasHelper,
       helperCount: settings.helperCount,
       bufferMinutes: settings.bufferMinutes,
+      maxEstimateMinutes: settings.maxEstimateMinutes,
       exQty: 1,
     };
 
@@ -251,6 +255,7 @@
         hasHelper: state.hasHelper,
         helperCount: state.helperCount,
         bufferMinutes: state.bufferMinutes,
+        maxEstimateMinutes: state.maxEstimateMinutes,
       });
       window.UI.toast('저장했어요');
     }
@@ -286,8 +291,9 @@
       root.querySelector('#val-marginal').textContent = state.cookTimeMarginal;
       root.querySelector('#val-batch').textContent = state.cookTimeBatch;
       var firstTime = incTime({ base: state.cookTimeBase, marginal: state.cookTimeMarginal, batch: state.cookTimeBatch }, 0, 1);
-      var firstCook = Math.round(Math.max(Math.min(state.cookTimeBase, firstTime), firstTime / staffCountOf(state)));
-      var firstHigh = firstCook + state.bufferMinutes;
+      var firstCookRaw = Math.round(Math.max(Math.min(state.cookTimeBase, firstTime), firstTime / staffCountOf(state)));
+      var firstCook = Math.min(firstCookRaw, state.maxEstimateMinutes);
+      var firstHigh = Math.min(firstCookRaw + state.bufferMinutes, state.maxEstimateMinutes);
       root.querySelector('#mode-time-sub').textContent = (firstCook === firstHigh) ? (firstCook + '분') : (firstCook + '~' + firstHigh + '분');
     }
 
@@ -309,6 +315,7 @@
     // ---------- 안전 여유 ----------
     function renderBuffer() {
       root.querySelector('#val-buffer').textContent = state.bufferMinutes;
+      root.querySelector('#val-max').textContent = state.maxEstimateMinutes;
     }
 
     // ---------- 미리보기 (예상 시간 모드) ----------
@@ -324,7 +331,7 @@
       root.querySelector('#bd-rule').textContent = r.rule;
       root.querySelector('#bd-cook').textContent = r.cook + '분';
       root.querySelector('#bd-buffer').textContent = '+' + r.buffer + '분';
-      root.querySelector('#bd-total').textContent = same ? (r.low + '분') : (r.low + '~' + r.high + '분');
+      root.querySelector('#bd-total').textContent = (same ? (r.low + '분') : (r.low + '~' + r.high + '분')) + (r.capped ? ' (최대 시간 적용)' : '');
     }
 
     function renderAll() {
@@ -402,6 +409,14 @@
     });
     root.querySelector('[data-stepper-plus="buffer"]').addEventListener('click', function () {
       state.bufferMinutes = state.bufferMinutes + 1;
+      renderBuffer(); renderCookFields(); renderPreview();
+    });
+    root.querySelector('[data-stepper-minus="max"]').addEventListener('click', function () {
+      state.maxEstimateMinutes = Math.max(10, state.maxEstimateMinutes - 5);
+      renderBuffer(); renderCookFields(); renderPreview();
+    });
+    root.querySelector('[data-stepper-plus="max"]').addEventListener('click', function () {
+      state.maxEstimateMinutes = state.maxEstimateMinutes + 5;
       renderBuffer(); renderCookFields(); renderPreview();
     });
 

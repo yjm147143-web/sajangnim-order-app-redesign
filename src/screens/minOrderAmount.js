@@ -24,7 +24,7 @@
         '<div class="section-title">최소 금액을 정해주세요</div>' +
         '<div class="moa-preset-row">' +
           PRESETS.map(function (p) {
-            return '<button type="button" class="moa-preset-btn' + (amount === p ? ' on' : '') + '" data-preset="' + p + '">' + p.toLocaleString() + '원</button>';
+            return '<button type="button" class="moa-preset-btn' + (amount === p ? ' on' : '') + '" data-preset="' + p + '">' + window.UI.formatMoney(p) + '</button>';
           }).join('') +
         '</div>' +
         '<div class="moa-input-label">위 금액에 없다면 아래 칸에 직접 입력할 수 있어요</div>' +
@@ -43,11 +43,6 @@
   function render() {
     return (
       '<style>' +
-        '.settings-list-item.no-toggle-click{cursor:default;flex-wrap:wrap;row-gap:8px;}' +
-        '.settings-list-item.no-toggle-click:active{background:transparent;}' +
-        '.settings-list-item .label-group{display:flex;flex-direction:column;gap:4px;flex:0 1 auto;min-width:0;}' +
-        '.settings-list-item .label-group .label{flex:none;}' +
-        '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
         '.moa-preset-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 var(--space-5) var(--space-4);}' +
         '.moa-preset-btn{flex:1 0 calc(50% - 4px);padding:12px 8px;border:1.5px solid var(--color-disabled);border-radius:var(--radius-button);' +
           'background:var(--color-white);font-size:var(--font-size-body);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +

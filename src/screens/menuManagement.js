@@ -116,8 +116,8 @@
         '<div class="option-group-usage">' + (usage > 0 ? usage + '개 메뉴에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' +
         '<div class="option-group-controls">' +
           '<div class="option-select-mode">' +
-            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-single" data-group-id="' + g.id + '">1개 선택</button>' +
-            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-multi" data-group-id="' + g.id + '">중복 선택</button>' +
+            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-single" data-group-id="' + g.id + '">1개만 선택</button>' +
+            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="lib-set-select-multi" data-group-id="' + g.id + '">여러개 선택</button>' +
           '</div>' +
           '<div class="option-required-row">' +
             '<span class="option-required-label">필수 여부</span>' +
@@ -134,7 +134,10 @@
     if (!groups.length) {
       return '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>';
     }
-    return '<div class="option-library-list">' + groups.map(optionGroupCardHtml).join('') + '</div>';
+    // 옵션 목록은 이미 각 입력마다 즉시 저장되지만, 사장님이 안심할 수 있도록 확인용 저장 버튼을 둔다
+    return '<div class="option-library-list">' + groups.map(optionGroupCardHtml).join('') +
+      '<button type="button" class="btn btn-primary" id="option-library-save-btn">저장</button>' +
+      '</div>';
   }
 
   function renderMenuList() {
@@ -152,6 +155,7 @@
         '.main-tab-menu{flex:2;font-size:var(--font-size-body);}' +
         '.main-tab-option{flex:1;font-size:var(--font-size-caption);}' +
         '.option-library-list{padding-bottom:24px;}' +
+        '.option-library-list #option-library-save-btn{margin-top:4px;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="menu-back">←</button></div>' +
@@ -263,6 +267,10 @@
         if (removeOptLibBtn) {
           window.MockApi.removeOptionGroupOption(removeOptLibBtn.getAttribute('data-group-id'), Number(removeOptLibBtn.getAttribute('data-opt-idx')));
           refresh();
+          return;
+        }
+        if (e.target.closest('#option-library-save-btn')) {
+          window.UI.toast('저장되었어요');
           return;
         }
         return;
@@ -403,7 +411,7 @@
     }
     return '<div class="existing-group-chip-row">' + groups.map(function (g) {
       var on = state.selectedGroupIds.indexOf(g.id) !== -1;
-      var modeLabel = g.multiSelect ? '중복 선택' : '1개 선택';
+      var modeLabel = g.multiSelect ? '여러개 선택' : '1개만 선택';
       return (
         '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-action="toggle-existing-group" data-group-id="' + g.id + '">' +
           '<span class="name">' + esc(g.name || '(이름 없음)') + '</span>' +
@@ -445,8 +453,8 @@
           '</div>' +
           '<div class="option-group-controls">' +
             '<div class="option-select-mode">' +
-              '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="set-select-single" data-group-idx="' + gi + '">1개 선택</button>' +
-              '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="set-select-multi" data-group-idx="' + gi + '">중복 선택</button>' +
+              '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="set-select-single" data-group-idx="' + gi + '">1개만 선택</button>' +
+              '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="set-select-multi" data-group-idx="' + gi + '">여러개 선택</button>' +
             '</div>' +
             '<div class="option-required-row">' +
               '<span class="option-required-label">필수 여부</span>' +
@@ -644,7 +652,7 @@
       '</div>' +
       '<div class="segment-tabs menu-edit-tab-bar">' +
         '<button type="button" class="segment-tab active" data-edit-tab="basic">기본 정보</button>' +
-        '<button type="button" class="segment-tab" data-edit-tab="etc">추가 설정</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="etc">기타 설정</button>' +
         '<button type="button" class="segment-tab" data-edit-tab="option">옵션</button>' +
       '</div>' +
       '<div class="screen-scroll">' +

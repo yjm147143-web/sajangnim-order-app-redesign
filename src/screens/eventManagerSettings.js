@@ -57,7 +57,7 @@
     const switchBtn = root.querySelector('#switch-event-btn');
     if (switchBtn) {
       switchBtn.addEventListener('click', function () {
-        window.Router.showScreen('eventSelect');
+        window.Router.showScreen('eventSelect', { eventId: params.eventId });
       });
     }
 

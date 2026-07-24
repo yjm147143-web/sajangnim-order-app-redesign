@@ -47,10 +47,19 @@
     return openTs ? '(' + dateTimeLabel(openTs) + ' 개점)' : '';
   }
 
+  var SOUND_TYPES = [
+    { v: 'default', label: '기본음' },
+    { v: 'bell', label: '청량한 벨' },
+    { v: 'cheerful', label: '경쾌한 알림' },
+  ];
+  var NOTICE_URL = 'https://dev-admin.qrorder.ai.kr/home';
+
   function contentHtml(store) {
     var autoAcceptOn = !!store.autoAcceptOrders;
     var notificationOn = store.notificationEnabled !== false;
     var volume = store.notificationVolume != null ? store.notificationVolume : 70;
+    var soundType = store.notificationSoundType || 'default';
+    var repeatCount = store.notificationRepeatCount != null ? store.notificationRepeatCount : 1;
     return (
       '<div class="settings-list-item no-toggle-click status-list-item">' +
         '<div class="icon">🏪</div>' +
@@ -71,6 +80,9 @@
         '<button type="button" class="toggle' + (autoAcceptOn ? ' on' : '') + '" id="auto-accept-toggle"><span class="toggle-knob"></span></button>' +
       '</div>' +
 
+      '<div class="divider-line"></div>' +
+      '<div class="settings-section-label">알림</div>' +
+
       '<div class="settings-list-item no-toggle-click">' +
         '<div class="icon">🔔</div>' +
         '<div class="label-group">' +
@@ -86,6 +98,22 @@
         '<button type="button" class="pill-btn" id="notification-preview-btn"' + (notificationOn ? '' : ' disabled') + '>🔊</button>' +
       '</div>' +
       '<div class="notification-volume-hint">' + (notificationOn && volume === 0 ? '소리 크기가 0이라 진동으로만 알려드려요' : '') + '</div>' +
+      '<div class="notification-sub-row' + (notificationOn ? '' : ' disabled') + '">' +
+        '<span class="notification-volume-label">알림음 종류</span>' +
+        '<div class="notification-chip-row">' +
+          SOUND_TYPES.map(function (s) {
+            return '<button type="button" class="pill-btn' + (soundType === s.v ? ' active' : '') + '" data-action="set-sound-type" data-value="' + s.v + '"' + (notificationOn ? '' : ' disabled') + '>' + s.label + '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+      '<div class="notification-sub-row' + (notificationOn ? '' : ' disabled') + '">' +
+        '<span class="notification-volume-label">반복 횟수</span>' +
+        '<div class="notification-chip-row">' +
+          [1, 2, 3].map(function (n) {
+            return '<button type="button" class="pill-btn' + (repeatCount === n ? ' active' : '') + '" data-action="set-repeat-count" data-value="' + n + '"' + (notificationOn ? '' : ' disabled') + '>' + n + '회</button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
 
       '<div class="divider-line"></div>' +
 
@@ -110,8 +138,18 @@
 
       '<div class="divider-line"></div>' +
 
+      '<div class="settings-list-item" id="terms-link-btn">' +
+        '<div class="icon">📄</div><div class="label">약관 보기</div><div class="chevron">›</div>' +
+      '</div>' +
+      '<div class="settings-list-item" id="notice-link-btn">' +
+        '<div class="icon">📣</div><div class="label">공지사항</div><div class="chevron">›</div>' +
+      '</div>' +
+
       '<div class="settings-list-item settings-logout" id="logout-btn">' +
         '<div class="icon">🚪</div><div class="label">로그아웃</div>' +
+      '</div>' +
+      '<div class="settings-list-item" id="log-send-btn">' +
+        '<div class="icon">🛠️</div><div class="label">로그 전송</div>' +
       '</div>'
     );
   }
@@ -119,11 +157,6 @@
   function render() {
     return (
       '<style>' +
-        '.settings-list-item.no-toggle-click{cursor:default;flex-wrap:wrap;row-gap:8px;}' +
-        '.settings-list-item.no-toggle-click:active{background:transparent;}' +
-        '.settings-list-item .label-group{display:flex;flex-direction:column;gap:4px;flex:0 1 auto;min-width:0;}' +
-        '.settings-list-item .label-group .label{flex:none;}' +
-        '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
         '.settings-list-item .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:20px;margin-left:auto;}' +
         '.settings-logout .label{color:var(--color-accent-red);}' +
         '.settings-logout .icon{filter:none;}' +
@@ -143,6 +176,11 @@
         '.notification-volume-value{font-size:var(--font-size-caption);font-weight:700;width:28px;text-align:right;flex-shrink:0;}' +
         '.notification-volume-row .pill-btn{flex-shrink:0;}' +
         '.notification-volume-hint{font-size:var(--font-size-micro);color:var(--color-text-secondary);padding:0 var(--space-5) var(--space-3) 48px;}' +
+        '.settings-section-label{font-size:var(--font-size-micro);font-weight:800;color:var(--color-text-secondary);padding:var(--space-3) var(--space-5) 0;}' +
+        '.notification-sub-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;flex-wrap:wrap;}' +
+        '.notification-sub-row.disabled{opacity:0.45;pointer-events:none;}' +
+        '.notification-chip-row{display:flex;gap:6px;flex-wrap:wrap;}' +
+        '.notification-chip-row .pill-btn.active{background:var(--color-accent-blue);color:var(--color-white);}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back">←</button></div>' +
@@ -162,6 +200,7 @@
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
           var newStatus = btn.getAttribute('data-status-action');
+          var storeBefore = window.MockApi.getStore(storeId);
 
           function applyStatusChange() {
             if (newStatus === 'CLOSED') {
@@ -177,6 +216,21 @@
                   refresh();
                 },
                 { danger: true, cancelLabel: '닫기' }
+              );
+              return;
+            }
+            // '개점'(마감→영업)일 때만 시작 확인 팝업을 보여준다 — 일시중지 해제는 계속 영업 중이었으므로 제외
+            if (newStatus === 'OPEN' && storeBefore.operatingStatus === 'CLOSED') {
+              window.UI.confirmModal(
+                '지금 영업을 시작할까요?',
+                '영업을 시작하면 손님이 주문을 할 수 있어요.',
+                '시작하기',
+                function () {
+                  window.MockApi.updateOperatingStatus(storeId, newStatus);
+                  window.UI.toast('영업 상태가 변경되었어요');
+                  refresh();
+                },
+                { cancelLabel: '닫기' }
               );
               return;
             }
@@ -248,6 +302,26 @@
           window.UI.playNotificationPreview(vol);
         });
       }
+
+      wrap.querySelectorAll('[data-action="set-sound-type"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          window.MockApi.updateNotificationSettings(storeId, { soundType: btn.getAttribute('data-value') });
+          refresh();
+        });
+      });
+      wrap.querySelectorAll('[data-action="set-repeat-count"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          window.MockApi.updateNotificationSettings(storeId, { repeatCount: Number(btn.getAttribute('data-value')) });
+          refresh();
+        });
+      });
+
+      var termsBtn = wrap.querySelector('#terms-link-btn');
+      if (termsBtn) termsBtn.addEventListener('click', function () { window.open(NOTICE_URL, '_blank', 'noopener'); });
+      var noticeBtn = wrap.querySelector('#notice-link-btn');
+      if (noticeBtn) noticeBtn.addEventListener('click', function () { window.open(NOTICE_URL, '_blank', 'noopener'); });
+      var logSendBtn = wrap.querySelector('#log-send-btn');
+      if (logSendBtn) logSendBtn.addEventListener('click', function () { window.UI.toast('로그를 전송했어요'); });
 
       var GATED_NAV = { sales: { scopeKey: 'sales', label: '매출 조회' } };
       wrap.querySelectorAll('[data-nav]').forEach(function (row) {

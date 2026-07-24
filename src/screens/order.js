@@ -15,19 +15,20 @@
   let sortDir = 'asc';    // 접수 시간 기준, 기본 오름차순(오래된순 — 새 주문이 아래로 쌓임)
   let searchQuery = '';
   let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
-  let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' | 'CALLED' 중 선택된 값 배열
+  let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
+  let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 상단 필터 배지가 있던 자리에 노출
   let selectedIds = new Set();
-  let expandedAll = true;      // 전체 펼쳐보기 기본값
-  let bucketOverrides = {};    // { [bucketKey:string]: boolean } 시간대 그룹 단위 펼침 오버라이드
-  let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (시간대 그룹 설정보다 우선)
+  let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 펼쳐짐)
   let isOnline = true;
   let autoSoldoutNames = [];   // 자동 품절 배너에 노출 중인 메뉴명 목록 (X로 닫으면 비움)
   let root = null;
 
   const SCOPED_STYLE = '' +
-    '.topbar-title { max-width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }' +
+    '.topbar-title { max-width: 62%; display: flex; align-items: center; gap: 6px; overflow: visible; }' +
+    '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
     '.order-card-actions.three { flex-wrap: wrap; }' +
-    '.order-card-actions.three .btn { font-size: 11.5px; padding: 0 4px; flex: 1 1 30%; }' +
+    '.order-card-actions.three .btn { font-size: 11.5px; padding: 0 4px; flex: 1 1 30%;' +
+      ' display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
     '.order-list.with-bulk-bar { padding-bottom: 88px; }' +
@@ -54,15 +55,18 @@
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); border-color: rgba(92,130,232,0.35); }' +
-    '.kitchen-fab {' +
-      ' position: absolute; right: var(--space-4); bottom: 20px; z-index: 30;' +
-      ' display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer;' +
-      ' background: var(--color-text-primary); color: var(--color-white);' +
-      ' font-size: var(--font-size-caption); font-weight: 800; white-space: nowrap;' +
-      ' padding: 12px 18px 12px 14px; border-radius: var(--radius-pill);' +
-      ' box-shadow: 0 10px 24px -8px rgba(30,29,43,0.45); transition: bottom .2s ease, transform .15s ease; }' +
-    '.kitchen-fab:active { transform: scale(0.95); }' +
-    '.kitchen-fab.with-bulk-bar { bottom: 92px; }';
+    '.sort-kitchen-col { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }' +
+    '.kitchen-board-btn { font-size: 11.5px; height: 30px; }' +
+    '.called-filter-seg { display: flex; gap: 2px; background: var(--color-divider); border-radius: var(--radius-pill); padding: 3px; }' +
+    '.called-filter-seg .segment-tab-sm { padding: 6px 10px; }' +
+    '.called-filter-seg .segment-tab-sm.active { background: var(--color-white); color: var(--color-text-primary); box-shadow: 0 1px 3px rgba(30,29,43,0.12); }' +
+    '.action-count-badge { padding: 1px 7px; font-size: 10px; }' +
+    '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
+    '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
+    '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
+    '.refresh-btn { background: none; border: none; padding: 4px; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; }' +
+    '.refresh-btn.spinning { animation: order-refresh-spin 0.6s linear; }' +
+    '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
 
   // ---------------- 탭 구성 ----------------
   // 자동수락 ON이면 신규 주문이 대기 없이 바로 처리중으로 인입되므로 대기 탭 자체를 숨긴다.
@@ -86,57 +90,40 @@
       status: currentStatus(),
       menuFilters: menuFilters,
       orderTypeFilters: orderTypeFilters,
+      calledFilter: calledFilter,
       search: searchQuery || undefined,
       sortDir: sortDir,
     });
   }
 
+  // 호출번호 검색은 탭을 넘나들며 유지되므로, 탭 옆 건수 뱃지도 검색어가 반영된 값으로 보여준다
   function tabCount(status) {
-    return window.MockApi.getOrders(storeId, { status: status }).length;
+    return window.MockApi.getOrders(storeId, { status: status, search: searchQuery || undefined }).length;
   }
 
   // ---------------- 펼침 상태 ----------------
-  function isBucketExpanded(key) {
-    const k = String(key);
-    if (Object.prototype.hasOwnProperty.call(bucketOverrides, k)) return bucketOverrides[k];
-    return expandedAll;
-  }
-
-  function toggleBucketExpand(key) {
-    const k = String(key);
-    bucketOverrides[k] = !isBucketExpanded(k);
-    updateList();
-  }
-
-  function toggleExpandAll() {
-    expandedAll = !expandedAll;
-    bucketOverrides = {};
-    cardOverrides = {};
-    const label = root.querySelector('#expand-all-toggle');
-    if (label) label.textContent = expandedAll ? '간단히 보기' : '펼쳐보기';
-    updateList();
-  }
-
-  // 주문카드 개별 펼침 상태 — 지정하지 않았다면 소속된 시간대 그룹의 상태를 따른다
-  function isCardExpanded(orderId, bucketKey) {
+  // 시간대 그룹 단위 간단히보기/펼쳐보기는 삭제하고, 카드마다 개별 화살표로만 펼침 상태를 다룬다 (기본값: 펼쳐짐)
+  function isCardExpanded(orderId) {
     if (Object.prototype.hasOwnProperty.call(cardOverrides, orderId)) return cardOverrides[orderId];
-    return isBucketExpanded(bucketKey);
+    return true;
   }
 
-  function toggleCardExpand(orderId, bucketKey) {
-    cardOverrides[orderId] = !isCardExpanded(orderId, bucketKey);
+  function toggleCardExpand(orderId) {
+    cardOverrides[orderId] = !isCardExpanded(orderId);
     updateList();
   }
 
   // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
+  // 다회용기 주문은 별도 뱃지 대신, 각 메뉴명 앞에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다
   function itemListHtml(order) {
+    const isReusable = !!order.isReusableContainer;
     return (order.items || []).map(function (it) {
       const optHtml = (it.optionNames && it.optionNames.length)
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
-        '<span class="line-name">' + esc(it.menuName) + '</span>' +
+        '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + (isReusable ? '♻️ ' : '') + esc(it.menuName) + '</span>' +
         optHtml +
         '</div>';
     }).join('');
@@ -166,20 +153,31 @@
       '</div>';
   }
 
+  // 호출/완료 횟수는 0회일 때는 굳이 보여줄 필요가 없어 숨기고, 1회부터는 버튼 옆 작은 뱃지로 노출한다
+  function countBadgeHtml(n) {
+    return n > 0 ? '<span class="badge badge-success-soft action-count-badge">' + n + '회</span>' : '';
+  }
+
   function renderActionsHtml(order, tabStatus, disabled) {
     const dAttr = disabled ? ' disabled' : '';
     if (tabStatus === 'WAITING') {
       return '<div class="order-card-actions">' +
-        '<button type="button" class="btn btn-outline" data-action="cancel-order" data-id="' + order.id + '"' + dAttr + '>주문 취소</button>' +
+        '<button type="button" class="btn btn-outline" data-action="cancel-order" data-id="' + order.id + '"' + dAttr + '>주문 거절</button>' +
         '<button type="button" class="btn btn-primary" data-action="accept-order" data-id="' + order.id + '"' + dAttr + '>주문 수락</button>' +
         '</div>';
     }
     if (tabStatus === 'PROCESSING') {
       return '<div class="order-card-actions three">' +
-        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출 (' + (order.calledCount || 0) + '회)</button>' +
+        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출' + countBadgeHtml(order.calledCount || 0) + '</button>' +
         '<button type="button" class="btn btn-danger-solid" data-action="cancel-payment" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>' +
-        '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료 (' + (order.completeCount || 0) + '회)</button>' +
+        '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료' + countBadgeHtml(order.completeCount || 0) + '</button>' +
         '</div>';
+    }
+    // 완료 탭에서 취소/반품 처리된 건은 되돌리기·결제취소 버튼 대신, 처리 완료 시각이 담긴 뱃지로 대체한다
+    if (order.canceled) {
+      const timeLabel = order.cancelledAt ? ' (' + window.UI.clockLabelWithSeconds(order.cancelledAt) + ')' : '';
+      const doneLabel = order.cancelType === 'CANCEL' ? '주문 취소 완료' : '결제 취소 완료';
+      return '<div class="order-card-actions"><span class="badge badge-neutral cancel-done-badge">' + doneLabel + timeLabel + '</span></div>';
     }
     return '<div class="order-card-actions">' +
       '<button type="button" class="btn btn-outline" data-action="revert-order" data-id="' + order.id + '"' + dAttr + '>되돌리기</button>' +
@@ -205,9 +203,8 @@
   }
 
   function renderOrderCard(order, tabStatus, disabled) {
-    const bucketKey = order.isReservation ? 'RESERVED' : window.UI.bucketKeyOf(order.orderedAt);
-    const expanded = isCardExpanded(order.id, bucketKey);
-    const cls = 'order-card' + (order.canceled ? ' canceled' : '');
+    const expanded = isCardExpanded(order.id);
+    const cls = 'order-card' + (order.canceled ? ' canceled' : '') + (selectedIds.has(order.id) ? ' selected' : '');
     let html = '<div class="' + cls + '">';
 
     // 상단 상태 행: 경과시간/예약시간(좌) + 픽업번호(우) — 조리 우선순위와 픽업 정보를 한눈에
@@ -221,9 +218,8 @@
     const channelHtml = window.UI.channelBadgeHtml(order.channel);
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
     const promoHtml = window.UI.promoBadgeHtml(order.promoType);
-    const reusableHtml = (expanded && order.isReusableContainer) ? window.UI.reusableContainerBadgeHtml() : '';
-    if (channelHtml || deliveryHtml || reusableHtml || promoHtml) {
-      html += '<div class="order-card-header-row">' + channelHtml + deliveryHtml + reusableHtml + promoHtml + '</div>';
+    if (channelHtml || deliveryHtml || promoHtml) {
+      html += '<div class="order-card-header-row">' + channelHtml + deliveryHtml + promoHtml + '</div>';
     }
 
     html += '<div class="order-card-items">' + itemListHtml(order) + '</div>';
@@ -233,13 +229,13 @@
       html += '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>';
     }
     if (order.canceled) {
-      const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제취소' : '주문취소');
+      const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제취소' : '주문거절');
       html += '<div class="order-card-cancel-reason">[' + typeLabel + '] ' + esc(order.cancelReason || '') + '</div>';
     }
 
     // 점선 구분선 오른쪽 하단의 화살표로 이 카드만 펼쳐보기/간단히보기를 개별 전환할 수 있다
     html += '<div class="order-card-divider">' +
-      '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '" data-bucket="' + esc(bucketKey) + '">' + (expanded ? '▲' : '▼') + '</button>' +
+      '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' + (expanded ? '▲' : '▼') + '</button>' +
       '</div>';
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
@@ -265,13 +261,11 @@
   function renderBucketHeader(group, tabStatus, disabled) {
     const showCheckbox = tabStatus !== 'DONE';
     const allSelected = showCheckbox && group.orders.length > 0 && group.orders.every(function (o) { return selectedIds.has(o.id); });
-    const expanded = isBucketExpanded(group.key);
     return '<div class="bucket-header">' +
       '<div class="bucket-header-left">' +
       (showCheckbox ? '<input type="checkbox" data-action="bucket-select-all" data-bucket="' + group.key + '"' + (allSelected ? ' checked' : '') + (disabled ? ' disabled' : '') + ' />' : '') +
       '<span class="bucket-label">' + group.label + '</span>' +
       '</div>' +
-      '<div class="bucket-toggle-label" data-action="toggle-bucket-expand" data-bucket="' + group.key + '">' + (expanded ? '간단히 보기' : '펼쳐보기') + '</div>' +
       '</div>';
   }
 
@@ -318,13 +312,11 @@
     wrap.innerHTML = renderGroupsHtml(groups, orders, disabled);
     const bulkSlot = root.querySelector('#bulk-bar-slot');
     if (bulkSlot) bulkSlot.innerHTML = renderBulkBarHtml(disabled);
-    const fab = root.querySelector('#kitchen-fab');
-    if (fab) fab.classList.toggle('with-bulk-bar', hasBulkBar);
     const tabsEl = root.querySelector('#segment-tabs');
     if (tabsEl) tabsEl.innerHTML = renderSegmentTabsHtml();
   }
 
-  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문', CALLED: '호출 완료' };
+  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문' };
 
   // 주문 방식 관리(설정)에서 꺼둔 유형은 필터 목록에서도 숨긴다 — 받지도 않는 유형을 필터로 보여주는 건 혼란스럽다
   function getOrderTypeOptions() {
@@ -332,8 +324,28 @@
     const opts = [];
     if (settings.acceptReservationOrders) opts.push({ v: 'RESERVATION', label: ORDER_TYPE_LABELS.RESERVATION });
     if (settings.acceptSeatOrders) opts.push({ v: 'DELIVERY', label: ORDER_TYPE_LABELS.DELIVERY });
-    opts.push({ v: 'CALLED', label: ORDER_TYPE_LABELS.CALLED });
     return opts;
+  }
+
+  const CALLED_FILTER_OPTIONS = [
+    { v: 'ALL', label: '전체' },
+    { v: 'CALLED', label: '호출' },
+    { v: 'NOT_CALLED', label: '미호출' },
+  ];
+
+  // 대기 탭은 아직 호출 개념이 없으므로 배지 자체를 숨긴다
+  function calledFilterHtml() {
+    if (currentStatus() === 'WAITING') return '';
+    return '<div class="called-filter-seg" id="called-filter-seg">' +
+      CALLED_FILTER_OPTIONS.map(function (o) {
+        return '<button type="button" class="segment-tab-sm' + (calledFilter === o.v ? ' active' : '') + '" data-action="set-called-filter" data-called-filter="' + o.v + '">' + o.label + '</button>';
+      }).join('') +
+      '</div>';
+  }
+
+  function refreshCalledFilterBadge() {
+    const slot = root.querySelector('#called-filter-slot');
+    if (slot) slot.innerHTML = calledFilterHtml();
   }
 
   function filterBtnLabel() {
@@ -350,16 +362,16 @@
     btn.classList.toggle('active', menuFilters.length > 0 || orderTypeFilters.length > 0);
   }
 
+  // 호출번호 검색은 미수락/처리중/완료 탭을 넘나들며 유지된다 — 탭을 옮겨도 검색어를 지우지 않는다
   function switchTab(idx) {
     if (idx < 0 || idx >= tabs.length) return;
     currentIndex = idx;
     selectedIds = new Set();
-    searchQuery = '';
     menuFilters = [];
     orderTypeFilters = [];
-    const input = root.querySelector('#search-input');
-    if (input) input.value = '';
+    calledFilter = 'ALL';
     updateFilterBtnLabel();
+    refreshCalledFilterBadge();
     updateList();
   }
 
@@ -480,8 +492,8 @@
         title: '취소 사유를 입력해 주세요.',
         bodyHtml: bodyHtml,
         buttons: [
-          { label: '확인', variant: 'btn-primary', onClick: function () { if (!confirmDisabled) onConfirm(reasonValue); } },
-          { label: '취소', variant: 'btn-secondary' },
+          { label: '취소하기', variant: 'btn-primary', onClick: function () { if (!confirmDisabled) onConfirm(reasonValue); } },
+          { label: '닫기', variant: 'btn-secondary' },
         ],
       });
 
@@ -518,12 +530,12 @@
     switchTab(indexOfStatus('PROCESSING'));
   }
 
-  // 태블릿오더 + VAN 결제건은 실물 카드가 있어야 취소·반품이 가능해 이 화면에서 처리할 수 없다
+  // 키오스크 + VAN 결제건은 실물 카드가 있어야 취소·반품이 가능해 이 화면에서 처리할 수 없다
   function blockIfVanTabletPayment(order, proceed) {
     if (order && order.channel === 'TABLET' && order.paymentMethod === 'VAN') {
       window.UI.showModal({
         title: '실물 카드가 필요해요',
-        message: "결제 취소에 '실물 카드'가 필요해요. 태블릿오더에서 취소해 주세요.",
+        message: "결제 취소에 '실물 카드'가 필요해요. 키오스크에서 취소해 주세요.",
         buttons: [{ label: '확인', variant: 'btn-primary' }],
       });
       return;
@@ -596,15 +608,22 @@
     window.UI.confirmModal(
       '손님 연락처로 이동하시겠어요?',
       contact,
-      '이동하기',
+      isEmail ? '메일 보내기' : '전화 걸기',
       function () { window.location.href = (isEmail ? 'mailto:' : 'tel:') + contact; },
       { cancelLabel: '닫기' }
     );
   }
 
   function handleRevert(id) {
-    window.MockApi.revertOrder(id);
-    switchTab(indexOfStatus('PROCESSING'));
+    window.UI.confirmModal(
+      '정말 되돌릴까요?',
+      '처리중 상태로 되돌리면 완료 처리를 다시 해야 해요.',
+      '되돌리기',
+      function () {
+        window.MockApi.revertOrder(id);
+        switchTab(indexOfStatus('PROCESSING'));
+      }
+    );
   }
 
   function handleReturn(id) {
@@ -639,15 +658,33 @@
   function doBulkCall() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    window.MockApi.bulkAction(ids, 'call');
-    window.UI.toast('카카오 알림톡 발송: 픽업 안내 (' + ids.length + '건)');
-    selectedIds = new Set();
-    updateList();
+    window.UI.confirmModal(
+      '선택한 ' + ids.length + '건을 호출할까요?',
+      '선택한 주문의 손님에게 픽업 안내 알림을 보내요.',
+      '호출하기',
+      function () {
+        window.MockApi.bulkAction(ids, 'call');
+        window.UI.toast('카카오 알림톡 발송: 픽업 안내 (' + ids.length + '건)');
+        selectedIds = new Set();
+        updateList();
+      }
+    );
   }
 
   // ---------------- 설정 / 오프라인 ----------------
   function onSettingsClick() {
     window.Router.showScreen('settings');
+  }
+
+  // 목록을 수동으로 다시 불러온다 — 회전 애니메이션으로 새로고침이 실행됐다는 걸 보여준다
+  function handleRefresh(btn) {
+    if (btn) {
+      btn.classList.remove('spinning');
+      void btn.offsetWidth;
+      btn.classList.add('spinning');
+    }
+    updateList();
+    window.UI.toast('주문 목록을 새로고침했어요');
   }
 
   // 영업중 ⇄ 일시중지 2단 순환. 잠금 설정이 되어 있으면 비밀번호 확인 후 변경한다.
@@ -693,6 +730,7 @@
     const action = target.getAttribute('data-action');
     const id = target.getAttribute('data-id');
     if (action === 'open-settings') onSettingsClick();
+    else if (action === 'refresh-orders') handleRefresh(target);
     else if (action === 'toggle-operating-status') handleToggleOperatingStatus();
     else if (action === 'dismiss-auto-soldout') { autoSoldoutNames = []; refreshAutoSoldoutBanner(); }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
@@ -700,9 +738,8 @@
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
     else if (action === 'toggle-sort') toggleSort();
     else if (action === 'open-order-filter') openOrderFilterSheet();
-    else if (action === 'toggle-expand-all') toggleExpandAll();
-    else if (action === 'toggle-bucket-expand') toggleBucketExpand(target.getAttribute('data-bucket'));
-    else if (action === 'toggle-card-expand') toggleCardExpand(target.getAttribute('data-order-id'), target.getAttribute('data-bucket'));
+    else if (action === 'set-called-filter') { calledFilter = target.getAttribute('data-called-filter'); refreshCalledFilterBadge(); updateList(); }
+    else if (action === 'toggle-card-expand') toggleCardExpand(target.getAttribute('data-order-id'));
     else if (action === 'accept-order') handleAccept(id);
     else if (action === 'cancel-order') handleCancelOrder(id);
     else if (action === 'call-customer') handleCallCustomer(id);
@@ -753,13 +790,12 @@
 
     tabs = computeTabs();
     currentIndex = 0;
-    sortDir = 'asc';
+    sortDir = 'desc';
     searchQuery = '';
     menuFilters = [];
     orderTypeFilters = [];
+    calledFilter = 'ALL';
     selectedIds = new Set();
-    expandedAll = true;
-    bucketOverrides = {};
     cardOverrides = {};
     autoSoldoutNames = [];
     isOnline = navigator.onLine && !(window.DevTools && window.DevTools.isOffline());
@@ -774,7 +810,10 @@
       '<div class="topbar-side">' +
       '<button type="button" class="status-pill-btn" id="status-pill-btn" data-action="toggle-operating-status">' + window.UI.statusPillHtml(store.operatingStatus) + '</button>' +
       '</div>' +
-      '<div class="topbar-title">' + esc(store.name) + '</div>' +
+      '<div class="topbar-title">' +
+      '<span class="order-title-text">' + esc(store.name) + '</span>' +
+      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>' +
+      '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
       '</div>' +
@@ -788,19 +827,19 @@
       '<span>🔍</span>' +
       '<input type="text" inputmode="numeric" id="search-input" placeholder="호출번호로 검색" value="' + esc(searchQuery) + '" />' +
       '</div>' +
+      '<div class="sort-kitchen-col">' +
       '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
+      '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
+      '</div>' +
       '</div>' +
       '<div class="toolbar-row">' +
-      '<div style="display:flex; gap:8px;">' +
       '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length) ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
-      '<button type="button" class="pill-btn" id="expand-all-toggle" data-action="toggle-expand-all">' + (expandedAll ? '간단히 보기' : '펼쳐보기') + '</button>' +
-      '</div>' +
+      '<div id="called-filter-slot">' + calledFilterHtml() + '</div>' +
       '</div>' +
       '</div>' +
       '<div class="screen-scroll" id="order-scroll">' +
       '<div class="order-list" id="order-list-wrap">' + renderGroupsHtml(groups, orders, disabled) + '</div>' +
       '</div>' +
-      '<button type="button" class="kitchen-fab" id="kitchen-fab" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '<div id="bulk-bar-slot">' + renderBulkBarHtml(disabled) + '</div>';
   }
 

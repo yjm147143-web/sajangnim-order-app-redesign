@@ -82,6 +82,12 @@
 .settings-list-item:active { background: var(--color-divider); }
 .settings-list-item .icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
 .settings-list-item .label { flex: 1; font-size: var(--font-size-body); font-weight: 600; }
+/* 토글이 딸린 설정 행 — label-group이 flex:1이 아니라서, 토글이 우측 끝에 붙도록 space-between으로 고정한다 */
+.settings-list-item.no-toggle-click { cursor: default; flex-wrap: wrap; row-gap: 8px; justify-content: space-between; }
+.settings-list-item.no-toggle-click:active { background: transparent; }
+.settings-list-item .label-group { display: flex; flex-direction: column; gap: 4px; flex: 0 1 auto; min-width: 0; }
+.settings-list-item .label-group .label { flex: none; }
+.settings-list-item .label-sub { font-size: var(--font-size-caption); color: var(--color-text-secondary); font-weight: 500; }
 
 .summary-card {
   background: var(--color-white);

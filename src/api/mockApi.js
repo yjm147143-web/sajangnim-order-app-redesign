@@ -93,6 +93,8 @@
     const store = findStore(storeId);
     if (opts.enabled != null) store.notificationEnabled = opts.enabled;
     if (opts.volume != null) store.notificationVolume = opts.volume;
+    if (opts.soundType != null) store.notificationSoundType = opts.soundType;
+    if (opts.repeatCount != null) store.notificationRepeatCount = opts.repeatCount;
     persist();
     return store;
   }
@@ -128,6 +130,7 @@
       operatingHoursEnd: store.operatingHoursEnd || '21:00',
       reservationCustomStart: store.reservationCustomStart || '09:00',
       reservationCustomEnd: store.reservationCustomEnd || '21:00',
+      seatInputPlaceholder: store.seatInputPlaceholder || '',
     };
   }
 
@@ -141,6 +144,7 @@
     if (opts.operatingHoursEnd != null) store.operatingHoursEnd = opts.operatingHoursEnd;
     if (opts.reservationCustomStart != null) store.reservationCustomStart = opts.reservationCustomStart;
     if (opts.reservationCustomEnd != null) store.reservationCustomEnd = opts.reservationCustomEnd;
+    if (opts.seatInputPlaceholder != null) store.seatInputPlaceholder = opts.seatInputPlaceholder;
     persist();
     return getOrderChannelSettings(storeId);
   }
@@ -171,6 +175,7 @@
       hasHelper: !!store.cookHasHelper,
       helperCount: store.cookHelperCount != null ? store.cookHelperCount : 1,
       bufferMinutes: store.cookBufferMinutes != null ? store.cookBufferMinutes : 2,
+      maxEstimateMinutes: store.cookMaxEstimateMinutes != null ? store.cookMaxEstimateMinutes : 60,
     };
   }
 
@@ -184,6 +189,7 @@
     if (payload.hasHelper !== undefined) store.cookHasHelper = payload.hasHelper;
     if (payload.helperCount !== undefined) store.cookHelperCount = payload.helperCount;
     if (payload.bufferMinutes !== undefined) store.cookBufferMinutes = payload.bufferMinutes;
+    if (payload.maxEstimateMinutes !== undefined) store.cookMaxEstimateMinutes = payload.maxEstimateMinutes;
     persist();
     return getCustomerGuideSettings(storeId);
   }
@@ -465,6 +471,8 @@
         return opts.orderTypeFilters.some(function (t) { return matchesOrderType(o, t); });
       });
     }
+    if (opts.calledFilter === 'CALLED') list = list.filter(function (o) { return !!o.called; });
+    else if (opts.calledFilter === 'NOT_CALLED') list = list.filter(function (o) { return !o.called; });
     if (opts.search) {
       const q = opts.search.trim();
       list = list.filter(function (o) { return o.pickupNo.indexOf(q) !== -1; });
@@ -507,8 +515,9 @@
     o.cancelReason = reason;
     o.cancelType = 'CANCEL';
     o.doneAt = new Date().toISOString();
+    o.cancelledAt = o.doneAt;
     persist();
-    return { order: o, notification: '주문 취소' };
+    return { order: o, notification: '주문 거절' };
   }
 
   function callCustomer(id) {
@@ -535,6 +544,7 @@
     o.cancelReason = reason;
     o.cancelType = 'PAYMENT_CANCEL';
     o.doneAt = new Date().toISOString();
+    o.cancelledAt = o.doneAt;
     persist();
     return { order: o, notification: '결제 취소' };
   }
@@ -545,6 +555,7 @@
     o.canceled = false;
     o.cancelReason = null;
     o.cancelType = null;
+    o.cancelledAt = null;
     persist();
     return { order: o };
   }
@@ -554,6 +565,7 @@
     o.canceled = true;
     o.cancelReason = reason;
     o.cancelType = 'RETURN';
+    o.cancelledAt = new Date().toISOString();
     persist();
     return { order: o, notification: '결제 취소' };
   }
@@ -603,7 +615,7 @@
     days.forEach(function (d) { sums.QR += d.byChannel.QR; sums.TABLET += d.byChannel.TABLET; sums.CASH += d.byChannel.CASH; });
     return [
       { name: 'QR오더', amount: sums.QR },
-      { name: '태블릿오더', amount: sums.TABLET },
+      { name: '키오스크', amount: sums.TABLET },
       { name: '현금', amount: sums.CASH },
     ];
   }
@@ -813,7 +825,7 @@
       tablet += orders.filter(function (o) { return o.channel === 'TABLET'; }).reduce(function (sum, o) { return sum + o.amount; }, 0);
       if (!orders.length && s.todaySalesAmount) { qr += Math.round(s.todaySalesAmount * 0.65); tablet += Math.round(s.todaySalesAmount * 0.35); }
     });
-    return [{ name: 'QR오더', amount: qr }, { name: '태블릿오더', amount: tablet }];
+    return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }];
   }
 
   function getEventSalesByMenu(eventId) {

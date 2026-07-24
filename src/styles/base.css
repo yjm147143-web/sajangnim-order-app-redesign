@@ -50,6 +50,12 @@ body {
   background: var(--color-bg);
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(30,29,43,0.05), 0 30px 70px -12px rgba(124,47,240,0.28), 0 18px 40px -10px rgba(92,130,232,0.18);
+  transition: box-shadow .2s ease;
+}
+
+/* 네트워크 단절 상태(실제 오프라인 또는 개발자 도구 시뮬레이션)임을 화면 테두리로 강조한다 */
+.device-frame.network-offline {
+  box-shadow: inset 0 0 0 4px var(--color-accent-red), 0 0 0 1px rgba(30,29,43,0.05), 0 30px 70px -12px rgba(124,47,240,0.28), 0 18px 40px -10px rgba(92,130,232,0.18);
 }
 
 @media (min-width: 480px) {
@@ -59,6 +65,9 @@ body {
   .device-frame {
     border-radius: 44px;
     border: 8px solid var(--color-wordmark);
+  }
+  .device-frame.network-offline {
+    border-color: var(--color-accent-red);
   }
 }
 

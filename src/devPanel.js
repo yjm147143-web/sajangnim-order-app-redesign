@@ -124,7 +124,7 @@
     return (
       '<div class="dp-subsection">' +
         '<div class="dp-subsection-title">주문 유형 설정하기</div>' +
-        pillGroupHtml('주문 채널', [{ v: 'QR', label: 'QR오더' }, { v: 'TABLET', label: '태블릿오더' }], devChannel, 'dp-set-channel') +
+        pillGroupHtml('주문 채널', [{ v: 'QR', label: 'QR오더' }, { v: 'TABLET', label: '키오스크' }], devChannel, 'dp-set-channel') +
         pillGroupHtml('주문 방식', [{ v: 'PICKUP', label: '호출번호' }, { v: 'SEAT', label: '자리번호' }], devIdentifierType, 'dp-set-identifier',
           channelSettings.acceptSeatOrders ? [] : ['SEAT']) +
         pillGroupHtml('연락처', [{ v: 'PHONE', label: '핸드폰 번호' }, { v: 'EMAIL', label: '이메일' }], devContactType, 'dp-set-contact') +

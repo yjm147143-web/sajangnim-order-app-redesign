@@ -17,6 +17,7 @@
       '<style>' +
         '.qr-section-pad{padding:0 20px;}' +
         '.qr-download-wrap{padding:0 20px 32px;}' +
+        '.link-row-text a{color:var(--color-accent-blue);text-decoration:underline;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="qr-back">←</button></div>' +
@@ -35,7 +36,7 @@
       '<div class="section-caption">손님이 QR을 스캔하면 메뉴판 페이지로 연결돼요</div>' +
       '<div class="qr-section-pad">' +
         '<div class="link-row">' +
-          '<div class="link-row-text">' + esc(info.url) + '</div>' +
+          '<div class="link-row-text"><a href="' + esc(info.url) + '" target="_blank" rel="noopener">' + esc(info.url) + '</a></div>' +
           '<button type="button" class="btn btn-secondary btn-sm" id="copy-link-btn">링크 복사</button>' +
         '</div>' +
       '</div>' +

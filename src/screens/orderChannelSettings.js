@@ -7,6 +7,8 @@
  *   '운영 시간'이라는 개념이 앱 전체에 따로 없어, 이 화면에서 처음 정의한다.
  */
 (function () {
+  function esc(s) { return window.UI.escapeHtml(s); }
+
   function currentStoreId() {
     var user = window.MockApi.getCurrentUser();
     return user && user.storeId;
@@ -45,7 +47,7 @@
       '<div class="ocs-subsection' + (on ? '' : ' ocs-subsection-disabled') + '">' +
         '<div class="ocs-subsection-title">예약 접수 시간</div>' +
         '<div class="choice-pair" id="ocs-hours-mode">' +
-          '<button type="button" class="' + (isOperating ? 'on' : '') + '" data-hours-mode="OPERATING"' + dAttr + '>운영 시간과 동일하게 할게요</button>' +
+          '<button type="button" class="' + (isOperating ? 'on' : '') + '" data-hours-mode="OPERATING"' + dAttr + '>운영 시간과 동일해요</button>' +
           '<button type="button" class="' + (!isOperating ? 'on' : '') + '" data-hours-mode="CUSTOM"' + dAttr + '>직접 설정</button>' +
         '</div>' +
         (isOperating
@@ -54,6 +56,19 @@
           : timeRangeHtml('ocs-custom', settings.reservationCustomStart, settings.reservationCustomEnd, !on) +
             '<div class="ocs-time-hint">이 시간 동안만 예약 주문을 받아요</div>'
         ) +
+      '</div>'
+    );
+  }
+
+  // 배달 주문 OFF여도 영역을 유지해 아래 항목 위치가 바뀌지 않게 한다. 포장(호출번호) 방식에는
+  // 자리 개념이 없어 자연스럽게 비활성화되고, 손님 화면에 노출되지 않는다.
+  function seatInputHtml(settings) {
+    var on = !!settings.acceptSeatOrders;
+    return (
+      '<div class="ocs-subsection' + (on ? '' : ' ocs-subsection-disabled') + '">' +
+        '<div class="ocs-subsection-title">자리 입력란 예시 문구</div>' +
+        '<input type="text" class="ocs-seat-input" id="ocs-seat-placeholder" placeholder="예: 테이블 번호를 입력해주세요" value="' + esc(settings.seatInputPlaceholder) + '"' + (on ? '' : ' disabled') + ' />' +
+        '<div class="ocs-time-hint">손님이 자리번호를 입력하는 화면에 예시로 보여드려요</div>' +
       '</div>'
     );
   }
@@ -68,9 +83,10 @@
       rowHtml('🛎️', 'ocs-seat-toggle', '배달 주문',
         settings.acceptSeatOrders ? '켜면 자리번호 주문도 함께 들어와요' : '꺼져 있으면 호출번호 주문만 들어와요',
         settings.acceptSeatOrders) +
+      seatInputHtml(settings) +
       '<div class="divider-line"></div>' +
       rowHtml('💬', 'ocs-note-toggle', '손님 요청사항',
-        settings.acceptCustomerNotes ? '주문 시 손님 요청사항을 받고 있어요' : '손님 요청사항을 받지 않아요',
+        settings.acceptCustomerNotes ? '주문 시 손님 요청사항을 받을게요' : '손님 요청사항을 받지 않아요',
         settings.acceptCustomerNotes)
     );
   }
@@ -78,11 +94,6 @@
   function render() {
     return (
       '<style>' +
-        '.settings-list-item.no-toggle-click{cursor:default;flex-wrap:wrap;row-gap:8px;}' +
-        '.settings-list-item.no-toggle-click:active{background:transparent;}' +
-        '.settings-list-item .label-group{display:flex;flex-direction:column;gap:4px;flex:0 1 auto;min-width:0;}' +
-        '.settings-list-item .label-group .label{flex:none;}' +
-        '.settings-list-item .label-sub{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:500;}' +
         '.ocs-subsection{padding:0 var(--space-5) var(--space-4);}' +
         '.ocs-subsection-disabled{opacity:0.45;pointer-events:none;}' +
         '.screen-scroll{padding-bottom:88px;}' +
@@ -96,6 +107,8 @@
           'padding:0 10px;font-size:var(--font-size-body);font-weight:700;color:var(--color-text-primary);}' +
         '.ocs-time-sep{color:var(--color-text-secondary);flex-shrink:0;}' +
         '.ocs-time-hint{font-size:var(--font-size-micro);color:var(--color-text-secondary);margin-top:8px;}' +
+        '.ocs-seat-input{width:100%;height:44px;border:1.5px solid var(--color-disabled);border-radius:var(--radius-button);' +
+          'padding:0 12px;font-size:var(--font-size-body);font-weight:600;color:var(--color-text-primary);}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="ocs-back" aria-label="뒤로가기">←</button></div>' +
@@ -151,7 +164,7 @@
             }
             if (mode === 'OPERATING') {
               window.UI.showModal({
-                title: '운영 시간과 동일하게 할게요',
+                title: '운영 시간과 동일해요',
                 message: '사장님사이트에서 설정한 시간으로 자동 설정돼요.',
                 buttons: [{ label: '확인', variant: 'btn-primary', onClick: apply }],
               });
@@ -172,6 +185,13 @@
             });
             window.UI.toast('운영 시간을 저장했어요');
           });
+        });
+      }
+      var seatInput = root.querySelector('#ocs-seat-placeholder');
+      if (seatInput) {
+        seatInput.addEventListener('change', function () {
+          window.MockApi.updateOrderChannelSettings(storeId, { seatInputPlaceholder: seatInput.value });
+          window.UI.toast('자리 입력란 예시 문구를 저장했어요');
         });
       }
       var cuStart = root.querySelector('#ocs-custom-start');
