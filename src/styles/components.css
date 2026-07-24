@@ -555,6 +555,10 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .option-seg-btn.tone-gray.active { background: var(--color-text-secondary); color: var(--color-white); }
 .option-name-input.input-field { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 6px; font-size: 12px; }
 .option-price-input.input-field { flex: 0 1 56px; min-width: 0; height: 36px; padding: 0 4px; font-size: 12px; text-align: right; }
+/* 자주 쓰는 옵션을 이름/선택방식/필수여부가 채워진 채로 바로 만들어주는 프리셋 칩 */
+.option-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: var(--space-3); }
+.option-preset-chip { border: none; border-radius: var(--radius-pill); padding: 9px 14px; font-size: var(--font-size-caption); font-weight: 700; cursor: pointer; background: var(--color-accent-purple-bg); color: var(--color-accent-purple); }
+.option-preset-chip.ghost { background: var(--color-divider); color: var(--color-text-secondary); }
 
 /* ---------- Misc ---------- */
 .link-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); background: var(--color-divider); border-radius: var(--radius-card); }

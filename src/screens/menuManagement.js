@@ -89,17 +89,13 @@
   function optionGroupCardHtml(g) {
     var usage = window.MockApi.getOptionGroupUsageCount(g.id);
     var optionsHtml = (g.options || []).map(function (o, oi) {
-      var soldOut = !!o.soldOut;
-      var hidden = o.exposed === false;
+      var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
       return (
         '<div class="option-row">' +
           '<div class="option-seg-pair">' +
-            '<button type="button" class="option-seg-btn' + (!soldOut ? ' active' : '') + '" data-action="lib-set-option-status" data-value="available" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">판매</button>' +
-            '<button type="button" class="option-seg-btn tone-red' + (soldOut ? ' active' : '') + '" data-action="lib-set-option-status" data-value="soldout" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">품절</button>' +
-          '</div>' +
-          '<div class="option-seg-pair">' +
-            '<button type="button" class="option-seg-btn' + (!hidden ? ' active' : '') + '" data-action="lib-set-option-visibility" data-value="visible" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">노출</button>' +
-            '<button type="button" class="option-seg-btn tone-gray' + (hidden ? ' active' : '') + '" data-action="lib-set-option-visibility" data-value="hidden" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">숨김</button>' +
+            '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="available" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">판매중</button>' +
+            '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="soldout" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">품절</button>' +
+            '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="lib-set-option-tri" data-value="hidden" data-group-id="' + g.id + '" data-opt-idx="' + oi + '">숨김</button>' +
           '</div>' +
           '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="lib-opt-name" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
           '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="lib-opt-price" data-group-id="' + g.id + '" data-opt-idx="' + oi + '" />' +
@@ -218,8 +214,7 @@
         var reqLibBtn = e.target.closest('[data-action="lib-toggle-required"]');
         var singleLibBtn = e.target.closest('[data-action="lib-set-select-single"]');
         var multiLibBtn = e.target.closest('[data-action="lib-set-select-multi"]');
-        var statusLibBtn = e.target.closest('[data-action="lib-set-option-status"]');
-        var visLibBtn = e.target.closest('[data-action="lib-set-option-visibility"]');
+        var triLibBtn = e.target.closest('[data-action="lib-set-option-tri"]');
         var removeOptLibBtn = e.target.closest('[data-action="lib-remove-option"]');
 
         if (addGroupLibBtn) {
@@ -254,13 +249,10 @@
           refresh();
           return;
         }
-        if (statusLibBtn) {
-          window.MockApi.updateOptionGroupOption(statusLibBtn.getAttribute('data-group-id'), Number(statusLibBtn.getAttribute('data-opt-idx')), { soldOut: statusLibBtn.getAttribute('data-value') === 'soldout' });
-          refresh();
-          return;
-        }
-        if (visLibBtn) {
-          window.MockApi.updateOptionGroupOption(visLibBtn.getAttribute('data-group-id'), Number(visLibBtn.getAttribute('data-opt-idx')), { exposed: visLibBtn.getAttribute('data-value') !== 'hidden' });
+        if (triLibBtn) {
+          var triLibVal = triLibBtn.getAttribute('data-value');
+          var triLibPayload = triLibVal === 'available' ? { soldOut: false, exposed: true } : triLibVal === 'soldout' ? { soldOut: true, exposed: true } : { exposed: false };
+          window.MockApi.updateOptionGroupOption(triLibBtn.getAttribute('data-group-id'), Number(triLibBtn.getAttribute('data-opt-idx')), triLibPayload);
           refresh();
           return;
         }
@@ -427,17 +419,13 @@
     }
     return state.optionGroups.map(function (g, gi) {
       var optionsHtml = (g.options || []).map(function (o, oi) {
-        var soldOut = !!o.soldOut;
-        var hidden = o.exposed === false;
+        var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
         return (
           '<div class="option-row">' +
             '<div class="option-seg-pair">' +
-              '<button type="button" class="option-seg-btn' + (!soldOut ? ' active' : '') + '" data-action="set-option-status" data-value="available" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">판매</button>' +
-              '<button type="button" class="option-seg-btn tone-red' + (soldOut ? ' active' : '') + '" data-action="set-option-status" data-value="soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">품절</button>' +
-            '</div>' +
-            '<div class="option-seg-pair">' +
-              '<button type="button" class="option-seg-btn' + (!hidden ? ' active' : '') + '" data-action="set-option-visibility" data-value="visible" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">노출</button>' +
-              '<button type="button" class="option-seg-btn tone-gray' + (hidden ? ' active' : '') + '" data-action="set-option-visibility" data-value="hidden" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">숨김</button>' +
+              '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="set-option-tri" data-value="available" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">판매중</button>' +
+              '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="set-option-tri" data-value="soldout" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">품절</button>' +
+              '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="set-option-tri" data-value="hidden" data-group-idx="' + gi + '" data-opt-idx="' + oi + '">숨김</button>' +
             '</div>' +
             '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="opt-name" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
             '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="opt-price" data-group-idx="' + gi + '" data-opt-idx="' + oi + '" />' +
@@ -818,8 +806,12 @@
               '<div class="option-groups-subtitle">기존 옵션 그룹에서 선택</div>' +
               '<div id="existing-group-chips">' + existingGroupChipsHtml(state.storeId, state) + '</div>' +
               '<div class="option-groups-subtitle">새 옵션 그룹 만들기</div>' +
+              '<div class="option-preset-row">' +
+                '<button type="button" class="option-preset-chip" data-action="add-preset-group" data-preset="size">+ 사이즈</button>' +
+                '<button type="button" class="option-preset-chip" data-action="add-preset-group" data-preset="topping">+ 토핑</button>' +
+                '<button type="button" class="option-preset-chip ghost" data-action="add-group">+ 직접 만들기</button>' +
+              '</div>' +
               '<div id="option-groups-list">' + renderOptionGroupsList(state) + '</div>' +
-              '<button type="button" class="btn btn-outline btn-sm" data-action="add-group">+ 옵션 그룹 추가</button>' +
             '</div>' +
           '</div>' +
 
@@ -1039,6 +1031,18 @@
         renderGroupsList();
         return;
       }
+      var presetBtn = e.target.closest('[data-action="add-preset-group"]');
+      if (presetBtn) {
+        // 자주 쓰는 옵션은 이름/선택방식/필수여부가 채워진 채로 바로 만들어, 손님이 빈 칸부터 채우지 않아도 되게 한다
+        var presetDefs = {
+          size: { name: '사이즈', required: true, multiSelect: false },
+          topping: { name: '토핑', required: false, multiSelect: true },
+        };
+        var preset = presetDefs[presetBtn.getAttribute('data-preset')];
+        state.optionGroups.push(Object.assign({ id: 'og-' + Date.now() + Math.random().toString(36).slice(2, 6), options: [] }, preset));
+        renderGroupsList();
+        return;
+      }
       var removeGroupBtn = e.target.closest('[data-action="remove-group"]');
       if (removeGroupBtn) {
         state.optionGroups.splice(Number(removeGroupBtn.getAttribute('data-group-idx')), 1);
@@ -1079,19 +1083,15 @@
         renderGroupsList();
         return;
       }
-      var statusBtn = e.target.closest('[data-action="set-option-status"]');
-      if (statusBtn) {
-        var giSt = Number(statusBtn.getAttribute('data-group-idx'));
-        var oiSt = Number(statusBtn.getAttribute('data-opt-idx'));
-        state.optionGroups[giSt].options[oiSt].soldOut = statusBtn.getAttribute('data-value') === 'soldout';
-        renderGroupsList();
-        return;
-      }
-      var visBtn = e.target.closest('[data-action="set-option-visibility"]');
-      if (visBtn) {
-        var giVis = Number(visBtn.getAttribute('data-group-idx'));
-        var oiVis = Number(visBtn.getAttribute('data-opt-idx'));
-        state.optionGroups[giVis].options[oiVis].exposed = visBtn.getAttribute('data-value') !== 'hidden';
+      var triBtn = e.target.closest('[data-action="set-option-tri"]');
+      if (triBtn) {
+        var giTri = Number(triBtn.getAttribute('data-group-idx'));
+        var oiTri = Number(triBtn.getAttribute('data-opt-idx'));
+        var triVal = triBtn.getAttribute('data-value');
+        var triOpt = state.optionGroups[giTri].options[oiTri];
+        if (triVal === 'available') { triOpt.soldOut = false; triOpt.exposed = true; }
+        else if (triVal === 'soldout') { triOpt.soldOut = true; triOpt.exposed = true; }
+        else { triOpt.exposed = false; }
         renderGroupsList();
         return;
       }
