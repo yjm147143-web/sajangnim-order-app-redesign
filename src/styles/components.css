@@ -517,8 +517,9 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .menu-preview-soldout::after { content: '품절'; position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--font-size-title); }
 
 /* ---------- Menu List Row ---------- */
-.menu-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); cursor: pointer; }
+.menu-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); cursor: pointer; background: var(--color-white); }
 .menu-row:active { background: var(--color-divider); }
+.menu-row.dragging { position: relative; z-index: 10; box-shadow: 0 6px 16px rgba(30,29,43,0.18); border-radius: var(--radius-card); }
 .menu-row-thumb { width: 52px; height: 52px; border-radius: 10px; background: var(--color-divider); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 .menu-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .menu-row-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -526,7 +527,10 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .menu-row-sub { font-size: var(--font-size-caption); color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-row-price { font-size: var(--font-size-caption); font-weight: 700; }
 .menu-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-.menu-row-order-btns { display: flex; flex-direction: column; gap: 2px; }
+.menu-row-drag { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; touch-action: none; cursor: grab; }
+.menu-row-drag:active { cursor: grabbing; }
+.menu-row-drag-handle { font-size: 18px; line-height: 1; color: var(--color-text-secondary); }
+.menu-row-order-num { font-size: 11px; font-weight: 800; color: var(--color-text-secondary); background: var(--color-divider); border-radius: 999px; min-width: 18px; height: 18px; padding: 0 4px; display: flex; align-items: center; justify-content: center; }
 
 /* ---------- Option Group Editor (메뉴 관리 화면의 '메뉴 추가' 폼과 '옵션 목록' 탭이 함께 쓴다) ---------- */
 .option-group-card { border: 1px solid var(--color-divider); border-radius: var(--radius-card); padding: var(--space-4); margin-bottom: var(--space-3); }

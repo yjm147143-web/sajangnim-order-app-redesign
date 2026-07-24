@@ -40,15 +40,15 @@
     return html;
   }
 
-  function menuRowHtml(item, categories, isSpecific) {
+  function menuRowHtml(item, categories, isSpecific, orderNum) {
     var cat = categories.find(function (c) { return c.id === item.categoryId; });
     var catName = cat ? cat.name : (item.categoryName || '미분류');
     return (
       '<div class="menu-row" data-menu-id="' + item.id + '">' +
         (isSpecific ?
-          '<div class="menu-row-order-btns">' +
-            '<button type="button" class="icon-btn-sm" data-action="move-up" data-menu-id="' + item.id + '">▲</button>' +
-            '<button type="button" class="icon-btn-sm" data-action="move-down" data-menu-id="' + item.id + '">▼</button>' +
+          '<div class="menu-row-drag">' +
+            '<span class="menu-row-drag-handle">⠿</span>' +
+            '<span class="menu-row-order-num">' + orderNum + '</span>' +
           '</div>' : ''
         ) +
         '<div class="menu-row-thumb">' + (item.imageUrl ? '<img src="' + esc(item.imageUrl) + '" alt="" />' : '🍽️') + '</div>' +
@@ -81,7 +81,7 @@
     if (!items.length) {
       return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>등록된 메뉴가 없어요</div></div>';
     }
-    return '<div class="menu-list">' + items.map(function (item) { return menuRowHtml(item, categories, isSpecific); }).join('') + '</div>';
+    return '<div class="menu-list">' + items.map(function (item, idx) { return menuRowHtml(item, categories, isSpecific, idx + 1); }).join('') + '</div>';
   }
 
   // 옵션 목록 탭 — 매장에 등록된 옵션 그룹을 직접 편집한다 (메뉴 추가 폼과 달리 저장 버튼 없이 즉시 반영됨)
@@ -170,6 +170,67 @@
     var selectedCategoryId = null; // null = 전체
     var activeMainTab = 'menu'; // 'menu' | 'option'
 
+    // 메뉴명 옆 ⠿ 손잡이를 눌러 드래그하면 노출 순서가 바뀐다(포인터 이동량만큼 translateY로 따라오다가,
+    // 위/아래 형제 카드의 중간 지점을 넘으면 그 카드와 자리를 맞바꾼다). 손을 떼면 최종 DOM 순서를 그대로 저장한다.
+    function bindMenuDrag(wrap) {
+      var list = wrap.querySelector('.menu-list');
+      if (!list) return;
+      wrap.querySelectorAll('.menu-row-drag-handle').forEach(function (handle) {
+        handle.addEventListener('click', function (e) { e.stopPropagation(); });
+        handle.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var row = handle.closest('.menu-row');
+          if (!row) return;
+          handle.setPointerCapture(e.pointerId);
+          row.classList.add('dragging');
+          var refY = e.clientY;
+
+          function onMove(ev) {
+            var dy = ev.clientY - refY;
+            row.style.transform = 'translateY(' + dy + 'px)';
+            var rowRect = row.getBoundingClientRect();
+            var centerY = rowRect.top + rowRect.height / 2;
+
+            var next = row.nextElementSibling;
+            while (next && next.classList.contains('menu-row')) {
+              var nextRect = next.getBoundingClientRect();
+              if (centerY > nextRect.top + nextRect.height / 2) {
+                list.insertBefore(next, row);
+                refY += nextRect.height;
+                next = row.nextElementSibling;
+              } else break;
+            }
+            var prev = row.previousElementSibling;
+            while (prev && prev.classList.contains('menu-row')) {
+              var prevRect = prev.getBoundingClientRect();
+              if (centerY < prevRect.top + prevRect.height / 2) {
+                list.insertBefore(row, prev);
+                refY -= prevRect.height;
+                prev = row.previousElementSibling;
+              } else break;
+            }
+          }
+
+          function onUp(ev) {
+            handle.releasePointerCapture(ev.pointerId);
+            handle.removeEventListener('pointermove', onMove);
+            handle.removeEventListener('pointerup', onUp);
+            handle.removeEventListener('pointercancel', onUp);
+            row.classList.remove('dragging');
+            row.style.transform = '';
+            var orderedIds = Array.prototype.map.call(list.querySelectorAll('.menu-row'), function (r) { return r.getAttribute('data-menu-id'); });
+            window.MockApi.reorderMenuItems(orderedIds);
+            refresh();
+          }
+
+          handle.addEventListener('pointermove', onMove);
+          handle.addEventListener('pointerup', onUp);
+          handle.addEventListener('pointercancel', onUp);
+        });
+      });
+    }
+
     function refresh() {
       root.querySelectorAll('[data-main-tab]').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-main-tab') === activeMainTab);
@@ -182,6 +243,7 @@
         var isSpecific = selectedCategoryId !== null;
         var items = window.MockApi.getMenuItems(storeId, isSpecific ? selectedCategoryId : undefined);
         wrap.innerHTML = tabsHtml(categories, selectedCategoryId) + listBodyHtml(items, categories, isSpecific);
+        if (isSpecific) bindMenuDrag(wrap);
       } else {
         wrap.innerHTML = optionLibraryHtml(window.MockApi.getOptionGroups(storeId));
       }
@@ -274,14 +336,6 @@
         var next = !item.soldOut;
         window.MockApi.toggleSoldOut(tid, next);
         window.UI.toast(next ? '품절 처리했어요' : '판매중으로 변경했어요');
-        refresh();
-        return;
-      }
-      var moveBtn = e.target.closest('[data-action="move-up"],[data-action="move-down"]');
-      if (moveBtn) {
-        var mid = moveBtn.getAttribute('data-menu-id');
-        var dir = moveBtn.getAttribute('data-action') === 'move-up' ? 'up' : 'down';
-        window.MockApi.moveMenuItem(mid, dir);
         refresh();
         return;
       }

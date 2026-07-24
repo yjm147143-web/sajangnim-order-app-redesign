@@ -355,16 +355,13 @@
     return item;
   }
 
-  function moveMenuItem(id, direction) {
-    const item = getMenuItem(id);
-    const siblings = getMenuItems(item.storeId, item.categoryId);
-    const idx = siblings.findIndex(function (m) { return m.id === id; });
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= siblings.length) return item;
-    const other = siblings[swapIdx];
-    const tmp = item.sortOrder; item.sortOrder = other.sortOrder; other.sortOrder = tmp;
+  // 드래그로 재배열한 최종 순서(orderedIds)를 그대로 sortOrder(0,1,2...)에 반영한다.
+  function reorderMenuItems(orderedIds) {
+    orderedIds.forEach(function (id, idx) {
+      const item = getMenuItem(id);
+      if (item) item.sortOrder = idx;
+    });
     persist();
-    return item;
   }
 
   // ---------------- Orders ----------------
@@ -950,7 +947,8 @@
     updatePermissionLockScopes: updatePermissionLockScopes,
     clearPermissionLockPassword: clearPermissionLockPassword, verifyPermissionLockPassword: verifyPermissionLockPassword,
     getCategories: getCategories, getMenuItems: getMenuItems, getMenuItem: getMenuItem,
-    addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut, moveMenuItem: moveMenuItem,
+    addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut,
+    reorderMenuItems: reorderMenuItems,
     getOptionGroups: getOptionGroups, getOptionGroup: getOptionGroup, getOptionGroupsByIds: getOptionGroupsByIds,
     getOptionGroupUsageCount: getOptionGroupUsageCount, addOptionGroup: addOptionGroup, updateOptionGroup: updateOptionGroup,
     deleteOptionGroup: deleteOptionGroup, addOptionGroupOption: addOptionGroupOption,
