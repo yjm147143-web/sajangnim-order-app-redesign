@@ -68,8 +68,7 @@
   }
 
   function mount(root) {
-    var user = window.MockApi.getCurrentUser();
-    var storeId = user.storeId;
+    var storeId = window.MockApi.getContextStoreId();
     var settings = window.MockApi.getMinOrderSettings(storeId);
     var brandControlled = !!settings.brandControlled;
     var state = { enabled: settings.enabled, amount: settings.amount };

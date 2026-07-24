@@ -26,8 +26,7 @@
       'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin:0 var(--space-5) var(--space-2);}';
 
   function currentStoreId() {
-    var user = window.MockApi.getCurrentUser();
-    return user && user.storeId;
+    return window.MockApi.getContextStoreId();
   }
 
   function scopesSummary(scopes) {

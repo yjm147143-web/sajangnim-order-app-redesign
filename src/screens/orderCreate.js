@@ -10,8 +10,7 @@
   const money = window.UI.formatMoney;
 
   function currentStoreId() {
-    const user = window.MockApi.getCurrentUser();
-    return user && user.storeId;
+    return window.MockApi.getContextStoreId();
   }
 
   function contactUrlFor(orderId) {

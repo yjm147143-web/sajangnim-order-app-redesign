@@ -55,6 +55,7 @@
           '</div>' +
         '</div>' +
         window.UI.statusPillHtml(s.operatingStatus) +
+        '<button type="button" class="store-settings-btn" data-action="open-store-settings" data-store-id="' + s.id + '" aria-label="' + esc(s.name) + ' 설정">⚙️</button>' +
       '</div>'
     );
   }
@@ -76,6 +77,8 @@
   }
 
   function render(params) {
+    // 행사 홈으로 돌아왔다는 건 특정 매장 설정을 다 보고 나왔다는 뜻이므로, 다음에 헷갈리지 않도록 초기화한다
+    window.MockApi.clearActingStoreId();
     const eventId = params.eventId;
     const event = window.MockApi.getEvent(eventId);
     const summary = window.MockApi.getEventDashboardSummary(eventId);
@@ -104,6 +107,7 @@
         '.network-badge.online{color:var(--color-accent-green);}' +
         '.network-badge.offline{color:var(--color-accent-red);}' +
         '.card-flat{padding:0;overflow:hidden;}' +
+        '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
       '</style>' +
       '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">' + esc(event.name) + '</div><div class="topbar-side"></div></div>' +
       '<div class="section-caption">' + formatDateRange(event.startDate, event.endDate) + ' · ' + esc(event.managerName || '') + ' 담당</div>' +
@@ -176,6 +180,14 @@
         const id = cb.getAttribute('data-store-id');
         if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
         refreshCtrlPanel();
+      });
+    });
+
+    // 매장 하나를 골라 그 매장인 것처럼 설정 화면으로 들어간다 — 뒤로가기를 반복하면 이 홈으로 돌아온다
+    root.querySelectorAll('[data-action="open-store-settings"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        window.MockApi.setActingStoreId(btn.getAttribute('data-store-id'));
+        window.Router.showScreen('settings', {});
       });
     });
 

@@ -13,8 +13,7 @@
   function money(n) { return window.UI.formatMoney(n); }
 
   function currentStoreId() {
-    var user = window.MockApi.getCurrentUser();
-    return user && user.storeId;
+    return window.MockApi.getContextStoreId();
   }
 
   // 세션 한정(새로고침 시 소실) 임시 카테고리 목록 — "새 카테고리 추가" 시 사용

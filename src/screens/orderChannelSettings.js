@@ -10,8 +10,7 @@
   function esc(s) { return window.UI.escapeHtml(s); }
 
   function currentStoreId() {
-    var user = window.MockApi.getCurrentUser();
-    return user && user.storeId;
+    return window.MockApi.getContextStoreId();
   }
 
   function rowHtml(icon, id, label, sub, on) {

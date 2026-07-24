@@ -7,8 +7,7 @@
  */
 (function () {
   function currentStoreId() {
-    var user = window.MockApi.getCurrentUser();
-    return user && user.storeId;
+    return window.MockApi.getContextStoreId();
   }
 
   function actionButtonsHtml(status) {
@@ -155,6 +154,9 @@
   }
 
   function render() {
+    var actingStoreId = window.MockApi.getActingStoreId();
+    var actingStore = actingStoreId ? window.MockApi.getStore(actingStoreId) : null;
+    var titleText = actingStore ? actingStore.name + ' 설정' : '설정';
     return (
       '<style>' +
         '.settings-list-item .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:20px;margin-left:auto;}' +
@@ -184,7 +186,7 @@
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back">←</button></div>' +
-        '<div class="topbar-title">설정</div>' +
+        '<div class="topbar-title">' + window.UI.escapeHtml(titleText) + '</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll"><div id="settings-list-wrap"></div></div>'
@@ -192,8 +194,7 @@
   }
 
   function mount(root) {
-    var user = window.MockApi.getCurrentUser();
-    var storeId = user.storeId;
+    var storeId = currentStoreId();
 
     function bindListEvents(wrap) {
       wrap.querySelectorAll('[data-status-action]').forEach(function (btn) {

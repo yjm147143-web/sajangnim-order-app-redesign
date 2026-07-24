@@ -24,6 +24,20 @@
     return DB.users.find(function (u) { return u.id === s.userId; }) || null;
   }
 
+  // ---------------- 행사 담당자가 특정 매장의 설정 화면을 들여다볼 때 쓰는 컨텍스트 전환 ----------------
+  // 사장님 계정은 자기 매장(storeId)만 다루지만, 행사 담당자는 매장이 없는 대신 행사 홈에서
+  // 매장을 골라 그 매장인 것처럼 설정 화면을 볼 수 있다. 화면들은 로그인 사용자의 storeId 대신
+  // 이 함수 하나만 거치면 되도록 통일한다.
+  let actingStoreId = null;
+  function setActingStoreId(storeId) { actingStoreId = storeId; }
+  function clearActingStoreId() { actingStoreId = null; }
+  function getActingStoreId() { return actingStoreId; }
+  function getContextStoreId() {
+    if (actingStoreId) return actingStoreId;
+    const user = getCurrentUser();
+    return user && user.storeId;
+  }
+
   function getAutoLogin() { return localStorage.getItem('order-app-auto-login') || null; }
   function setAutoLogin(loginId) {
     if (loginId) localStorage.setItem('order-app-auto-login', loginId);
@@ -41,10 +55,11 @@
     }
     setSession(user.id);
     if (params.autoLogin) setAutoLogin(loginId); else setAutoLogin(null);
+    actingStoreId = null; // 이전 세션에서 들여다보던 매장이 새 로그인에 그대로 남아있으면 안 된다
     return { ok: true, user: user };
   }
 
-  function logout() { clearSession(); }
+  function logout() { clearSession(); actingStoreId = null; }
 
   // ---------------- Store / Settings ----------------
   function getStore(storeId) { return findStore(storeId); }
@@ -910,6 +925,8 @@
 
   window.MockApi = {
     getCurrentUser: getCurrentUser, getAutoLogin: getAutoLogin, login: login, logout: logout,
+    setActingStoreId: setActingStoreId, clearActingStoreId: clearActingStoreId,
+    getActingStoreId: getActingStoreId, getContextStoreId: getContextStoreId,
     getStore: getStore, updateOperatingStatus: updateOperatingStatus, updateAutoAccept: updateAutoAccept,
     updateNotificationSettings: updateNotificationSettings,
     getMinOrderSettings: getMinOrderSettings, updateMinOrderSettings: updateMinOrderSettings,

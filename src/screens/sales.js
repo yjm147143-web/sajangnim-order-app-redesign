@@ -239,8 +239,7 @@
 
   function mount(root) {
     const view = root.querySelector('#sales-view');
-    const user = window.MockApi.getCurrentUser();
-    const storeId = user.storeId;
+    const storeId = window.MockApi.getContextStoreId();
 
     let activeTab = 'live';
     let pastRange = { preset: 'today' };

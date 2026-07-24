@@ -226,8 +226,7 @@
   }
 
   function mount(root) {
-    var user = window.MockApi.getCurrentUser();
-    var storeId = user.storeId;
+    var storeId = window.MockApi.getContextStoreId();
     var store = window.MockApi.getStore(storeId);
     var settings = window.MockApi.getCustomerGuideSettings(storeId);
 
