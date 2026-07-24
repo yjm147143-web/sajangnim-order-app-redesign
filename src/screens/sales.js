@@ -140,14 +140,15 @@
     );
   }
 
-  function liveTabHtml(storeId) {
+  function liveTabHtml(storeId, liveSubTab) {
     const today = todayStr();
-    const summary = window.MockApi.getSalesSummary(storeId, { preset: 'today' });
+    const todayRange = { preset: 'today' };
+    const summary = window.MockApi.getSalesSummary(storeId, todayRange);
     return (
       metricGridHtml(summary) +
-      '<div class="sales-today-row sales-date-row" data-open-date="' + today + '">' +
-        '<span>오늘 (' + today.slice(5).replace('-', '.') + ') 상세 보기</span><span class="chevron">›</span>' +
-      '</div>'
+      '<div class="sales-detail-date">' + today.replace(/-/g, '.') + '</div>' +
+      subTabSwitchHtml(liveSubTab) +
+      subTabBodyHtml(liveSubTab, storeId, todayRange)
     );
   }
 
@@ -178,7 +179,7 @@
     );
   }
 
-  function mainHtml(activeTab, storeId, pastRange) {
+  function mainHtml(activeTab, storeId, pastRange, liveSubTab) {
     return (
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="sales-main-back" aria-label="뒤로가기">←</button></div>' +
@@ -186,7 +187,7 @@
         '<div class="topbar-side"></div>' +
       '</div>' +
       tabSwitchHtml(activeTab) +
-      '<div class="screen-scroll">' + (activeTab === 'live' ? liveTabHtml(storeId) : pastTabHtml(storeId, pastRange)) + '</div>'
+      '<div class="screen-scroll">' + (activeTab === 'live' ? liveTabHtml(storeId, liveSubTab) : pastTabHtml(storeId, pastRange)) + '</div>'
     );
   }
 
@@ -223,12 +224,10 @@
         'font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +
       '.sales-tab-btn.active{border-bottom-color:var(--color-text-primary);color:var(--color-text-primary);}' +
       '.sales-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 var(--space-5) var(--space-4);}' +
-      '.sales-metric-card{background:var(--color-card-bg);border-radius:var(--radius-card);padding:10px 8px;}' +
-      '.sales-metric-label{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin-bottom:4px;}' +
-      '.sales-metric-value{font-size:14px;font-weight:800;color:var(--color-text-primary);word-break:keep-all;}' +
+      '.sales-metric-card{background:var(--color-card-bg);border-radius:var(--radius-card);padding:12px 8px;text-align:center;}' +
+      '.sales-metric-label{font-size:12px;font-weight:700;color:var(--color-text-secondary);margin-bottom:5px;}' +
+      '.sales-metric-value{font-size:20px;font-weight:800;color:var(--color-text-primary);word-break:keep-all;}' +
       '.sales-metric-value.accent{color:var(--color-accent-blue);}' +
-      '.sales-today-row{display:flex;align-items:center;justify-content:space-between;margin:0 var(--space-5) var(--space-4);' +
-        'padding:14px;border-radius:var(--radius-card);background:var(--color-card-bg);font-size:var(--font-size-body);font-weight:700;color:var(--color-accent-blue);cursor:pointer;}' +
       '.sales-list{padding:0 var(--space-5) var(--space-5);display:flex;flex-direction:column;}' +
       '.sales-list-row{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider);}' +
       '.sales-list-row:last-child{border-bottom:none;}' +
@@ -257,11 +256,12 @@
 
     let activeTab = 'live';
     let pastRange = { preset: 'today' };
+    let liveSubTab = 'channel';
     let detailDate = null;
     let detailSubTab = 'channel';
 
     function paintMain() {
-      view.innerHTML = mainHtml(activeTab, storeId, pastRange);
+      view.innerHTML = mainHtml(activeTab, storeId, pastRange, liveSubTab);
       bindMain();
     }
 
@@ -280,6 +280,14 @@
           openDetail(el.getAttribute('data-open-date'));
         });
       });
+      if (activeTab === 'live') {
+        view.querySelectorAll('[data-sales-subtab]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            liveSubTab = btn.getAttribute('data-sales-subtab');
+            paintMain();
+          });
+        });
+      }
       const filterEl = view.querySelector('#sales-range-filter');
       if (!filterEl) return;
       filterEl.querySelectorAll('[data-range-preset]').forEach(function (btn) {
