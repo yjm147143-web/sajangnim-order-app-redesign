@@ -21,6 +21,9 @@
       const variance = 0.7 + Math.random() * 0.6;
       const dayTotal = Math.round(baseAmount * weekendBoost * variance / 1000) * 1000;
 
+      // 주문건수는 실제 주문 데이터가 아니라 평균 객단가로 역산한 근사치다 (일자별/구간별 요약 카드에 쓰인다)
+      const orderCount = Math.max(1, Math.round(dayTotal / 12000));
+
       const qrShare = 0.5 + Math.random() * 0.15;
       const tabletShare = 0.35 + Math.random() * 0.1;
       const cashShare = Math.max(0.02, 1 - qrShare - tabletShare);
@@ -29,6 +32,9 @@
         TABLET: Math.round(dayTotal * tabletShare),
         CASH: Math.round(dayTotal * cashShare),
       };
+      const qrCount = Math.round(orderCount * qrShare);
+      const tabletCount = Math.round(orderCount * tabletShare);
+      const byChannelCount = { QR: qrCount, TABLET: tabletCount, CASH: Math.max(0, orderCount - qrCount - tabletCount) };
 
       const cardShare = 0.5 + Math.random() * 0.1;
       const easyShare = 0.3 + Math.random() * 0.1;
@@ -38,14 +44,22 @@
         간편결제: Math.round(dayTotal * easyShare),
         쿠폰: Math.round(dayTotal * couponShare),
       };
+      const cardCount = Math.round(orderCount * cardShare);
+      const easyCount = Math.round(orderCount * easyShare);
+      const byPaymentCount = { 카드: cardCount, 간편결제: easyCount, 쿠폰: Math.max(0, orderCount - cardCount - easyCount) };
 
-      const byHour = hours.map(function (h, idx) { return { hour: h, amount: Math.round(dayTotal * hourWeights[idx]) }; });
+      const byHour = hours.map(function (h, idx) { return { hour: h, amount: Math.round(dayTotal * hourWeights[idx]), count: Math.round(orderCount * hourWeights[idx]) }; });
       const byMenu = menuList.map(function (m, idx) {
         const amount = Math.round(dayTotal * menuWeights[idx]);
         return { name: m.name, qty: Math.max(1, Math.round(amount / m.avgPrice)), amount: amount };
       });
 
-      days.push({ date: dateStr, totalAmount: dayTotal, byChannel: byChannel, byPayment: byPayment, byHour: byHour, byMenu: byMenu });
+      days.push({
+        date: dateStr, totalAmount: dayTotal, orderCount: orderCount,
+        byChannel: byChannel, byChannelCount: byChannelCount,
+        byPayment: byPayment, byPaymentCount: byPaymentCount,
+        byHour: byHour, byMenu: byMenu,
+      });
     }
     return days;
   }

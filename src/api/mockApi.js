@@ -657,11 +657,16 @@
     const store = findStore(storeId);
     const days = filterDailyRange(store.dailySales || [], range);
     const sums = { QR: 0, TABLET: 0, CASH: 0 };
-    days.forEach(function (d) { sums.QR += d.byChannel.QR; sums.TABLET += d.byChannel.TABLET; sums.CASH += d.byChannel.CASH; });
+    const counts = { QR: 0, TABLET: 0, CASH: 0 };
+    days.forEach(function (d) {
+      sums.QR += d.byChannel.QR; sums.TABLET += d.byChannel.TABLET; sums.CASH += d.byChannel.CASH;
+      const c = d.byChannelCount || {};
+      counts.QR += c.QR || 0; counts.TABLET += c.TABLET || 0; counts.CASH += c.CASH || 0;
+    });
     return [
-      { name: 'QR오더', amount: sums.QR },
-      { name: '키오스크', amount: sums.TABLET },
-      { name: '현금', amount: sums.CASH },
+      { name: 'QR오더', amount: sums.QR, count: counts.QR },
+      { name: '키오스크', amount: sums.TABLET, count: counts.TABLET },
+      { name: '현금', amount: sums.CASH, count: counts.CASH },
     ];
   }
 
@@ -669,17 +674,23 @@
     const store = findStore(storeId);
     const days = filterDailyRange(store.dailySales || [], range);
     const sums = { 카드: 0, 간편결제: 0, 쿠폰: 0 };
-    days.forEach(function (d) { sums.카드 += d.byPayment.카드; sums.간편결제 += d.byPayment.간편결제; sums.쿠폰 += d.byPayment.쿠폰; });
-    return Object.keys(sums).map(function (k) { return { name: k, amount: sums[k] }; });
+    const counts = { 카드: 0, 간편결제: 0, 쿠폰: 0 };
+    days.forEach(function (d) {
+      sums.카드 += d.byPayment.카드; sums.간편결제 += d.byPayment.간편결제; sums.쿠폰 += d.byPayment.쿠폰;
+      const c = d.byPaymentCount || {};
+      counts.카드 += c.카드 || 0; counts.간편결제 += c.간편결제 || 0; counts.쿠폰 += c.쿠폰 || 0;
+    });
+    return Object.keys(sums).map(function (k) { return { name: k, amount: sums[k], count: counts[k] }; });
   }
 
   function getSalesByHour(storeId, range) {
     const store = findStore(storeId);
     const days = filterDailyRange(store.dailySales || [], range);
     const hours = ['10', '11', '12', '13', '14', '15', '16'];
-    const sums = {}; hours.forEach(function (h) { sums[h] = 0; });
-    days.forEach(function (d) { d.byHour.forEach(function (h) { sums[h.hour] += h.amount; }); });
-    return hours.map(function (h) { return { name: h + '시', amount: sums[h] }; });
+    const sums = {}; const counts = {};
+    hours.forEach(function (h) { sums[h] = 0; counts[h] = 0; });
+    days.forEach(function (d) { d.byHour.forEach(function (h) { sums[h.hour] += h.amount; counts[h.hour] += h.count || 0; }); });
+    return hours.map(function (h) { return { name: h + '시', amount: sums[h], count: counts[h] }; });
   }
 
   function getSalesByMenu(storeId, range) {
@@ -698,7 +709,20 @@
   function getSalesByPeriod(storeId, range) {
     const store = findStore(storeId);
     const days = filterDailyRange(store.dailySales || [], range);
-    return days.map(function (d) { return { name: d.date.slice(5).replace('-', '.'), amount: d.totalAmount, date: d.date }; });
+    return days.map(function (d) { return { name: d.date.slice(5).replace('-', '.'), amount: d.totalAmount, date: d.date, count: d.orderCount || 0 }; });
+  }
+
+  // 매출 조회 상단의 총 주문건수/총 매출액/주문단가 3개 요약 지표에 쓰인다
+  function getSalesSummary(storeId, range) {
+    const store = findStore(storeId);
+    const days = filterDailyRange(store.dailySales || [], range);
+    const totalAmount = days.reduce(function (s, d) { return s + d.totalAmount; }, 0);
+    const totalOrderCount = days.reduce(function (s, d) { return s + (d.orderCount || 0); }, 0);
+    return {
+      totalAmount: totalAmount,
+      totalOrderCount: totalOrderCount,
+      avgOrderValue: totalOrderCount ? Math.round(totalAmount / totalOrderCount) : 0,
+    };
   }
 
   // ---------------- Event Manager ----------------
@@ -908,6 +932,7 @@
     revertOrder: revertOrder, returnOrder: returnOrder, bulkAction: bulkAction,
     getSalesByChannel: getSalesByChannel, getSalesByPayment: getSalesByPayment, getSalesByHour: getSalesByHour,
     getSalesByMenu: getSalesByMenu, getSalesByPeriod: getSalesByPeriod, getSalesDateBounds: getSalesDateBounds,
+    getSalesSummary: getSalesSummary,
     getMyEvents: getMyEvents, getEvent: getEvent, getStoresByEvent: getStoresByEvent,
     getEventDashboardSummary: getEventDashboardSummary, getAttentionStores: getAttentionStores,
     bulkUpdateStoreStatus: bulkUpdateStoreStatus, addAuditLog: addAuditLog, getAuditLogs: getAuditLogs,

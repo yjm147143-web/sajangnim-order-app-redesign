@@ -1,74 +1,42 @@
 /*
- * 매출 조회 화면 — 5개 카드형 허브 -> 상세 화면 구조
+ * 매출 조회 화면 — 실시간 매출현황 / 과거 매출현황 2탭 구조.
+ * 두 탭 모두 날짜(또는 오늘)를 탭하면 그 날짜 하나만의 주문방식별/메뉴별/시간대별/결제수단별
+ * 매출을 4개 탭으로 볼 수 있는 '날짜별 매출 상세' 화면으로 들어간다.
  * Router 화면 이름은 'sales' 하나만 등록하고, 내부적으로 상태(state)를 바꿔가며
- * 허브/상세 화면을 그린다. 뒤로가기: 상세 -> 허브, 허브 -> 'settings'
+ * 메인(탭)/상세 화면을 그린다. 뒤로가기: 상세 -> 메인, 메인 -> 'settings'
  */
 (function () {
-  const HUB_CARDS = [
-    { key: 'channel', emoji: '🧾', title: '주문 방식별 매출', sub: 'QR오더 · 키오스크 · 현금' },
-    { key: 'period', emoji: '📅', title: '기간별 매출', sub: '일자별 매출 추이' },
-    { key: 'menu', emoji: '🍽️', title: '메뉴별 매출', sub: '메뉴 랭킹' },
-    { key: 'hour', emoji: '🕒', title: '시간대별 매출', sub: '시간대별 매출 흐름' },
-    { key: 'payment', emoji: '💳', title: '결제수단별 매출', sub: '카드 · 간편결제 · 쿠폰' },
+  const SUB_TABS = [
+    { key: 'channel', label: '주문방식별' },
+    { key: 'menu', label: '메뉴별' },
+    { key: 'hour', label: '시간대별' },
+    { key: 'payment', label: '결제수단별' },
   ];
 
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
   function sumAmount(data) { return data.reduce(function (s, d) { return s + d.amount; }, 0); }
 
-  function summaryCardHtml(label, total) {
+  function listRowHtml(name, amount, count, dateAttr) {
     return (
-      '<div style="padding:0 var(--space-5) var(--space-4);">' +
-        '<div class="summary-card">' +
-          '<div class="summary-label">' + label + '</div>' +
-          '<div class="summary-value">' + window.UI.formatMoney(total) + '</div>' +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  function listRowHtml(name, amount, count, extraClass) {
-    return (
-      '<div class="sales-list-row">' +
+      '<div class="sales-list-row' + (dateAttr ? ' sales-date-row' : '') + '"' + (dateAttr ? ' data-open-date="' + dateAttr + '"' : '') + '>' +
         '<div class="sales-list-name">' + window.UI.escapeHtml(name) + '</div>' +
         '<div class="sales-list-right">' +
           (count != null ? '<span class="sales-list-count">' + count + '건</span>' : '') +
-          '<span class="sales-list-amount' + (extraClass ? ' ' + extraClass : '') + '">' + window.UI.formatMoney(amount) + '</span>' +
+          '<span class="sales-list-amount">' + window.UI.formatMoney(amount) + '</span>' +
+          (dateAttr ? '<span class="chevron">›</span>' : '') +
         '</div>' +
       '</div>'
     );
   }
 
+  // ---------------- 4개 세부 항목별 본문 (날짜별 매출 상세 화면의 각 탭에서 재사용) ----------------
   function channelDetailHtml(storeId, range) {
     const data = window.MockApi.getSalesByChannel(storeId, range);
     const total = sumAmount(data);
     const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.count); }).join('');
     return (
-      summaryCardHtml('합계 매출', total) +
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('channel', data) + '</div>' +
-      '<div class="section-title">채널별 상세</div>' +
-      '<div class="sales-list">' + rows + '</div>'
-    );
-  }
-
-  function periodDetailHtml(storeId, range) {
-    const data = window.MockApi.getSalesByPeriod(storeId, range);
-    const total = sumAmount(data);
-    let maxItem = null, minItem = null;
-    data.forEach(function (d) {
-      if (!maxItem || d.amount > maxItem.amount) maxItem = d;
-      if (!minItem || d.amount < minItem.amount) minItem = d;
-    });
-    const showHighlight = data.length > 1 && maxItem !== minItem;
-    const rows = data.map(function (d) {
-      let cls = '';
-      if (showHighlight && d === maxItem) cls = 'sales-amount-max';
-      else if (showHighlight && d === minItem) cls = 'sales-amount-min';
-      return listRowHtml(d.name, d.amount, null, cls);
-    }).join('');
-    return (
-      summaryCardHtml('합계 매출', total) +
-      '<div class="section-caption">이 화면은 최근 한 달 데이터만 조회할 수 있어요 · 더 자세한 매출 데이터는 사장님 사이트에서 확인해주세요</div>' +
-      '<div class="chart-card">' + window.UI.salesChartHtml('period', data) + '</div>' +
-      '<div class="section-title">일자별 매출<span class="sales-legend-hint"> · <span class="sales-amount-max">최고</span> / <span class="sales-amount-min">최저</span></span></div>' +
       '<div class="sales-list">' + rows + '</div>'
     );
   }
@@ -76,21 +44,21 @@
   function menuDetailHtml(storeId, range) {
     const data = window.MockApi.getSalesByMenu(storeId, range);
     const total = sumAmount(data);
+    const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.qty); }).join('');
     return (
-      summaryCardHtml('합계 매출', total) +
-      '<div class="section-title">메뉴별 매출 랭킹</div>' +
-      '<div class="chart-card">' + window.UI.salesChartHtml('menu', data) + '</div>'
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="chart-card">' + window.UI.salesChartHtml('menu', data) + '</div>' +
+      '<div class="sales-list">' + rows + '</div>'
     );
   }
 
   function hourDetailHtml(storeId, range) {
     const data = window.MockApi.getSalesByHour(storeId, range);
     const total = sumAmount(data);
-    const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, null); }).join('');
+    const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.count); }).join('');
     return (
-      summaryCardHtml('합계 매출', total) +
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('hour', data) + '</div>' +
-      '<div class="section-title">시간대별 상세</div>' +
       '<div class="sales-list">' + rows + '</div>'
     );
   }
@@ -100,13 +68,20 @@
     const total = sumAmount(data);
     const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.count); }).join('');
     return (
-      summaryCardHtml('합계 매출', total) +
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('payment', data) + '</div>' +
-      '<div class="section-title">결제수단별 상세</div>' +
       '<div class="sales-list">' + rows + '</div>'
     );
   }
 
+  function subTabBodyHtml(key, storeId, range) {
+    if (key === 'menu') return menuDetailHtml(storeId, range);
+    if (key === 'hour') return hourDetailHtml(storeId, range);
+    if (key === 'payment') return paymentDetailHtml(storeId, range);
+    return channelDetailHtml(storeId, range);
+  }
+
+  // ---------------- 기간 필터 (과거 매출현황 탭 전용) ----------------
   function rangeButtonLabel(range) {
     if (range.preset === 'custom') return (range.start || '').slice(5).replace('-', '.') + ' ~ ' + (range.end || '').slice(5).replace('-', '.');
     return '기간 설정';
@@ -120,56 +95,6 @@
       }).join('') +
       '<button type="button" class="pill-btn' + (range.preset === 'custom' ? ' active' : '') + '" id="range-custom-btn">' + rangeButtonLabel(range) + '</button>' +
       '</div>';
-  }
-
-  function hubCardRowHtml(card) {
-    return (
-      '<div class="card-list-item" data-detail="' + card.key + '">' +
-        '<div class="sales-hub-card-left">' +
-          '<span class="sales-hub-emoji">' + card.emoji + '</span>' +
-          '<div class="label-group">' +
-            '<div class="label-title">' + card.title + '</div>' +
-            '<div class="label-sub">' + card.sub + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<span class="chevron">›</span>' +
-      '</div>'
-    );
-  }
-
-  function hubHtml() {
-    return (
-      '<div class="topbar">' +
-        '<div class="topbar-side"><button type="button" class="icon-btn" id="sales-hub-back" aria-label="뒤로가기">←</button></div>' +
-        '<div class="topbar-title">매출 조회</div>' +
-        '<div class="topbar-side"></div>' +
-      '</div>' +
-      '<div class="screen-scroll">' +
-        '<div class="section-title">매출 항목을 선택하세요</div>' +
-        '<div class="section-caption">최근 한 달 매출만 조회돼요. 더 많은 매출은 사장님사이트에서 조회 가능해요</div>' +
-        '<div class="sales-hub-list">' + HUB_CARDS.map(hubCardRowHtml).join('') + '</div>' +
-      '</div>'
-    );
-  }
-
-  function detailHtml(key, range) {
-    const meta = HUB_CARDS.filter(function (c) { return c.key === key; })[0] || { title: '매출 조회' };
-    const user = window.MockApi.getCurrentUser();
-    const storeId = user.storeId;
-    let body = '';
-    if (key === 'channel') body = channelDetailHtml(storeId, range);
-    else if (key === 'period') body = periodDetailHtml(storeId, range);
-    else if (key === 'menu') body = menuDetailHtml(storeId, range);
-    else if (key === 'hour') body = hourDetailHtml(storeId, range);
-    else if (key === 'payment') body = paymentDetailHtml(storeId, range);
-    return (
-      '<div class="topbar">' +
-        '<div class="topbar-side"><button type="button" class="icon-btn" id="sales-detail-back" aria-label="뒤로가기">←</button></div>' +
-        '<div class="topbar-title">' + meta.title + '</div>' +
-        '<div class="topbar-side"></div>' +
-      '</div>' +
-      '<div class="screen-scroll">' + rangeFilterHtml(range) + body + '</div>'
-    );
   }
 
   function openCustomRangeSheet(onApply) {
@@ -194,22 +119,119 @@
     });
   }
 
+  // ---------------- 상단 3개 요약 지표 (실시간/과거 탭 공용) ----------------
+  function metricGridHtml(summary) {
+    return (
+      '<div class="sales-metric-grid">' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">총 주문건수</div><div class="sales-metric-value">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건</div></div>' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">총 매출액</div><div class="sales-metric-value accent">' + window.UI.formatMoney(summary.totalAmount) + '</div></div>' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">주문단가</div><div class="sales-metric-value">' + window.UI.formatMoney(summary.avgOrderValue) + '</div></div>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- 메인 화면: 실시간 매출현황 / 과거 매출현황 2탭 ----------------
+  function tabSwitchHtml(activeTab) {
+    return (
+      '<div class="sales-tab-switch">' +
+        '<button type="button" class="sales-tab-btn' + (activeTab === 'live' ? ' active' : '') + '" data-sales-tab="live">실시간 매출현황</button>' +
+        '<button type="button" class="sales-tab-btn' + (activeTab === 'past' ? ' active' : '') + '" data-sales-tab="past">과거 매출현황</button>' +
+      '</div>'
+    );
+  }
+
+  function liveTabHtml(storeId) {
+    const today = todayStr();
+    const summary = window.MockApi.getSalesSummary(storeId, { preset: 'today' });
+    return (
+      metricGridHtml(summary) +
+      '<div class="sales-today-row sales-date-row" data-open-date="' + today + '">' +
+        '<span>오늘 (' + today.slice(5).replace('-', '.') + ') 상세 보기</span><span class="chevron">›</span>' +
+      '</div>'
+    );
+  }
+
+  function pastTabHtml(storeId, range) {
+    const summary = window.MockApi.getSalesSummary(storeId, range);
+    const periodData = window.MockApi.getSalesByPeriod(storeId, range);
+    const rows = periodData.length
+      ? periodData.map(function (d) { return listRowHtml(d.name, d.amount, d.count, d.date); }).join('')
+      : '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
+    return (
+      rangeFilterHtml(range) +
+      metricGridHtml(summary) +
+      '<div class="section-caption">이 화면은 최근 한 달 데이터만 조회할 수 있어요 · 더 자세한 매출 데이터는 사장님사이트에서 확인해주세요</div>' +
+      '<div class="chart-card">' + window.UI.salesChartHtml('period', periodData) + '</div>' +
+      '<div class="section-title">일자별 매출</div>' +
+      '<div class="sales-list">' + rows + '</div>'
+    );
+  }
+
+  function mainHtml(activeTab, storeId, pastRange) {
+    return (
+      '<div class="topbar">' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="sales-main-back" aria-label="뒤로가기">←</button></div>' +
+        '<div class="topbar-title">매출 조회</div>' +
+        '<div class="topbar-side"></div>' +
+      '</div>' +
+      tabSwitchHtml(activeTab) +
+      '<div class="screen-scroll">' + (activeTab === 'live' ? liveTabHtml(storeId) : pastTabHtml(storeId, pastRange)) + '</div>'
+    );
+  }
+
+  // ---------------- 날짜별 매출 상세 화면 (4탭) ----------------
+  function subTabSwitchHtml(activeSub) {
+    return '<div class="sales-subtab-row">' + SUB_TABS.map(function (t) {
+      return '<button type="button" class="sales-subtab-btn' + (activeSub === t.key ? ' active' : '') + '" data-sales-subtab="' + t.key + '">' + t.label + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function dateDetailHtml(date, subKey, storeId) {
+    const dayRange = { preset: 'custom', start: date, end: date };
+    const summary = window.MockApi.getSalesSummary(storeId, dayRange);
+    return (
+      '<div class="topbar">' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="sales-detail-back" aria-label="뒤로가기">←</button></div>' +
+        '<div class="topbar-title">날짜별 매출 상세</div>' +
+        '<div class="topbar-side"></div>' +
+      '</div>' +
+      '<div class="screen-scroll">' +
+        '<div class="sales-detail-date">' + date.replace(/-/g, '.') + '</div>' +
+        '<div class="sales-detail-sub">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건 · ' + window.UI.formatMoney(summary.totalAmount) + '</div>' +
+        subTabSwitchHtml(subKey) +
+        subTabBodyHtml(subKey, storeId, dayRange) +
+      '</div>'
+    );
+  }
+
   function render() {
     return (
       '<style>' +
-      '.sales-hub-list{padding:0 var(--space-5) var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);}' +
-      '.sales-hub-card-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}' +
-      '.sales-hub-emoji{font-size:28px;flex-shrink:0;}' +
+      '.sales-tab-switch{display:flex;padding:0 var(--space-5);margin-bottom:var(--space-3);}' +
+      '.sales-tab-btn{flex:1;text-align:center;padding:12px 0;background:none;border:none;border-bottom:2.5px solid var(--color-divider);' +
+        'font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +
+      '.sales-tab-btn.active{border-bottom-color:var(--color-text-primary);color:var(--color-text-primary);}' +
+      '.sales-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 var(--space-5) var(--space-4);}' +
+      '.sales-metric-card{background:var(--color-card-bg);border-radius:var(--radius-card);padding:10px 8px;}' +
+      '.sales-metric-label{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin-bottom:4px;}' +
+      '.sales-metric-value{font-size:14px;font-weight:800;color:var(--color-text-primary);word-break:keep-all;}' +
+      '.sales-metric-value.accent{color:var(--color-accent-blue);}' +
+      '.sales-today-row{display:flex;align-items:center;justify-content:space-between;margin:0 var(--space-5) var(--space-4);' +
+        'padding:14px;border-radius:var(--radius-card);background:var(--color-card-bg);font-size:var(--font-size-body);font-weight:700;color:var(--color-accent-blue);cursor:pointer;}' +
       '.sales-list{padding:0 var(--space-5) var(--space-5);display:flex;flex-direction:column;}' +
       '.sales-list-row{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider);}' +
       '.sales-list-row:last-child{border-bottom:none;}' +
+      '.sales-date-row{cursor:pointer;}' +
       '.sales-list-name{font-size:var(--font-size-body);font-weight:600;}' +
       '.sales-list-right{display:flex;align-items:center;gap:8px;}' +
       '.sales-list-count{font-size:var(--font-size-caption);color:var(--color-text-secondary);}' +
       '.sales-list-amount{font-size:var(--font-size-body);font-weight:700;}' +
-      '.sales-amount-max{color:var(--color-accent-green);}' +
-      '.sales-amount-min{color:var(--color-accent-red);}' +
-      '.sales-legend-hint{font-size:var(--font-size-caption);font-weight:600;}' +
+      '.sales-detail-date{text-align:center;font-size:var(--font-size-subtitle);font-weight:800;color:var(--color-text-primary);padding:var(--space-4) var(--space-5) 2px;}' +
+      '.sales-detail-sub{text-align:center;font-size:var(--font-size-caption);color:var(--color-text-secondary);padding-bottom:var(--space-4);}' +
+      '.sales-subtab-row{display:flex;gap:5px;padding:0 var(--space-5) var(--space-4);flex-wrap:wrap;}' +
+      '.sales-subtab-btn{flex:1;min-width:70px;text-align:center;padding:9px 0;border:none;border-radius:10px;background:var(--color-card-bg);' +
+        'color:var(--color-text-secondary);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}' +
+      '.sales-subtab-btn.active{background:var(--color-text-primary);color:var(--color-white);}' +
       '</style>' +
       '<div id="sales-view"></div>'
     );
@@ -217,55 +239,74 @@
 
   function mount(root) {
     const view = root.querySelector('#sales-view');
+    const user = window.MockApi.getCurrentUser();
+    const storeId = user.storeId;
 
-    function bindHub() {
-      view.querySelector('#sales-hub-back').addEventListener('click', function () {
+    let activeTab = 'live';
+    let pastRange = { preset: 'today' };
+    let detailDate = null;
+    let detailSubTab = 'channel';
+
+    function paintMain() {
+      view.innerHTML = mainHtml(activeTab, storeId, pastRange);
+      bindMain();
+    }
+
+    function bindMain() {
+      view.querySelector('#sales-main-back').addEventListener('click', function () {
         window.Router.back();
       });
-      view.querySelectorAll('[data-detail]').forEach(function (el) {
+      view.querySelectorAll('[data-sales-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activeTab = btn.getAttribute('data-sales-tab');
+          paintMain();
+        });
+      });
+      view.querySelectorAll('[data-open-date]').forEach(function (el) {
         el.addEventListener('click', function () {
-          paintDetail(el.getAttribute('data-detail'));
+          openDetail(el.getAttribute('data-open-date'));
+        });
+      });
+      const filterEl = view.querySelector('#sales-range-filter');
+      if (!filterEl) return;
+      filterEl.querySelectorAll('[data-range-preset]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          pastRange = { preset: btn.getAttribute('data-range-preset') };
+          paintMain();
+        });
+      });
+      const customBtn = filterEl.querySelector('#range-custom-btn');
+      if (customBtn) {
+        customBtn.addEventListener('click', function () {
+          openCustomRangeSheet(function (r) { pastRange = r; paintMain(); });
+        });
+      }
+    }
+
+    function openDetail(date) {
+      detailDate = date;
+      detailSubTab = 'channel';
+      paintDetail();
+    }
+
+    function paintDetail() {
+      view.innerHTML = dateDetailHtml(detailDate, detailSubTab, storeId);
+      bindDetail();
+    }
+
+    function bindDetail() {
+      view.querySelector('#sales-detail-back').addEventListener('click', function () {
+        paintMain();
+      });
+      view.querySelectorAll('[data-sales-subtab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          detailSubTab = btn.getAttribute('data-sales-subtab');
+          paintDetail();
         });
       });
     }
 
-    function paintHub() {
-      view.innerHTML = hubHtml();
-      bindHub();
-    }
-
-    function paintDetail(key) {
-      let range = { preset: 'today' };
-
-      function repaint() {
-        view.innerHTML = detailHtml(key, range);
-        bindDetail();
-      }
-
-      function bindDetail() {
-        view.querySelector('#sales-detail-back').addEventListener('click', function () {
-          paintHub();
-        });
-        const filterEl = view.querySelector('#sales-range-filter');
-        if (!filterEl) return;
-        filterEl.querySelectorAll('[data-range-preset]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            range = { preset: btn.getAttribute('data-range-preset') };
-            repaint();
-          });
-        });
-        const customBtn = filterEl.querySelector('#range-custom-btn');
-        if (customBtn) {
-          customBtn.addEventListener('click', function () {
-            openCustomRangeSheet(function (r) { range = r; repaint(); });
-          });
-        }
-      }
-
-      repaint();
-    }
-
-    paintHub();
+    paintMain();
   }
 
   function unmount() {}
