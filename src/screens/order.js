@@ -44,7 +44,7 @@
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
     '.status-pill-btn { background: none; border: none; padding: 0; cursor: pointer; }' +
-    '.search-row { display: flex; align-items: center; gap: var(--space-2); }' +
+    '.search-row { display: flex; align-items: flex-start; gap: var(--space-2); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
