@@ -39,12 +39,13 @@
     }).join('') + '</div>';
   }
 
-  function storeRankingHtml(eventId) {
+  function storeRankingHtml(eventId, preset) {
     const esc = window.UI.escapeHtml;
-    const data = window.MockApi.getEventStoreSalesRanking(eventId);
+    const data = window.MockApi.getEventStoreSalesRanking(eventId, preset);
     if (!data.length) return emptyHtml();
     const max = Math.max(1, Math.max.apply(null, data.map(function (d) { return d.amount; })));
-    return '<div class="section-caption">오늘 매출 기준 · 높은 순</div><div class="rank-list">' + data.map(function (d, i) {
+    const captionLabel = preset === 'yesterday' ? '전일' : preset === 'eventPeriod' ? '행사 누적' : '오늘';
+    return '<div class="section-caption">' + captionLabel + ' 매출 기준 · 높은 순</div><div class="rank-list">' + data.map(function (d, i) {
       const pct = Math.round((d.amount / max) * 100);
       return '<div class="rank-row">' +
         '<div class="rank-index">' + (i + 1) + '</div>' +
@@ -58,7 +59,7 @@
 
   function renderDetailBody(key, eventId, preset) {
     if (key === 'store') {
-      return '<div class="chart-card">' + storeRankingHtml(eventId) + '</div>';
+      return periodFilterHtml(preset) + '<div id="detail-chart-slot"><div class="chart-card">' + storeRankingHtml(eventId, preset) + '</div></div>';
     }
     if (key === 'period') {
       const data = window.MockApi.getEventSalesByPeriod(eventId, preset);
@@ -82,20 +83,22 @@
       '</div>';
     }
     if (key === 'menu') {
-      const data = window.MockApi.getEventSalesByMenu(eventId);
-      return data.length ? '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>' : emptyHtml();
+      const data = window.MockApi.getEventSalesByMenu(eventId, preset);
+      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + (data.length ? '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>' : emptyHtml()) + '</div>';
     }
     if (key === 'hour') {
-      const data = window.MockApi.getEventSalesByHour(eventId);
-      if (!data.length) return emptyHtml();
+      const data = window.MockApi.getEventSalesByHour(eventId, preset);
+      if (!data.length) return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + emptyHtml() + '</div>';
       const rows = data.map(function (d) { return listRowHtml(d.name, d.amount); }).join('');
-      return '<div class="chart-card">' + window.UI.barChartHtml(data) + '</div>' +
+      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' +
+        '<div class="chart-card">' + window.UI.barChartHtml(data) + '</div>' +
         '<div class="section-title">시간대별 상세</div>' +
-        '<div class="sales-list">' + rows + '</div>';
+        '<div class="sales-list">' + rows + '</div>' +
+      '</div>';
     }
     if (key === 'channel') {
-      const data = window.MockApi.getEventSalesByChannel(eventId).slice().sort(function (a, b) { return b.amount - a.amount; });
-      return data.length ? '<div class="chart-card">' + window.UI.donutChartHtml(data) + '</div>' : emptyHtml();
+      const data = window.MockApi.getEventSalesByChannel(eventId, preset).slice().sort(function (a, b) { return b.amount - a.amount; });
+      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + (data.length ? '<div class="chart-card">' + window.UI.donutChartHtml(data) + '</div>' : emptyHtml()) + '</div>';
     }
     if (key === 'payment') {
       const data = window.MockApi.getEventSalesByPayment(eventId, preset).slice().sort(function (a, b) { return b.amount - a.amount; });

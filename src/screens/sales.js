@@ -16,13 +16,13 @@
   function todayStr() { return new Date().toISOString().slice(0, 10); }
   function sumAmount(data) { return data.reduce(function (s, d) { return s + d.amount; }, 0); }
 
-  function listRowHtml(name, amount, count, dateAttr) {
+  function listRowHtml(name, amount, count, dateAttr, extraClass) {
     return (
       '<div class="sales-list-row' + (dateAttr ? ' sales-date-row' : '') + '"' + (dateAttr ? ' data-open-date="' + dateAttr + '"' : '') + '>' +
         '<div class="sales-list-name">' + window.UI.escapeHtml(name) + '</div>' +
         '<div class="sales-list-right">' +
           (count != null ? '<span class="sales-list-count">' + count + '건</span>' : '') +
-          '<span class="sales-list-amount">' + window.UI.formatMoney(amount) + '</span>' +
+          '<span class="sales-list-amount' + (extraClass ? ' ' + extraClass : '') + '">' + window.UI.formatMoney(amount) + '</span>' +
           (dateAttr ? '<span class="chevron">›</span>' : '') +
         '</div>' +
       '</div>'
@@ -154,15 +154,26 @@
   function pastTabHtml(storeId, range) {
     const summary = window.MockApi.getSalesSummary(storeId, range);
     const periodData = window.MockApi.getSalesByPeriod(storeId, range);
+    let maxItem = null, minItem = null;
+    periodData.forEach(function (d) {
+      if (!maxItem || d.amount > maxItem.amount) maxItem = d;
+      if (!minItem || d.amount < minItem.amount) minItem = d;
+    });
+    const showHighlight = periodData.length > 1 && maxItem !== minItem;
     const rows = periodData.length
-      ? periodData.map(function (d) { return listRowHtml(d.name, d.amount, d.count, d.date); }).join('')
+      ? periodData.map(function (d) {
+          let cls = '';
+          if (showHighlight && d === maxItem) cls = 'sales-amount-max';
+          else if (showHighlight && d === minItem) cls = 'sales-amount-min';
+          return listRowHtml(d.name, d.amount, d.count, d.date, cls);
+        }).join('')
       : '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
     return (
       rangeFilterHtml(range) +
       metricGridHtml(summary) +
       '<div class="section-caption">이 화면은 최근 한 달 데이터만 조회할 수 있어요 · 더 자세한 매출 데이터는 사장님사이트에서 확인해주세요</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('period', periodData) + '</div>' +
-      '<div class="section-title">일자별 매출</div>' +
+      '<div class="section-title">일자별 매출' + (showHighlight ? '<span class="sales-legend-hint"> · <span class="sales-amount-max">최고</span> / <span class="sales-amount-min">최저</span></span>' : '') + '</div>' +
       '<div class="sales-list">' + rows + '</div>'
     );
   }
@@ -226,6 +237,9 @@
       '.sales-list-right{display:flex;align-items:center;gap:8px;}' +
       '.sales-list-count{font-size:var(--font-size-caption);color:var(--color-text-secondary);}' +
       '.sales-list-amount{font-size:var(--font-size-body);font-weight:700;}' +
+      '.sales-amount-max{color:var(--color-accent-green);}' +
+      '.sales-amount-min{color:var(--color-accent-red);}' +
+      '.sales-legend-hint{font-size:var(--font-size-caption);font-weight:600;}' +
       '.sales-detail-date{text-align:center;font-size:var(--font-size-subtitle);font-weight:800;color:var(--color-text-primary);padding:var(--space-4) var(--space-5) 2px;}' +
       '.sales-detail-sub{text-align:center;font-size:var(--font-size-caption);color:var(--color-text-secondary);padding-bottom:var(--space-4);}' +
       '.sales-subtab-row{display:flex;gap:5px;padding:0 var(--space-5) var(--space-4);flex-wrap:wrap;}' +

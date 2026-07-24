@@ -377,6 +377,18 @@
     return String((existingNums.length ? Math.max.apply(null, existingNums) : 1000) + 1);
   }
 
+  // 손님 연락처가 이메일이면 순차 발급 대신 랜덤 4자리로 픽업번호를 구성한다 (같은 매장 내 중복 회피).
+  function randomPickupNo(storeId) {
+    const existing = new Set(DB.orders.filter(function (o) { return o.storeId === storeId; }).map(function (o) { return o.pickupNo; }));
+    let candidate;
+    let attempts = 0;
+    do {
+      candidate = String(1000 + Math.floor(Math.random() * 9000));
+      attempts++;
+    } while (existing.has(candidate) && attempts < 20);
+    return candidate;
+  }
+
   // ---------------- 개발자 도구: 선택한 조건에 맞는 신규 주문 1건 생성 (실시간 주문 유입 시뮬레이션) ----------------
   // opts: { hasNote, isReservation, channel: 'QR'|'TABLET', identifierType: 'PICKUP'|'SEAT', multiMenu, hasOption,
   //         isReusableContainer, promoType: null|'GROUP_COUPON'|'STORE_COUPON'|'HAPPY_HOUR'|'FIRST_COME' }
@@ -392,6 +404,7 @@
     const payments = ['카드', '간편결제', '쿠폰'];
     const seatCodes = ['A-3', 'A-12', 'B-2', 'B-7', 'C-1', 'D-5'];
     const isReservation = !!opts.isReservation && channelSettings.acceptReservationOrders;
+    const isEmailContact = opts.contactType === 'EMAIL';
 
     // 옵션 있음: 옵션 그룹(+ 옵션값)이 실제로 연결된 메뉴만 후보로 삼는다.
     const itemsWithOption = menuItems.filter(function (m) {
@@ -423,7 +436,7 @@
     if (identifierType === 'SEAT') {
       identifierValue = seatCodes[Math.floor(Math.random() * seatCodes.length)];
     } else {
-      identifierValue = nextPickupNo(storeId);
+      identifierValue = isEmailContact ? randomPickupNo(storeId) : nextPickupNo(storeId);
     }
 
     const autoAccept = !!(store && store.autoAcceptOrders);
@@ -440,7 +453,7 @@
       paymentMethod: paymentMethod,
       amount: amount,
       items: lines,
-      customerContact: opts.contactType === 'EMAIL' ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)],
+      customerContact: isEmailContact ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)],
       orderedAt: new Date().toISOString(),
       acceptedAt: autoAccept ? new Date().toISOString() : null, doneAt: null,
       status: autoAccept ? 'PROCESSING' : 'WAITING', called: false, calledCount: 0, completeCount: 0,
@@ -771,7 +784,8 @@
   }
 
   // 매장별 매출 랭킹 + 매장별 제일 많이 팔린 메뉴 (행사담당자 매출현황 > 상세매출 > 매장별 매출)
-  function getEventStoreSalesRanking(eventId) {
+  function getEventStoreSalesRanking(eventId, preset) {
+    preset = preset || 'today';
     const stores = getStoresByEvent(eventId);
     return stores.map(function (s) {
       let topMenuName = s.topMenuName || null;
@@ -781,7 +795,7 @@
         topMenuName = sorted[0].name;
         topMenuQty = sorted[0].qty;
       }
-      return { name: s.name, amount: s.todaySalesAmount || 0, totalAmount: s.totalSalesAmount || 0, topMenuName: topMenuName, topMenuQty: topMenuQty, storeId: s.id };
+      return { name: s.name, amount: amountForPreset(s, preset), totalAmount: s.totalSalesAmount || 0, topMenuName: topMenuName, topMenuQty: topMenuQty, storeId: s.id };
     }).sort(function (a, b) { return b.amount - a.amount; });
   }
 
@@ -846,38 +860,78 @@
     return days;
   }
 
-  function getEventSalesByHour(eventId) {
+  function getEventSalesByHour(eventId, preset) {
+    preset = preset || 'today';
     const stores = getStoresByEvent(eventId);
     const hours = ['10', '11', '12', '13', '14', '15', '16'];
     return hours.map(function (h) {
       let amount = 0;
       stores.forEach(function (s) {
-        const found = s.salesStats && s.salesStats.byHour && s.salesStats.byHour.find(function (x) { return x.hour === h; });
-        amount += found ? found.amount : Math.round((s.todaySalesAmount || 0) / hours.length);
+        if (s.id === 'store-1' && s.dailySales) {
+          if (preset === 'eventPeriod') {
+            amount += s.dailySales.reduce(function (sum, d) {
+              const found = (d.byHour || []).find(function (x) { return x.hour === h; });
+              return sum + (found ? found.amount : 0);
+            }, 0);
+            return;
+          }
+          const idx = preset === 'yesterday' ? s.dailySales.length - 2 : s.dailySales.length - 1;
+          const rec = s.dailySales[idx];
+          const found = rec && (rec.byHour || []).find(function (x) { return x.hour === h; });
+          if (found) { amount += found.amount; return; }
+        }
+        amount += Math.round(amountForPreset(s, preset) / hours.length);
       });
       return { name: h + '시', amount: amount };
     });
   }
 
-  function getEventSalesByChannel(eventId) {
+  function getEventSalesByChannel(eventId, preset) {
+    preset = preset || 'today';
     const stores = getStoresByEvent(eventId);
     let qr = 0, tablet = 0;
     stores.forEach(function (s) {
-      const orders = DB.orders.filter(function (o) { return o.storeId === s.id && o.status === 'DONE' && !o.canceled; });
-      qr += orders.filter(function (o) { return o.channel === 'QR'; }).reduce(function (sum, o) { return sum + o.amount; }, 0);
-      tablet += orders.filter(function (o) { return o.channel === 'TABLET'; }).reduce(function (sum, o) { return sum + o.amount; }, 0);
-      if (!orders.length && s.todaySalesAmount) { qr += Math.round(s.todaySalesAmount * 0.65); tablet += Math.round(s.todaySalesAmount * 0.35); }
+      if (preset === 'today') {
+        const orders = DB.orders.filter(function (o) { return o.storeId === s.id && o.status === 'DONE' && !o.canceled; });
+        if (orders.length) {
+          qr += orders.filter(function (o) { return o.channel === 'QR'; }).reduce(function (sum, o) { return sum + o.amount; }, 0);
+          tablet += orders.filter(function (o) { return o.channel === 'TABLET'; }).reduce(function (sum, o) { return sum + o.amount; }, 0);
+          return;
+        }
+      }
+      const base = amountForPreset(s, preset);
+      qr += Math.round(base * 0.65);
+      tablet += Math.round(base * 0.35);
     });
     return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }];
   }
 
-  function getEventSalesByMenu(eventId) {
+  function getEventSalesByMenu(eventId, preset) {
+    preset = preset || 'today';
     const stores = getStoresByEvent(eventId);
     let rows = [];
     stores.forEach(function (s) {
-      if (s.salesStats && s.salesStats.byMenu) {
-        s.salesStats.byMenu.forEach(function (m) { rows.push({ name: m.name + ' (' + s.name + ')', qty: m.qty, amount: m.amount }); });
+      let byMenu = null;
+      if (s.id === 'store-1' && s.dailySales) {
+        if (preset === 'eventPeriod') {
+          const agg = {};
+          s.dailySales.forEach(function (d) {
+            (d.byMenu || []).forEach(function (m) {
+              if (!agg[m.name]) agg[m.name] = { name: m.name, qty: 0, amount: 0 };
+              agg[m.name].qty += m.qty;
+              agg[m.name].amount += m.amount;
+            });
+          });
+          byMenu = Object.keys(agg).map(function (k) { return agg[k]; });
+        } else {
+          const idx = preset === 'yesterday' ? s.dailySales.length - 2 : s.dailySales.length - 1;
+          const rec = s.dailySales[idx];
+          byMenu = rec ? rec.byMenu : null;
+        }
+      } else if (s.salesStats && s.salesStats.byMenu) {
+        byMenu = s.salesStats.byMenu;
       }
+      if (byMenu) byMenu.forEach(function (m) { rows.push({ name: m.name + ' (' + s.name + ')', qty: m.qty, amount: m.amount }); });
     });
     return rows.sort(function (a, b) { return b.amount - a.amount; }).slice(0, 8);
   }
