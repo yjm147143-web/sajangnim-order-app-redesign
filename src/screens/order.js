@@ -16,7 +16,7 @@
   let searchQuery = '';
   let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
   let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
-  let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 상단 필터 배지가 있던 자리에 노출
+  let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 주문 필터 시트의 '호출 여부' 카테고리에서 설정
   let selectedIds = new Set();
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
@@ -55,11 +55,7 @@
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
-    '.toolbar-row-left { display: flex; align-items: center; gap: var(--space-2); }' +
     '.kitchen-board-btn { background: var(--color-text-primary); color: var(--color-white); flex-shrink: 0; }' +
-    '.called-filter-seg { display: flex; gap: 2px; background: var(--color-divider); border-radius: var(--radius-pill); padding: 3px; }' +
-    '.called-filter-seg .segment-tab-sm { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 var(--space-3); font-size: var(--font-size-caption); }' +
-    '.called-filter-seg .segment-tab-sm.active { background: var(--color-white); color: var(--color-text-primary); box-shadow: 0 1px 3px rgba(30,29,43,0.12); }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
@@ -326,29 +322,15 @@
     return opts;
   }
 
-  const CALLED_FILTER_OPTIONS = [
-    { v: 'ALL', label: '전체' },
-    { v: 'CALLED', label: '호출' },
-    { v: 'NOT_CALLED', label: '미호출' },
+  const CALLED_STATUS_OPTIONS = [
+    { v: 'CALLED', label: '호출 주문만' },
+    { v: 'NOT_CALLED', label: '미호출 주문만' },
   ];
-
-  // 대기 탭은 아직 호출 개념이 없으므로 배지 자체를 숨긴다
-  function calledFilterHtml() {
-    if (currentStatus() === 'WAITING') return '';
-    return '<div class="called-filter-seg" id="called-filter-seg">' +
-      CALLED_FILTER_OPTIONS.map(function (o) {
-        return '<button type="button" class="segment-tab-sm' + (calledFilter === o.v ? ' active' : '') + '" data-action="set-called-filter" data-called-filter="' + o.v + '">' + o.label + '</button>';
-      }).join('') +
-      '</div>';
-  }
-
-  function refreshCalledFilterBadge() {
-    const slot = root.querySelector('#called-filter-slot');
-    if (slot) slot.innerHTML = calledFilterHtml();
-  }
+  const CALLED_STATUS_LABELS = { CALLED: '호출 주문만', NOT_CALLED: '미호출 주문만' };
 
   function filterBtnLabel() {
-    const parts = menuFilters.concat(orderTypeFilters.map(function (t) { return ORDER_TYPE_LABELS[t] || t; }));
+    const calledLabel = CALLED_STATUS_LABELS[calledFilter];
+    const parts = (calledLabel ? [calledLabel] : []).concat(menuFilters).concat(orderTypeFilters.map(function (t) { return ORDER_TYPE_LABELS[t] || t; }));
     if (parts.length === 1) return parts[0];
     if (parts.length >= 2) return parts[0] + ' +' + (parts.length - 1);
     return '주문 필터';
@@ -358,7 +340,7 @@
     const btn = root.querySelector('#order-filter-btn');
     if (!btn) return;
     btn.textContent = filterBtnLabel();
-    btn.classList.toggle('active', menuFilters.length > 0 || orderTypeFilters.length > 0);
+    btn.classList.toggle('active', menuFilters.length > 0 || orderTypeFilters.length > 0 || calledFilter !== 'ALL');
   }
 
   // 호출번호 검색은 미수락/처리중/완료 탭을 넘나들며 유지된다 — 탭을 옮겨도 검색어를 지우지 않는다
@@ -370,16 +352,18 @@
     orderTypeFilters = [];
     calledFilter = 'ALL';
     updateFilterBtnLabel();
-    refreshCalledFilterBadge();
     updateList();
   }
 
-  // ---------------- 주문 필터 바텀시트 (메뉴별 + 주문 유형별, 각 카테고리 내에서도 중복 선택 가능) ----------------
+  // ---------------- 주문 필터 바텀시트 (호출 여부 + 메뉴별 + 주문 유형별, 각 카테고리 내에서도 중복 선택 가능) ----------------
   // 두 카테고리를 서로 배타적인 탭으로 나누지 않고, 각각 다중 선택 가능한 칩으로 노출한 뒤
   // '적용'을 눌러야 실제로 반영되도록 해 다양한 조합(메뉴+메뉴, 유형+유형, 메뉴+유형)을 자유롭게 시도해볼 수 있게 한다.
+  // 호출 여부는 성격상 단일 선택(호출 주문만 / 미호출 주문만 중 하나, 또는 둘 다 미선택=전체)이라 다른 카테고리와 달리 배타적으로 토글한다.
   function openOrderFilterSheet() {
     let draftMenus = menuFilters.slice();
     let draftTypes = orderTypeFilters.slice();
+    let draftCalled = calledFilter;
+    const showCalledSection = currentStatus() !== 'WAITING'; // 대기 탭은 아직 호출 개념이 없으므로 숨긴다
     const ordersInTab = window.MockApi.getOrders(storeId, { status: currentStatus() });
     const menuNames = [];
     ordersInTab.forEach(function (o) {
@@ -387,6 +371,12 @@
         if (menuNames.indexOf(it.menuName) === -1) menuNames.push(it.menuName);
       });
     });
+
+    function calledChipsHtml() {
+      return CALLED_STATUS_OPTIONS.map(function (o) {
+        return '<button type="button" class="filter-chip' + (draftCalled === o.v ? ' on' : '') + '" data-called-status="' + o.v + '">' + o.label + '</button>';
+      }).join('');
+    }
 
     function menuChipsHtml() {
       if (!menuNames.length) return '<div class="empty-state"><div>필터링할 메뉴가 없어요</div></div>';
@@ -406,6 +396,11 @@
         '<div class="sheet-title" style="margin:0;">주문 필터</div>' +
         '<button type="button" class="filter-reset-link" id="filter-reset-btn">🔄 초기화</button>' +
       '</div>' +
+      (showCalledSection ?
+        '<div class="filter-section">' +
+          '<div class="filter-section-title">호출 여부</div>' +
+          '<div class="filter-chip-row" id="called-chip-row">' + calledChipsHtml() + '</div>' +
+        '</div>' : '') +
       '<div class="filter-section">' +
         '<div class="filter-section-title">메뉴 (중복 선택 가능)</div>' +
         '<div class="filter-chip-row" id="menu-chip-row">' + menuChipsHtml() + '</div>' +
@@ -419,8 +414,22 @@
       '</div>';
 
     window.UI.showBottomSheet(bodyHtml, function (host) {
+      const calledRow = host.querySelector('#called-chip-row');
       const menuRow = host.querySelector('#menu-chip-row');
       const typeRow = host.querySelector('#type-chip-row');
+
+      function bindCalledChips() {
+        if (!calledRow) return;
+        calledRow.querySelectorAll('[data-called-status]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            const v = el.getAttribute('data-called-status');
+            draftCalled = (draftCalled === v) ? 'ALL' : v;
+            calledRow.querySelectorAll('[data-called-status]').forEach(function (btn) {
+              btn.classList.toggle('on', btn.getAttribute('data-called-status') === draftCalled);
+            });
+          });
+        });
+      }
 
       function bindMenuChips() {
         menuRow.querySelectorAll('[data-menu]').forEach(function (el) {
@@ -444,12 +453,15 @@
         });
       }
 
+      bindCalledChips();
       bindMenuChips();
       bindTypeChips();
 
       host.querySelector('#filter-reset-btn').addEventListener('click', function () {
         draftMenus = [];
         draftTypes = [];
+        draftCalled = 'ALL';
+        if (calledRow) calledRow.querySelectorAll('[data-called-status]').forEach(function (btn) { btn.classList.remove('on'); });
         menuRow.innerHTML = menuChipsHtml();
         typeRow.innerHTML = typeChipsHtml();
         bindMenuChips();
@@ -459,6 +471,7 @@
       host.querySelector('#filter-apply-btn').addEventListener('click', function () {
         menuFilters = draftMenus;
         orderTypeFilters = draftTypes;
+        calledFilter = draftCalled;
         window.UI.closeModal();
         updateFilterBtnLabel();
         updateList();
@@ -737,7 +750,6 @@
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
     else if (action === 'toggle-sort') toggleSort();
     else if (action === 'open-order-filter') openOrderFilterSheet();
-    else if (action === 'set-called-filter') { calledFilter = target.getAttribute('data-called-filter'); refreshCalledFilterBadge(); updateList(); }
     else if (action === 'toggle-card-expand') toggleCardExpand(target.getAttribute('data-order-id'));
     else if (action === 'accept-order') handleAccept(id);
     else if (action === 'cancel-order') handleCancelOrder(id);
@@ -829,10 +841,7 @@
       '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
       '</div>' +
       '<div class="toolbar-row">' +
-      '<div class="toolbar-row-left">' +
-      '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length) ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
-      '<div id="called-filter-slot">' + calledFilterHtml() + '</div>' +
-      '</div>' +
+      '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length || calledFilter !== 'ALL') ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
       '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '</div>' +
       '</div>' +
