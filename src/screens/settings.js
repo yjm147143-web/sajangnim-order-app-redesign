@@ -46,19 +46,10 @@
     return openTs ? '(' + dateTimeLabel(openTs) + ' 개점)' : '';
   }
 
-  var SOUND_TYPES = [
-    { v: 'default', label: '기본음' },
-    { v: 'bell', label: '청량한 벨' },
-    { v: 'cheerful', label: '경쾌한 알림' },
-  ];
   var NOTICE_URL = 'https://dev-admin.qrorder.ai.kr/home';
 
   function contentHtml(store) {
     var autoAcceptOn = !!store.autoAcceptOrders;
-    var notificationOn = store.notificationEnabled !== false;
-    var volume = store.notificationVolume != null ? store.notificationVolume : 70;
-    var soundType = store.notificationSoundType || 'default';
-    var repeatCount = store.notificationRepeatCount != null ? store.notificationRepeatCount : 1;
     return (
       '<div class="settings-list-item no-toggle-click status-list-item">' +
         '<div class="icon">🏪</div>' +
@@ -80,42 +71,10 @@
       '</div>' +
 
       '<div class="divider-line"></div>' +
-      '<div class="settings-section-label">알림</div>' +
 
-      '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">🔔</div>' +
-        '<div class="label-group">' +
-          '<div class="label">알림 설정</div>' +
-          '<div class="label-sub">' + (notificationOn ? '소리 · 푸시 · 진동으로 새 주문을 알려드려요' : '소리 · 푸시 알림이 꺼져 있어요') + '</div>' +
-        '</div>' +
-        '<button type="button" class="toggle' + (notificationOn ? ' on' : '') + '" id="notification-toggle"><span class="toggle-knob"></span></button>' +
+      '<div class="settings-list-item" data-nav="notificationSettings">' +
+        '<div class="icon">🔔</div><div class="label">알림 설정</div><div class="chevron">›</div>' +
       '</div>' +
-      '<div class="notification-volume-row' + (notificationOn ? '' : ' disabled') + '">' +
-        '<span class="notification-volume-label">알림음 크기</span>' +
-        '<input type="range" min="0" max="100" step="5" value="' + volume + '" id="notification-volume-slider"' + (notificationOn ? '' : ' disabled') + ' />' +
-        '<span class="notification-volume-value" id="notification-volume-value">' + volume + '</span>' +
-        '<button type="button" class="pill-btn" id="notification-preview-btn"' + (notificationOn ? '' : ' disabled') + '>🔊</button>' +
-      '</div>' +
-      '<div class="notification-volume-hint">' + (notificationOn && volume === 0 ? '소리 크기가 0이라 진동으로만 알려드려요' : '') + '</div>' +
-      '<div class="notification-sub-row' + (notificationOn ? '' : ' disabled') + '">' +
-        '<span class="notification-volume-label">알림음 종류</span>' +
-        '<div class="notification-chip-row">' +
-          SOUND_TYPES.map(function (s) {
-            return '<button type="button" class="pill-btn' + (soundType === s.v ? ' active' : '') + '" data-action="set-sound-type" data-value="' + s.v + '"' + (notificationOn ? '' : ' disabled') + '>' + s.label + '</button>';
-          }).join('') +
-        '</div>' +
-      '</div>' +
-      '<div class="notification-sub-row' + (notificationOn ? '' : ' disabled') + '">' +
-        '<span class="notification-volume-label">반복 횟수</span>' +
-        '<div class="notification-chip-row">' +
-          [1, 2, 3].map(function (n) {
-            return '<button type="button" class="pill-btn' + (repeatCount === n ? ' active' : '') + '" data-action="set-repeat-count" data-value="' + n + '"' + (notificationOn ? '' : ' disabled') + '>' + n + '회</button>';
-          }).join('') +
-        '</div>' +
-      '</div>' +
-
-      '<div class="divider-line"></div>' +
-
       '<div class="settings-list-item" data-nav="menuManagement">' +
         '<div class="icon">🍽️</div><div class="label">메뉴 추가 및 수정</div><div class="chevron">›</div>' +
       '</div>' +
@@ -125,30 +84,26 @@
       '<div class="settings-list-item" data-nav="customerGuideSettings">' +
         '<div class="icon">📢</div><div class="label">손님 대기 관리</div><div class="chevron">›</div>' +
       '</div>' +
+      '<div class="settings-list-item" data-nav="qrMenu">' +
+        '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
+      '</div>' +
       '<div class="settings-list-item" data-nav="sales">' +
         '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="permissionLock">' +
         '<div class="icon">🔐</div><div class="label">권한 잠금 설정</div><div class="chevron">›</div>' +
       '</div>' +
-      '<div class="settings-list-item" data-nav="qrMenu">' +
-        '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
-      '</div>' +
-
-      '<div class="divider-line"></div>' +
-
-      '<div class="settings-list-item" id="terms-link-btn">' +
-        '<div class="icon">📄</div><div class="label">약관 보기</div><div class="chevron">›</div>' +
-      '</div>' +
       '<div class="settings-list-item" id="notice-link-btn">' +
         '<div class="icon">📣</div><div class="label">공지사항</div><div class="chevron">›</div>' +
       '</div>' +
-
       '<div class="settings-list-item settings-logout" id="logout-btn">' +
         '<div class="icon">🚪</div><div class="label">로그아웃</div>' +
       '</div>' +
-      '<div class="settings-list-item" id="log-send-btn">' +
-        '<div class="icon">🛠️</div><div class="label">로그 전송</div>' +
+
+      '<div class="settings-footer-row">' +
+        '<button type="button" class="settings-footer-link" id="terms-link-btn">약관 보기</button>' +
+        '<span class="settings-footer-sep">·</span>' +
+        '<button type="button" class="settings-footer-link" id="log-send-btn">로그 전송</button>' +
       '</div>'
     );
   }
@@ -171,18 +126,9 @@
         '.status-action-btn.pastel-green{background:var(--color-accent-green-bg);color:var(--color-accent-green);}' +
         '.status-action-btn.pastel-amber{background:var(--color-accent-amber-bg);color:#a15c00;}' +
         '.status-action-btn.pastel-red{background:var(--color-accent-red-bg);color:var(--color-accent-red);}' +
-        '.notification-volume-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;}' +
-        '.notification-volume-row.disabled{opacity:0.45;pointer-events:none;}' +
-        '.notification-volume-label{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:600;flex-shrink:0;white-space:nowrap;}' +
-        '.notification-volume-row input[type=range]{flex:1;accent-color:var(--color-text-primary);}' +
-        '.notification-volume-value{font-size:var(--font-size-caption);font-weight:700;width:28px;text-align:right;flex-shrink:0;}' +
-        '.notification-volume-row .pill-btn{flex-shrink:0;}' +
-        '.notification-volume-hint{font-size:var(--font-size-micro);color:var(--color-text-secondary);padding:0 var(--space-5) var(--space-3) 48px;}' +
-        '.settings-section-label{font-size:var(--font-size-micro);font-weight:800;color:var(--color-text-secondary);padding:var(--space-3) var(--space-5) 0;}' +
-        '.notification-sub-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;flex-wrap:wrap;}' +
-        '.notification-sub-row.disabled{opacity:0.45;pointer-events:none;}' +
-        '.notification-chip-row{display:flex;gap:6px;flex-wrap:wrap;}' +
-        '.notification-chip-row .pill-btn.active{background:var(--color-accent-blue);color:var(--color-white);}' +
+        '.settings-footer-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:24px var(--space-5) 32px;}' +
+        '.settings-footer-link{background:none;border:none;padding:2px;font-size:11px;color:var(--color-text-secondary);opacity:0.6;cursor:pointer;}' +
+        '.settings-footer-sep{font-size:11px;color:var(--color-text-secondary);opacity:0.4;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back">←</button></div>' +
@@ -271,51 +217,6 @@
           refresh();
         });
       }
-
-      var notificationToggle = wrap.querySelector('#notification-toggle');
-      if (notificationToggle) {
-        notificationToggle.addEventListener('click', function () {
-          var store = window.MockApi.getStore(storeId);
-          var next = !(store.notificationEnabled !== false);
-          window.MockApi.updateNotificationSettings(storeId, { enabled: next });
-          window.UI.toast(next ? '알림을 켰어요' : '알림을 껐어요');
-          refresh();
-        });
-      }
-
-      var volumeSlider = wrap.querySelector('#notification-volume-slider');
-      var volumeValue = wrap.querySelector('#notification-volume-value');
-      if (volumeSlider) {
-        volumeSlider.addEventListener('input', function () {
-          if (volumeValue) volumeValue.textContent = volumeSlider.value;
-        });
-        volumeSlider.addEventListener('change', function () {
-          var vol = Number(volumeSlider.value);
-          window.MockApi.updateNotificationSettings(storeId, { volume: vol });
-          window.UI.playNotificationPreview(vol);
-          refresh();
-        });
-      }
-      var previewBtn = wrap.querySelector('#notification-preview-btn');
-      if (previewBtn) {
-        previewBtn.addEventListener('click', function () {
-          var vol = volumeSlider ? Number(volumeSlider.value) : 0;
-          window.UI.playNotificationPreview(vol);
-        });
-      }
-
-      wrap.querySelectorAll('[data-action="set-sound-type"]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          window.MockApi.updateNotificationSettings(storeId, { soundType: btn.getAttribute('data-value') });
-          refresh();
-        });
-      });
-      wrap.querySelectorAll('[data-action="set-repeat-count"]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          window.MockApi.updateNotificationSettings(storeId, { repeatCount: Number(btn.getAttribute('data-value')) });
-          refresh();
-        });
-      });
 
       var termsBtn = wrap.querySelector('#terms-link-btn');
       if (termsBtn) termsBtn.addEventListener('click', function () { window.open(NOTICE_URL, '_blank', 'noopener'); });
