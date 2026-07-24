@@ -26,9 +26,7 @@
   const SCOPED_STYLE = '' +
     '.topbar-title { max-width: 62%; display: flex; align-items: center; gap: 6px; overflow: visible; }' +
     '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
-    '.order-card-actions.three { flex-wrap: wrap; }' +
-    '.order-card-actions.three .btn { font-size: 11.5px; padding: 0 4px; flex: 1 1 30%;' +
-      ' display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; }' +
+    '.order-card-actions.three .btn { font-size: 13px; padding: 0 4px; flex: 1 1 30%; white-space: nowrap; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
     '.order-list.with-bulk-bar { padding-bottom: 88px; }' +
@@ -44,7 +42,7 @@
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
     '.status-pill-btn { background: none; border: none; padding: 0; cursor: pointer; }' +
-    '.search-row { display: flex; align-items: center; gap: var(--space-2); }' +
+    '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
@@ -59,7 +57,8 @@
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
-    '.refresh-btn { background: none; border: none; padding: 4px; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; }' +
+    '.refresh-btn { background: none; border: none; padding: 4px; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; margin-left: auto; }' +
+    '.order-title-text { font-size: 18px; }' +
     '.refresh-btn.spinning { animation: order-refresh-spin 0.6s linear; }' +
     '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
 
@@ -71,10 +70,6 @@
       return [{ status: 'PROCESSING', label: '처리중' }, { status: 'DONE', label: '완료' }];
     }
     return [{ status: 'WAITING', label: '미수락' }, { status: 'PROCESSING', label: '처리중' }, { status: 'DONE', label: '완료' }];
-  }
-
-  function indexOfStatus(status) {
-    return tabs.findIndex(function (t) { return t.status === status; });
   }
 
   function currentStatus() { return tabs[currentIndex].status; }
@@ -110,26 +105,32 @@
 
   // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
   // 다회용기 주문은 별도 뱃지 대신, 각 메뉴명 앞에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다
+  // 선착순 배지는 주문 시점 값이 아니라 '지금' 그 메뉴에 선착순 가격이 설정돼 있는지를 보고 판단한다
+  // (주문 카드 단위가 아니라 메뉴 줄 단위로 노출).
   function itemListHtml(order) {
     const isReusable = !!order.isReusableContainer;
+    const menuItems = window.MockApi.getMenuItems(storeId);
     return (order.items || []).map(function (it) {
       const optHtml = (it.optionNames && it.optionNames.length)
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
+      const menu = menuItems.find(function (m) { return m.name === it.menuName; });
+      const firstComeHtml = (menu && menu.firstComeEnabled) ? ' <span class="badge badge-warning-soft">선착순</span>' : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
-        '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + (isReusable ? '♻️ ' : '') + esc(it.menuName) + '</span>' +
-        optHtml +
+        '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ♻️' : '') + '</span>' +
+        optHtml + firstComeHtml +
         '</div>';
     }).join('');
   }
 
   // ---------------- 렌더 조각들 ----------------
   function renderSegmentTabsHtml() {
-    return tabs.map(function (t, i) {
+    const tabBtns = tabs.map(function (t, i) {
       return '<button type="button" class="segment-tab' + (i === currentIndex ? ' active' : '') + '" data-action="switch-tab" data-tab-idx="' + i + '">' +
         esc(t.label) + ' <span class="count">' + tabCount(t.status) + '</span></button>';
     }).join('');
+    return tabBtns + '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>';
   }
 
   function sortLabel() { return sortDir === 'desc' ? '최신순' : '오래된순'; }
@@ -138,19 +139,20 @@
     return '<div class="offline-banner">📶 오프라인 상태예요 · 네트워크가 연결되면 다시 사용할 수 있어요</div>';
   }
 
+  // 여러 메뉴가 동시에 자동 품절돼도 '메뉴명 외 N개'로 뭉치지 않고, 메뉴마다 각각 별도의 배너로 띄운다.
   function autoSoldoutBannerHtml() {
-    if (!autoSoldoutNames.length) return '';
-    const first = esc(autoSoldoutNames[0]);
-    const label = autoSoldoutNames.length > 1 ? first + ' 외 ' + (autoSoldoutNames.length - 1) + '개 메뉴가' : first + ' 메뉴가';
-    return '<div class="auto-soldout-banner">' +
-      '<span>⚠️ ' + label + ' 자동 품절됐어요.</span>' +
-      '<button type="button" class="auto-soldout-banner-close" data-action="dismiss-auto-soldout" aria-label="닫기">✕</button>' +
-      '</div>';
+    return autoSoldoutNames.map(function (n) {
+      return '<div class="auto-soldout-banner">' +
+        '<span>⚠️ ' + esc(n) + ' 메뉴가 자동 품절됐어요.</span>' +
+        '<button type="button" class="auto-soldout-banner-close" data-action="dismiss-auto-soldout" data-name="' + esc(n) + '" aria-label="닫기">✕</button>' +
+        '</div>';
+    }).join('');
   }
 
   // 호출/완료 횟수는 0회일 때는 굳이 보여줄 필요가 없어 숨기고, 1회부터는 버튼 옆 작은 뱃지로 노출한다
-  function countBadgeHtml(n) {
-    return n > 0 ? '<span class="badge badge-success-soft">' + n + '회</span>' : '';
+  // 배지 대신 버튼 라벨 한 줄 안에 (n회)로 붙여서 두 줄로 줄바꿈되지 않게 한다.
+  function countText(n) {
+    return n > 0 ? ' (' + n + '회)' : '';
   }
 
   function renderActionsHtml(order, tabStatus, disabled) {
@@ -163,9 +165,9 @@
     }
     if (tabStatus === 'PROCESSING') {
       return '<div class="order-card-actions three">' +
-        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출' + countBadgeHtml(order.calledCount || 0) + '</button>' +
+        '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출' + countText(order.calledCount || 0) + '</button>' +
         '<button type="button" class="btn btn-danger-solid" data-action="cancel-payment" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>' +
-        '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료' + countBadgeHtml(order.completeCount || 0) + '</button>' +
+        '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료' + countText(order.completeCount || 0) + '</button>' +
         '</div>';
     }
     // 완료 탭에서 취소/반품 처리된 건은 되돌리기·결제취소 버튼 대신, 처리 완료 시각이 담긴 뱃지로 대체한다
@@ -210,9 +212,10 @@
 
     // 주문채널·배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
+    // 선착순은 주문 건 단위가 아니라 메뉴별 배지(itemListHtml)로 표시하므로 헤더에서는 제외한다
     const channelHtml = window.UI.channelBadgeHtml(order.channel);
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
-    const promoHtml = window.UI.promoBadgeHtml(order.promoType);
+    const promoHtml = order.promoType === 'FIRST_COME' ? '' : window.UI.promoBadgeHtml(order.promoType);
     if (channelHtml || deliveryHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + channelHtml + deliveryHtml + promoHtml + '</div>';
     }
@@ -300,7 +303,7 @@
     if (!root) return;
     const disabled = controlsDisabled();
     const orders = fetchOrders();
-    const groups = window.UI.groupByBucket(orders);
+    const groups = window.UI.groupByBucket(orders, sortDir);
     const wrap = root.querySelector('#order-list-wrap');
     const hasBulkBar = currentStatus() !== 'DONE' && selectedIds.size > 0;
     wrap.className = 'order-list' + (hasBulkBar ? ' with-bulk-bar' : '');
@@ -539,7 +542,7 @@
   function handleAccept(id) {
     const res = window.MockApi.acceptOrder(id);
     window.UI.toast('카카오 알림톡 발송: ' + res.notification);
-    switchTab(indexOfStatus('PROCESSING'));
+    updateList();
   }
 
   // 키오스크 + VAN 결제건은 실물 카드가 있어야 취소·반품이 가능해 이 화면에서 처리할 수 없다
@@ -547,7 +550,7 @@
     if (order && order.channel === 'TABLET' && order.paymentMethod === 'VAN') {
       window.UI.showModal({
         title: '실물 카드가 필요해요',
-        message: "결제 취소에 '실물 카드'가 필요해요. 키오스크에서 취소해 주세요.",
+        message: "결제 취소에 '실물 카드'가 필요해요.<br/><strong>키오스크에서 취소</strong>해 주세요.",
         buttons: [{ label: '확인', variant: 'btn-primary' }],
       });
       return;
@@ -561,7 +564,7 @@
       openReasonModal(function (reason) {
         const res = window.MockApi.cancelOrder(id, reason);
         window.UI.toast('카카오 알림톡 발송: ' + res.notification);
-        switchTab(indexOfStatus('DONE'));
+        updateList();
       });
     });
   }
@@ -588,7 +591,7 @@
   function handleComplete(id) {
     function proceed() {
       window.MockApi.completeOrder(id);
-      switchTab(indexOfStatus('DONE'));
+      updateList();
     }
     const order = window.MockApi.getOrder(id);
     if (order && !order.called) {
@@ -609,7 +612,7 @@
       openReasonModal(function (reason) {
         const res = window.MockApi.cancelPayment(id, reason);
         window.UI.toast('카카오 알림톡 발송: ' + res.notification);
-        switchTab(indexOfStatus('DONE'));
+        updateList();
       });
     });
   }
@@ -633,7 +636,7 @@
       '되돌리기',
       function () {
         window.MockApi.revertOrder(id);
-        switchTab(indexOfStatus('PROCESSING'));
+        updateList();
       }
     );
   }
@@ -657,14 +660,16 @@
     if (!ids.length) return;
     window.MockApi.bulkAction(ids, 'accept');
     window.UI.toast('카카오 알림톡 발송: 주문 완료 (' + ids.length + '건)');
-    switchTab(indexOfStatus('PROCESSING'));
+    selectedIds = new Set();
+    updateList();
   }
 
   function doBulkComplete() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
     window.MockApi.bulkAction(ids, 'complete');
-    switchTab(indexOfStatus('DONE'));
+    selectedIds = new Set();
+    updateList();
   }
 
   function doBulkCall() {
@@ -744,7 +749,11 @@
     if (action === 'open-settings') onSettingsClick();
     else if (action === 'refresh-orders') handleRefresh(target);
     else if (action === 'toggle-operating-status') handleToggleOperatingStatus();
-    else if (action === 'dismiss-auto-soldout') { autoSoldoutNames = []; refreshAutoSoldoutBanner(); }
+    else if (action === 'dismiss-auto-soldout') {
+      const dismissName = target.getAttribute('data-name');
+      autoSoldoutNames = autoSoldoutNames.filter(function (n) { return n !== dismissName; });
+      refreshAutoSoldoutBanner();
+    }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
     else if (action === 'open-kitchen-board') window.Router.showScreen('kitchenBoard');
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
@@ -776,7 +785,7 @@
     if (target.matches('input[data-action="bucket-select-all"]')) {
       const key = target.getAttribute('data-bucket');
       const orders = fetchOrders();
-      const groups = window.UI.groupByBucket(orders);
+      const groups = window.UI.groupByBucket(orders, sortDir);
       const group = groups.find(function (g) { return String(g.key) === key; });
       if (group) {
         if (target.checked) group.orders.forEach(function (o) { selectedIds.add(o.id); });
@@ -813,7 +822,7 @@
 
     const disabled = controlsDisabled();
     const orders = fetchOrders();
-    const groups = window.UI.groupByBucket(orders);
+    const groups = window.UI.groupByBucket(orders, sortDir);
 
     return '' +
       '<style>' + SCOPED_STYLE + '</style>' +
@@ -823,7 +832,6 @@
       '</div>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
-      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>' +
       '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
@@ -831,8 +839,6 @@
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
       '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +
-      '<div class="segment-tabs" id="segment-tabs">' + renderSegmentTabsHtml() + '</div>' +
-      '<div class="toolbar">' +
       '<div class="search-row">' +
       '<div class="search-box">' +
       '<span>🔍</span>' +
@@ -840,6 +846,8 @@
       '</div>' +
       '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
       '</div>' +
+      '<div class="segment-tabs" id="segment-tabs">' + renderSegmentTabsHtml() + '</div>' +
+      '<div class="toolbar">' +
       '<div class="toolbar-row">' +
       '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length || calledFilter !== 'ALL') ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
       '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +

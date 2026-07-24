@@ -396,7 +396,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   font-size: var(--font-size-caption);
   background: var(--color-divider); padding: 2px 8px; border-radius: 6px;
 }
-.order-card-menu-line .line-name { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: break-word; }
+.order-card-menu-line .line-name { flex: 0 1 auto; min-width: 0; white-space: normal; overflow-wrap: break-word; }
 .order-card-menu-line .line-option { flex-shrink: 0; font-size: var(--font-size-micro); font-weight: 700; color: var(--color-accent-blue); background: var(--color-accent-blue-bg); padding: 2px 8px; border-radius: var(--radius-pill); margin-top: 1px; }
 
 .order-card-note { margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--color-accent-amber-bg); border: 1px solid rgba(161,92,0,0.25); border-radius: var(--space-2); font-size: var(--font-size-caption); color: #a15c00; font-weight: 600; }

@@ -54,26 +54,18 @@
     return hm(start) + ' ~ ' + hm(end);
   }
 
-  // 예약 주문은 5분 단위 시간대 버킷 대신 별도의 '예약 시간' 그룹으로 묶는다.
-  function groupByBucket(orders) {
-    const reserved = orders.filter(function (o) { return o.isReservation; });
-    const normal = orders.filter(function (o) { return !o.isReservation; });
-
-    const groups = [];
-    let current = null;
-    normal.forEach(function (o) {
-      const key = bucketKeyOf(o.orderedAt);
-      if (!current || current.key !== key) {
-        current = { key: key, label: bucketLabel(key), orders: [] };
-        groups.push(current);
-      }
-      current.orders.push(o);
+  // 예약 주문도 별도 그룹으로 빼지 않고, 자신이 속할 시간대 그룹을 접수시간(orderedAt) 대신
+  // 예약시간(reservationTime) 기준으로 판단해 해당 시간대 헤더 안에 합류시킨다.
+  function groupByBucket(orders, sortDir) {
+    const map = {};
+    orders.forEach(function (o) {
+      const timeSource = (o.isReservation && o.reservationTime) ? o.reservationTime : o.orderedAt;
+      const key = bucketKeyOf(timeSource);
+      if (!map[key]) map[key] = { key: key, label: bucketLabel(key), orders: [] };
+      map[key].orders.push(o);
     });
-
-    if (reserved.length) {
-      groups.push({ key: 'RESERVED', label: '예약 시간', isReservationGroup: true, orders: reserved });
-    }
-    return groups;
+    const keys = Object.keys(map).map(Number).sort(function (a, b) { return sortDir === 'desc' ? b - a : a - b; });
+    return keys.map(function (k) { return map[k]; });
   }
 
   // ---------------- Channel / status badges ----------------
