@@ -633,14 +633,24 @@
         '.existing-group-chip .name{font-size:var(--font-size-caption);font-weight:800;color:var(--color-text-primary);}' +
         '.existing-group-chip .meta{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
         '.option-groups-subtitle{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin:14px 0 8px;}' +
+        '.menu-edit-tab-bar{padding:0 var(--space-5) var(--space-3);}' +
+        '.edit-tab-panel{display:none;}' +
+        '.edit-tab-panel.active{display:block;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="edit-back">←</button></div>' +
         '<div class="topbar-title">' + (state.isEdit ? '메뉴 수정' : '메뉴 추가') + '</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
+      '<div class="segment-tabs menu-edit-tab-bar">' +
+        '<button type="button" class="segment-tab active" data-edit-tab="basic">기본 정보</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="etc">추가 설정</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="option">옵션</button>' +
+      '</div>' +
       '<div class="screen-scroll">' +
         '<div class="menu-edit-form-pad">' +
+
+          '<div class="edit-tab-panel active" data-edit-panel="basic">' +
 
           '<div class="input-group">' +
             '<div class="input-label">메뉴 이미지</div>' +
@@ -679,6 +689,46 @@
             '<div class="input-label">메뉴 가격</div>' +
             '<input class="input-field" type="number" id="f-price" placeholder="가격을 입력해주세요" value="' + (state.price === '' ? '' : state.price) + '" />' +
             '<div class="input-error" id="err-price" style="display:none;"></div>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">메뉴 설명</div>' +
+            '<textarea class="input-field" id="f-desc" placeholder="메뉴 설명을 입력해주세요">' + esc(state.description) + '</textarea>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">손님 화면 미리보기</div>' +
+            '<div id="menu-preview-container">' + renderPreviewHtml(state) + '</div>' +
+          '</div>' +
+
+          '</div>' +
+
+          '<div class="edit-tab-panel" data-edit-panel="etc">' +
+
+          '<div class="input-group">' +
+            '<div class="toggle-row">' +
+              '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                '<span class="input-label" style="margin:0;">자동 품절</span>' +
+                '<span class="menu-edit-subcaption">준비량이 0이 되면 자동으로 품절 처리해요</span>' +
+              '</div>' +
+              '<button type="button" class="toggle' + (state.autoSoldoutEnabled ? ' on' : '') + '" id="toggle-auto-soldout"><span class="toggle-knob"></span></button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="input-label">준비량<span id="stock-required-hint" style="color:var(--color-accent-red);' + (state.autoSoldoutEnabled ? '' : 'display:none;') + '"> · 자동품절 ON 시 필수</span></div>' +
+            '<input class="input-field" type="number" id="f-stock" placeholder="준비량을 입력해주세요" value="' + (state.stockQuantity === '' ? '' : state.stockQuantity) + '" />' +
+            '<div class="input-error" id="err-stock" style="display:none;"></div>' +
+          '</div>' +
+
+          '<div class="input-group">' +
+            '<div class="toggle-row">' +
+              '<div class="label-group" style="display:flex;flex-direction:column;">' +
+                '<span class="input-label" style="margin:0;">메뉴 숨기기</span>' +
+                '<span class="menu-edit-subcaption">켜면 손님 화면에서 이 메뉴가 보이지 않아요</span>' +
+              '</div>' +
+              '<button type="button" class="toggle' + (!state.exposed ? ' on' : '') + '" id="toggle-exposed"><span class="toggle-knob"></span></button>' +
+            '</div>' +
           '</div>' +
 
           '<div class="input-group">' +
@@ -733,35 +783,23 @@
           '</div>' +
 
           '<div class="input-group">' +
-            '<div class="input-label">메뉴 설명</div>' +
-            '<textarea class="input-field" id="f-desc" placeholder="메뉴 설명을 입력해주세요">' + esc(state.description) + '</textarea>' +
+            '<div class="input-label">원산지 (선택)</div>' +
+            '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
           '</div>' +
 
           '<div class="input-group">' +
-            '<div class="toggle-row">' +
-              '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">자동 품절</span>' +
-                '<span class="menu-edit-subcaption">준비량이 0이 되면 자동으로 품절 처리해요</span>' +
-              '</div>' +
-              '<button type="button" class="toggle' + (state.autoSoldoutEnabled ? ' on' : '') + '" id="toggle-auto-soldout"><span class="toggle-knob"></span></button>' +
-            '</div>' +
+            '<div class="input-label">영양 정보 (선택)</div>' +
+            '<textarea class="input-field" id="f-nutrition" placeholder="예: 열량 350kcal, 당류 20g">' + esc(state.nutritionInfo) + '</textarea>' +
           '</div>' +
 
           '<div class="input-group">' +
-            '<div class="input-label">준비량<span id="stock-required-hint" style="color:var(--color-accent-red);' + (state.autoSoldoutEnabled ? '' : 'display:none;') + '"> · 자동품절 ON 시 필수</span></div>' +
-            '<input class="input-field" type="number" id="f-stock" placeholder="준비량을 입력해주세요" value="' + (state.stockQuantity === '' ? '' : state.stockQuantity) + '" />' +
-            '<div class="input-error" id="err-stock" style="display:none;"></div>' +
+            '<div class="input-label">알레르기 정보 (선택)</div>' +
+            '<textarea class="input-field" id="f-allergy" placeholder="예: 우유, 밀, 대두 함유">' + esc(state.allergyInfo) + '</textarea>' +
           '</div>' +
 
-          '<div class="input-group">' +
-            '<div class="toggle-row">' +
-              '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">메뉴 숨기기</span>' +
-                '<span class="menu-edit-subcaption">켜면 손님 화면에서 이 메뉴가 보이지 않아요</span>' +
-              '</div>' +
-              '<button type="button" class="toggle' + (!state.exposed ? ' on' : '') + '" id="toggle-exposed"><span class="toggle-knob"></span></button>' +
-            '</div>' +
           '</div>' +
+
+          '<div class="edit-tab-panel" data-edit-panel="option">' +
 
           '<div class="input-group">' +
             '<div class="toggle-row">' +
@@ -777,24 +815,6 @@
             '</div>' +
           '</div>' +
 
-          '<div class="input-group">' +
-            '<div class="input-label">원산지 (선택)</div>' +
-            '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">영양 정보 (선택)</div>' +
-            '<textarea class="input-field" id="f-nutrition" placeholder="예: 열량 350kcal, 당류 20g">' + esc(state.nutritionInfo) + '</textarea>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">알레르기 정보 (선택)</div>' +
-            '<textarea class="input-field" id="f-allergy" placeholder="예: 우유, 밀, 대두 함유">' + esc(state.allergyInfo) + '</textarea>' +
-          '</div>' +
-
-          '<div class="input-group">' +
-            '<div class="input-label">손님 화면 미리보기</div>' +
-            '<div id="menu-preview-container">' + renderPreviewHtml(state) + '</div>' +
           '</div>' +
 
         '</div>' +
@@ -822,9 +842,26 @@
       });
     }
 
+    // 필드가 어느 탭에 있는지 알아야, 검증 에러가 나면 그 탭으로 이동시켜 사용자가 에러를 놓치지 않게 한다
+    var FIELD_TAB = { name: 'basic', category: 'basic', price: 'basic', stock: 'etc', happyHourPrice: 'etc', firstComePrice: 'etc' };
+
+    function switchEditTab(tabKey) {
+      root.querySelectorAll('[data-edit-tab]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-edit-tab') === tabKey);
+      });
+      root.querySelectorAll('[data-edit-panel]').forEach(function (panel) {
+        panel.classList.toggle('active', panel.getAttribute('data-edit-panel') === tabKey);
+      });
+    }
+
+    root.querySelectorAll('[data-edit-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () { switchEditTab(btn.getAttribute('data-edit-tab')); });
+    });
+
     function showError(field, msg) {
       var el = root.querySelector('#err-' + field);
       if (!el) el = root.querySelector('#err-general');
+      if (FIELD_TAB[field]) switchEditTab(FIELD_TAB[field]);
       el.textContent = msg;
       el.style.display = 'block';
     }
