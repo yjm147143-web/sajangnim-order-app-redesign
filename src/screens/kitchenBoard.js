@@ -16,8 +16,15 @@
     return user && user.storeId;
   }
 
+  // 조리 현황판의 누적/호출/수기차감은 모두 '오늘 최초 개점 시각' 이후 범위로 집계한다 — 마감 자체가
+  // 아니라 그 다음 새로운 날의 개점 시점에 셋이 함께 초기화되는 것과 같은 기준선을 쓰기 위함이다.
+  // (주문 기록 자체는 지우지 않는다 — 매출조회 등 다른 화면은 여전히 전체 이력을 본다.)
   function aggregateByMenu(storeId) {
-    var orders = window.MockApi.getOrders(storeId, {}).filter(function (o) { return !o.canceled; });
+    var store = window.MockApi.getStore(storeId);
+    var cutoff = store.todayFirstOpenAt ? new Date(store.todayFirstOpenAt).getTime() : 0;
+    var orders = window.MockApi.getOrders(storeId, {}).filter(function (o) {
+      return !o.canceled && new Date(o.orderedAt).getTime() >= cutoff;
+    });
     var stats = {};
     orders.forEach(function (o) {
       var isCalled = !!o.called;
@@ -27,16 +34,24 @@
         if (isCalled) stats[it.menuName].called += it.quantity;
       });
     });
+    var manualDeductions = window.MockApi.getKitchenManualDeductions(storeId);
+    Object.keys(stats).forEach(function (name) {
+      stats[name].manual = manualDeductions[name] || 0;
+    });
     return stats;
   }
 
-  // 가장 눈에 띄는 큰 숫자는 '남은 주문'(아직 호출되지 않은 수량)이고, 호출/누적 수량은 아래
-  // 배지 두 개로만 보조 표시한다. 남은 주문이 있어야만(=아직 조리·호출할 게 남아야만) 파란
-  // 음영으로 강조한다 — 누적 수량이 있어도 이미 다 호출됐다면 더 이상 강조하지 않는다.
-  function menuCardHtml(name, total, called, idx) {
-    var remaining = total - called;
+  // 가장 눈에 띄는 큰 숫자는 '남은 주문'(누적에서 호출·수기차감을 뺀 수량)이고, 호출/누적 수량은
+  // 아래 배지로 보조 표시한다. 남은 주문이 있어야만(=아직 조리·호출할 게 남아야만) 파란 음영으로
+  // 강조한다. 기본은 호출 버튼에 따른 자동 차감이고, "조리완료" 버튼은 카운터가 바빠 호출을 늦게
+  // 눌러도 조리 담당자가 남은 수량에 미리 반영할 수 있게 하는 수기 차감 옵션이다 — 사용자가 직접
+  // 남은 수량을 올릴 수는 없고 줄이기만 한다.
+  function menuCardHtml(name, total, called, manual, idx) {
+    var remaining = Math.max(0, total - called - manual);
     var hasRemaining = remaining > 0;
     var calledPct = total ? Math.round((called / total) * 100) : 0;
+    var manualPct = total ? Math.round((manual / total) * 100) : 0;
+    var remainingPct = Math.max(0, 100 - calledPct - manualPct);
     return (
       '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
         '<div class="kb-card-name">' + esc(name) + '</div>' +
@@ -44,21 +59,23 @@
         '<div class="kb-card-total-label">남은 주문</div>' +
         '<div class="kb-ratio-bar">' +
           '<div class="fill-called" style="width:' + calledPct + '%"></div>' +
-          '<div class="fill-remaining" style="width:' + (100 - calledPct) + '%"></div>' +
+          '<div class="fill-manual" style="width:' + manualPct + '%"></div>' +
+          '<div class="fill-remaining" style="width:' + remainingPct + '%"></div>' +
         '</div>' +
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-called">호출 ' + called + '</span>' +
-          '<span class="kb-tag kb-tag-total">누적 ' + total + '</span>' +
+          '<span class="kb-tag kb-tag-total">누적 ' + total + (manual > 0 ? '<span class="kb-manual-note">(조리완료 ' + manual + ')</span>' : '') + '</span>' +
         '</div>' +
+        '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>조리완료 −1</button>' +
       '</div>'
     );
   }
 
-  // 아직 호출되지 않은(남은) 수량이 많은 메뉴를 카테고리 내에서 앞쪽으로 정렬한다
+  // 남은(누적-호출-수기차감) 수량이 많은 메뉴를 카테고리 내에서 앞쪽으로 정렬한다
   function sortByActivity(names, stats) {
     return names.slice().sort(function (a, b) {
-      var aRemaining = stats[a] ? stats[a].total - stats[a].called : 0;
-      var bRemaining = stats[b] ? stats[b].total - stats[b].called : 0;
+      var aRemaining = stats[a] ? stats[a].total - stats[a].called - stats[a].manual : 0;
+      var bRemaining = stats[b] ? stats[b].total - stats[b].called - stats[b].manual : 0;
       return bRemaining - aRemaining;
     });
   }
@@ -83,8 +100,8 @@
       html += '<div class="section-title">' + esc(cat.name) + '</div>';
       html += '<div class="kb-grid">' +
         names.map(function (name) {
-          var s = stats[name] || { total: 0, called: 0 };
-          return menuCardHtml(name, s.total, s.called, idx++);
+          var s = stats[name] || { total: 0, called: 0, manual: 0 };
+          return menuCardHtml(name, s.total, s.called, s.manual, idx++);
         }).join('') +
         '</div>';
     });
@@ -96,7 +113,7 @@
     if (uncategorized.length) {
       html += '<div class="section-title">기타</div>';
       html += '<div class="kb-grid">' +
-        uncategorized.map(function (name) { return menuCardHtml(name, stats[name].total, stats[name].called, idx++); }).join('') +
+        uncategorized.map(function (name) { return menuCardHtml(name, stats[name].total, stats[name].called, stats[name].manual, idx++); }).join('') +
         '</div>';
     }
 
@@ -117,11 +134,17 @@
         '.kb-card-total-label{font-size:10px;font-weight:700;color:var(--color-text-secondary);margin-top:-7px;}' +
         '.kb-ratio-bar{height:6px;background:var(--color-disabled);border-radius:999px;overflow:hidden;display:flex;}' +
         '.kb-ratio-bar .fill-called{background:var(--color-accent-green);height:100%;}' +
+        '.kb-ratio-bar .fill-manual{background:var(--color-accent-purple);opacity:0.55;height:100%;}' +
         '.kb-ratio-bar .fill-remaining{background:var(--color-accent-amber);height:100%;}' +
-        '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;}' +
+        '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}' +
         '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-pill);font-size:var(--font-size-caption);font-weight:700;white-space:nowrap;}' +
         '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
         '.kb-tag-total{background:var(--color-accent-amber-bg);color:#a15c00;}' +
+        '.kb-manual-note{font-size:10px;font-weight:700;color:var(--color-accent-purple);margin-left:2px;}' +
+        '.kb-deduct-btn{border:1.5px solid var(--color-accent-purple);background:var(--color-white);color:var(--color-accent-purple);' +
+          'font-size:12px;font-weight:800;height:34px;border-radius:10px;cursor:pointer;}' +
+        '.kb-deduct-btn:active{background:var(--color-accent-purple-bg);}' +
+        '.kb-deduct-btn:disabled{opacity:0.35;cursor:not-allowed;}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +
       '<div class="topbar">' +
@@ -142,8 +165,15 @@
       root.querySelector('#kb-content').innerHTML = contentHtml(storeId);
     }
 
-    // 화면 어디를 눌러도 뒤로 돌아간다 (뒤로가기 버튼도 이 위임을 그대로 탄다)
-    root.addEventListener('click', function () {
+    // 화면 어디를 눌러도 뒤로 돌아가지만, '조리완료' 버튼만은 예외로 그 자리에서 수기차감을 처리하고
+    // 화면에 머무른다.
+    root.addEventListener('click', function (e) {
+      var deductBtn = e.target.closest('[data-action="kb-manual-deduct"]');
+      if (deductBtn) {
+        window.MockApi.addKitchenManualDeduction(storeId, deductBtn.getAttribute('data-name'), 1);
+        refresh();
+        return;
+      }
       window.Router.back();
     });
 
