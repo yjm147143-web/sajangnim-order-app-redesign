@@ -87,6 +87,9 @@
       '<div class="settings-list-item" data-nav="qrMenu">' +
         '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
+
+      '<div class="divider-line"></div>' +
+
       '<div class="settings-list-item" data-nav="sales">' +
         '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
       '</div>' +
@@ -96,6 +99,9 @@
       '<div class="settings-list-item" id="notice-link-btn">' +
         '<div class="icon">📣</div><div class="label">공지사항</div><div class="chevron">›</div>' +
       '</div>' +
+
+      '<div class="divider-line"></div>' +
+
       '<div class="settings-list-item settings-logout" id="logout-btn">' +
         '<div class="icon">🚪</div><div class="label">로그아웃</div>' +
       '</div>' +
