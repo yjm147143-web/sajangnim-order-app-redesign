@@ -1,204 +1,343 @@
 /*
  * 행사 담당자 — 매출 현황 화면
- * 상단 요약 + 매장별 매출 랭킹 + 상세 매출(카드형 허브 → 상세, 사장님 앱 패턴 재현)
+ * 사장님 보드의 매출 조회(sales.js)와 동일한 UI/UX: 실시간 매출현황 / 과거 매출현황 2탭 구조.
+ * 실시간 탭은 오늘 하루 고정, 과거 탭은 전일/행사일/기간설정 필터로 날짜(구간)를 고른다.
+ * 두 탭 모두 날짜를 탭하면 그 날짜 하나만의 매장별/메뉴별/시간대별/주문방식별/결제수단별
+ * 매출을 5개 탭으로 볼 수 있는 '날짜별 매출 상세' 화면으로 들어간다.
+ * 사장님 보드와 달리 매장이 여러 개라 '매장별' 탭이 추가되고, 사장님 사이트 링크 안내는
+ * 행사 담당자 role과 맞지 않아 넣지 않는다.
  */
 (function () {
-  const DETAIL_CARDS = [
-    { key: 'store', icon: '🏪', label: '매장별 매출' },
-    { key: 'period', icon: '📅', label: '기간별 매출' },
-    { key: 'menu', icon: '🍽️', label: '메뉴별 매출' },
-    { key: 'hour', icon: '🕒', label: '시간대별 매출' },
-    { key: 'channel', icon: '🧾', label: '주문 방식별 매출' },
-    { key: 'payment', icon: '💳', label: '결제수단별 매출' },
+  const SUB_TABS = [
+    { key: 'store', label: '매장별' },
+    { key: 'menu', label: '메뉴별' },
+    { key: 'hour', label: '시간대별' },
+    { key: 'channel', label: '주문방식별' },
+    { key: 'payment', label: '결제수단별' },
   ];
 
-  const PERIOD_PRESETS = [{ key: 'today', label: '당일' }, { key: 'yesterday', label: '전일' }, { key: 'eventPeriod', label: '행사일' }];
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function sumAmount(data) { return data.reduce(function (s, d) { return s + d.amount; }, 0); }
 
-  function computeChannelRatio(eventId) {
-    const rows = window.MockApi.getEventSalesByChannel(eventId);
-    const total = rows.reduce(function (s, r) { return s + r.amount; }, 0) || 1;
-    return rows.map(function (r) { return { name: r.name, amount: r.amount, pct: Math.round((r.amount / total) * 100) }; });
-  }
-
-  function emptyHtml() {
-    return '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>데이터가 없어요</div></div>';
-  }
-
-  function listRowHtml(name, amount, extraClass) {
+  function listRowHtml(name, amount, count, dateAttr, extraClass, nameBadgeHtml) {
     return (
-      '<div class="sales-list-row">' +
-        '<div class="sales-list-name">' + window.UI.escapeHtml(name) + '</div>' +
-        '<span class="sales-list-amount' + (extraClass ? ' ' + extraClass : '') + '">' + window.UI.formatMoney(amount) + '</span>' +
-      '</div>'
-    );
-  }
-
-  function periodFilterHtml(preset) {
-    return '<div class="date-range-bar" id="detail-period-filter">' + PERIOD_PRESETS.map(function (o) {
-      return '<button type="button" class="pill-btn' + (preset === o.key ? ' active' : '') + '" data-preset="' + o.key + '">' + o.label + '</button>';
-    }).join('') + '</div>';
-  }
-
-  function storeRankingHtml(eventId, preset) {
-    const esc = window.UI.escapeHtml;
-    const data = window.MockApi.getEventStoreSalesRanking(eventId, preset);
-    if (!data.length) return emptyHtml();
-    const max = Math.max(1, Math.max.apply(null, data.map(function (d) { return d.amount; })));
-    const captionLabel = preset === 'yesterday' ? '전일' : preset === 'eventPeriod' ? '행사 누적' : '오늘';
-    return '<div class="section-caption">' + captionLabel + ' 매출 기준 · 높은 순</div><div class="rank-list">' + data.map(function (d, i) {
-      const pct = Math.round((d.amount / max) * 100);
-      return '<div class="rank-row">' +
-        '<div class="rank-index">' + (i + 1) + '</div>' +
-        '<div class="rank-body">' +
-        '<div class="rank-name-row"><span>' + esc(d.name) + '</span><span>' + window.UI.formatMoney(d.amount) + '</span></div>' +
-        '<div class="rank-bar-track"><div class="rank-bar-fill' + (i === 0 ? ' max' : '') + '" style="width:' + pct + '%"></div></div>' +
-        (d.topMenuName ? '<div class="rank-sub">베스트 메뉴 · ' + esc(d.topMenuName) + (d.topMenuQty ? ' ' + d.topMenuQty + '개' : '') + '</div>' : '') +
-        '</div></div>';
-    }).join('') + '</div>';
-  }
-
-  function renderDetailBody(key, eventId, preset) {
-    if (key === 'store') {
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot"><div class="chart-card">' + storeRankingHtml(eventId, preset) + '</div></div>';
-    }
-    if (key === 'period') {
-      const data = window.MockApi.getEventSalesByPeriod(eventId, preset);
-      if (!data.length) return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + emptyHtml() + '</div>';
-      let maxItem = null, minItem = null;
-      data.forEach(function (d) {
-        if (!maxItem || d.amount > maxItem.amount) maxItem = d;
-        if (!minItem || d.amount < minItem.amount) minItem = d;
-      });
-      const showHighlight = data.length > 1 && maxItem !== minItem;
-      const rows = data.map(function (d) {
-        let cls = '';
-        if (showHighlight && d === maxItem) cls = 'sales-amount-max';
-        else if (showHighlight && d === minItem) cls = 'sales-amount-min';
-        return listRowHtml(d.name, d.amount, cls);
-      }).join('');
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' +
-        '<div class="chart-card">' + window.UI.barChartHtml(data) + '</div>' +
-        '<div class="section-title">일자별 매출<span class="sales-legend-hint"> · <span class="sales-amount-max">최고</span> / <span class="sales-amount-min">최저</span></span></div>' +
-        '<div class="sales-list">' + rows + '</div>' +
-      '</div>';
-    }
-    if (key === 'menu') {
-      const data = window.MockApi.getEventSalesByMenu(eventId, preset);
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + (data.length ? '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>' : emptyHtml()) + '</div>';
-    }
-    if (key === 'hour') {
-      const data = window.MockApi.getEventSalesByHour(eventId, preset);
-      if (!data.length) return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + emptyHtml() + '</div>';
-      const rows = data.map(function (d) { return listRowHtml(d.name, d.amount); }).join('');
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' +
-        '<div class="chart-card">' + window.UI.barChartHtml(data) + '</div>' +
-        '<div class="section-title">시간대별 상세</div>' +
-        '<div class="sales-list">' + rows + '</div>' +
-      '</div>';
-    }
-    if (key === 'channel') {
-      const data = window.MockApi.getEventSalesByChannel(eventId, preset).slice().sort(function (a, b) { return b.amount - a.amount; });
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + (data.length ? '<div class="chart-card">' + window.UI.donutChartHtml(data) + '</div>' : emptyHtml()) + '</div>';
-    }
-    if (key === 'payment') {
-      const data = window.MockApi.getEventSalesByPayment(eventId, preset).slice().sort(function (a, b) { return b.amount - a.amount; });
-      return periodFilterHtml(preset) + '<div id="detail-chart-slot">' + (data.length ? '<div class="chart-card">' + window.UI.donutChartHtml(data) + '</div>' : emptyHtml()) + '</div>';
-    }
-    return '';
-  }
-
-  function render(params) {
-    const esc = window.UI.escapeHtml;
-    const eventId = params.eventId;
-    const summary = window.MockApi.getEventDashboardSummary(eventId);
-    const channelRatio = computeChannelRatio(eventId);
-
-    const channelRatioText = channelRatio.map(function (c) { return esc(c.name) + ' ' + c.pct + '%'; }).join(' · ');
-
-    const detailListHtml = DETAIL_CARDS.map(function (d) {
-      return (
-        '<div class="card-list-item" data-detail-key="' + d.key + '" data-detail-label="' + esc(d.label) + '">' +
-          '<div class="label-group"><span class="label-title">' + d.icon + ' ' + esc(d.label) + '</span></div>' +
-          '<span class="chevron">›</span>' +
-        '</div>'
-      );
-    }).join('');
-
-    return (
-      '<style>' +
-        '.sales-detail-overlay{position:absolute;inset:0;background:var(--color-bg);z-index:60;display:none;flex-direction:column;}' +
-        '.sales-detail-overlay.show{display:flex;}' +
-        '.channel-ratio-row{padding:0 20px 20px;font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:700;}' +
-        '.sales-list{padding:0 var(--space-5) var(--space-5);display:flex;flex-direction:column;}' +
-        '.sales-list-row{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider);}' +
-        '.sales-list-row:last-child{border-bottom:none;}' +
-        '.sales-list-name{font-size:var(--font-size-body);font-weight:600;}' +
-        '.sales-list-amount{font-size:var(--font-size-body);font-weight:700;}' +
-        '.sales-amount-max{color:var(--color-accent-green);}' +
-        '.sales-amount-min{color:var(--color-accent-red);}' +
-        '.sales-legend-hint{font-size:var(--font-size-caption);font-weight:600;}' +
-      '</style>' +
-      '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">매출 현황</div><div class="topbar-side"></div></div>' +
-      '<div class="screen-scroll">' +
-
-        '<div class="section-title">매출 요약</div>' +
-        '<div class="summary-grid" style="padding-bottom:8px;">' +
-          '<div class="summary-card"><span class="summary-label">누적 매출</span><span class="summary-value">' + window.UI.formatMoney(summary.totalAmount) + '</span></div>' +
-          '<div class="summary-card"><span class="summary-label">오늘 매출</span><span class="summary-value">' + window.UI.formatMoney(summary.todayAmount) + '</span></div>' +
-          '<div class="summary-card"><span class="summary-label">참여 매장 수</span><span class="summary-value">' + summary.storeCount + '개</span></div>' +
-          '<div class="summary-card"><span class="summary-label">매장당 평균(오늘)</span><span class="summary-value">' + window.UI.formatMoney(summary.avgPerStoreToday) + '</span></div>' +
-          '<div class="summary-card"><span class="summary-label">매장당 평균(누적)</span><span class="summary-value">' + window.UI.formatMoney(summary.avgPerStoreTotal) + '</span></div>' +
+      '<div class="sales-list-row' + (dateAttr ? ' sales-date-row' : '') + '"' + (dateAttr ? ' data-open-date="' + dateAttr + '"' : '') + '>' +
+        '<div class="sales-list-name">' + window.UI.escapeHtml(name) + (nameBadgeHtml || '') + '</div>' +
+        '<div class="sales-list-right">' +
+          (count != null ? '<span class="sales-list-count">' + count + '건</span>' : '') +
+          '<span class="sales-list-amount' + (extraClass ? ' ' + extraClass : '') + '">' + window.UI.formatMoney(amount) + '</span>' +
+          (dateAttr ? '<span class="chevron">›</span>' : '') +
         '</div>' +
-        '<div class="channel-ratio-row">주문경로 비중 · ' + channelRatioText + '</div>' +
-
-        '<div class="section-title">상세 매출</div>' +
-        '<div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:12px;">' + detailListHtml + '</div>' +
-
-      '</div>' +
-      window.EventManagerShell.tabbarHtml('eventManagerSales') +
-
-      '<div class="sales-detail-overlay" id="sales-detail-overlay">' +
-        '<div class="topbar"><div class="topbar-side"><button type="button" class="icon-btn" id="detail-back">←</button></div><div class="topbar-title" id="detail-title"></div><div class="topbar-side"></div></div>' +
-        '<div class="screen-scroll" id="detail-body"></div>' +
       '</div>'
     );
+  }
+
+  function sortToggleHtml(key, dir) {
+    const label = dir === 'asc' ? '오름차순' : '내림차순';
+    return '<div class="sales-sort-row"><button type="button" class="pill-btn" data-sales-sort-key="' + key + '">' + label + ' ▾</button></div>';
+  }
+
+  // ---------------- 5개 세부 항목별 본문 (날짜별 매출 상세 화면의 각 탭에서 재사용) ----------------
+  // 매장별 매출은 사장님 보드에는 없는, 행사담당자 전용 항목이다(매장이 여럿이라 랭킹으로 비교).
+  function storeDetailHtml(eventId, range, sortDir) {
+    const raw = window.MockApi.getEventStoreSalesRanking(eventId, range);
+    const data = raw.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
+    const total = sumAmount(data);
+    return (
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      sortToggleHtml('store', sortDir) +
+      '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>'
+    );
+  }
+
+  // 메뉴별 매출은 전체 메뉴를 순위(랭킹)로만 보여준다 — 사장님 보드와 동일하게 상위 N개로 자르지 않는다.
+  function menuDetailHtml(eventId, range, sortDir) {
+    const raw = window.MockApi.getEventSalesByMenu(eventId, range);
+    const data = raw.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
+    const total = sumAmount(data);
+    return (
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      sortToggleHtml('menu', sortDir) +
+      '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>'
+    );
+  }
+
+  // 그래프는 시간 흐름을 보여줘야 하니 항상 시간순으로 고정하고, 정렬 토글은 아래 목록에만 적용한다.
+  function hourDetailHtml(eventId, range, sortDir) {
+    const data = window.MockApi.getEventSalesByHour(eventId, range);
+    const total = sumAmount(data);
+    let peakItem = null;
+    data.forEach(function (d) { if (d.amount > 0 && (!peakItem || d.amount > peakItem.amount)) peakItem = d; });
+    const sorted = data.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
+    const rows = sorted.map(function (d) {
+      const badge = (peakItem && d === peakItem) ? ' <span class="badge badge-warning-soft">피크</span>' : '';
+      return listRowHtml(d.name, d.amount, null, null, '', badge);
+    }).join('');
+    return (
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="chart-card">' + window.UI.salesChartHtml('hour', data) + '</div>' +
+      sortToggleHtml('hour', sortDir) +
+      '<div class="sales-list">' + rows + '</div>'
+    );
+  }
+
+  function channelDetailHtml(eventId, range) {
+    const data = window.MockApi.getEventSalesByChannel(eventId, range);
+    const total = sumAmount(data);
+    return (
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="chart-card">' + window.UI.salesChartHtml('channel', data) + '</div>'
+    );
+  }
+
+  function paymentDetailHtml(eventId, range) {
+    const data = window.MockApi.getEventSalesByPayment(eventId, range);
+    const total = sumAmount(data);
+    return (
+      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="chart-card">' + window.UI.salesChartHtml('payment', data) + '</div>'
+    );
+  }
+
+  function subTabBodyHtml(key, eventId, range, sortDirByKey) {
+    sortDirByKey = sortDirByKey || {};
+    if (key === 'store') return storeDetailHtml(eventId, range, sortDirByKey.store || 'desc');
+    if (key === 'menu') return menuDetailHtml(eventId, range, sortDirByKey.menu || 'desc');
+    if (key === 'hour') return hourDetailHtml(eventId, range, sortDirByKey.hour || 'desc');
+    if (key === 'payment') return paymentDetailHtml(eventId, range);
+    return channelDetailHtml(eventId, range);
+  }
+
+  // ---------------- 기간 필터 (과거 매출현황 탭 전용) ----------------
+  // 사장님 보드는 '전일/최근 한 달'이지만, 행사담당자는 '전일/행사일/기간설정'을 쓴다.
+  // '행사일'은 행사 정보의 날짜 범위(시작일~오늘)를 뜻한다.
+  function rangeButtonLabel(range) {
+    if (range.preset === 'custom') return (range.start || '').slice(5).replace('-', '.') + ' ~ ' + (range.end || '').slice(5).replace('-', '.');
+    return '기간 설정';
+  }
+
+  function rangeFilterHtml(range) {
+    const presets = [{ key: 'yesterday', label: '전일' }, { key: 'eventPeriod', label: '행사일' }];
+    return '<div class="date-range-bar" id="ems-range-filter">' +
+      presets.map(function (p) {
+        return '<button type="button" class="pill-btn' + (range.preset === p.key ? ' active' : '') + '" data-range-preset="' + p.key + '">' + p.label + '</button>';
+      }).join('') +
+      '<button type="button" class="pill-btn' + (range.preset === 'custom' ? ' active' : '') + '" id="ems-range-custom-btn">' + rangeButtonLabel(range) + '</button>' +
+      '</div>';
+  }
+
+  // 사장님 매출조회와 동일하게 최근 30일 범위 안에서만 커스텀 기간을 고를 수 있다.
+  function openCustomRangeSheet(onApply) {
+    const bounds = window.MockApi.getSalesDateBounds();
+    const bodyHtml =
+      '<div class="sheet-title">기간 설정</div>' +
+      '<div class="section-caption" style="padding:0 0 12px;">최근 한 달 이내에서만 선택할 수 있어요</div>' +
+      '<div class="input-group"><div class="input-label">시작일</div><input class="input-field" type="date" id="ems-range-start-input" min="' + bounds.min + '" max="' + bounds.max + '" value="' + bounds.min + '" /></div>' +
+      '<div class="input-group"><div class="input-label">종료일</div><input class="input-field" type="date" id="ems-range-end-input" min="' + bounds.min + '" max="' + bounds.max + '" value="' + bounds.max + '" /></div>' +
+      '<div class="input-error" id="ems-range-error-text" style="display:none;"></div>' +
+      '<button type="button" class="btn btn-primary" id="ems-range-apply-btn">적용</button>';
+    window.UI.showBottomSheet(bodyHtml, function (host) {
+      host.querySelector('#ems-range-apply-btn').addEventListener('click', function () {
+        const start = host.querySelector('#ems-range-start-input').value;
+        const end = host.querySelector('#ems-range-end-input').value;
+        const errEl = host.querySelector('#ems-range-error-text');
+        if (!start || !end) { errEl.textContent = '시작일과 종료일을 모두 선택해주세요.'; errEl.style.display = 'block'; return; }
+        if (start > end) { errEl.textContent = '시작일은 종료일보다 늦을 수 없어요.'; errEl.style.display = 'block'; return; }
+        window.UI.closeModal();
+        onApply({ preset: 'custom', start: start, end: end });
+      });
+    });
+  }
+
+  // ---------------- 상단 3개 요약 지표 (실시간/과거 탭 공용) ----------------
+  function metricGridHtml(summary) {
+    return (
+      '<div class="sales-metric-grid">' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">총 주문건수</div><div class="sales-metric-value">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건</div></div>' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">총 매출액</div><div class="sales-metric-value accent">' + window.UI.formatMoney(summary.totalAmount) + '</div></div>' +
+        '<div class="sales-metric-card"><div class="sales-metric-label">주문단가</div><div class="sales-metric-value">' + window.UI.formatMoney(summary.avgOrderValue) + '</div></div>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- 메인 화면: 실시간 매출현황 / 과거 매출현황 2탭 ----------------
+  function tabSwitchHtml(activeTab) {
+    return (
+      '<div class="sales-tab-switch">' +
+        '<button type="button" class="sales-tab-btn' + (activeTab === 'live' ? ' active' : '') + '" data-sales-tab="live">실시간 매출현황</button>' +
+        '<button type="button" class="sales-tab-btn' + (activeTab === 'past' ? ' active' : '') + '" data-sales-tab="past">과거 매출현황</button>' +
+      '</div>'
+    );
+  }
+
+  function liveTabHtml(eventId, liveSubTab, sortDirByKey) {
+    const today = todayStr();
+    const todayRange = { preset: 'today' };
+    const summary = window.MockApi.getEventSalesSummary(eventId, todayRange);
+    return (
+      metricGridHtml(summary) +
+      '<div class="sales-detail-date">' + today.replace(/-/g, '.') + '</div>' +
+      subTabSwitchHtml(liveSubTab) +
+      subTabBodyHtml(liveSubTab, eventId, todayRange, sortDirByKey)
+    );
+  }
+
+  function pastTabHtml(eventId, range) {
+    const summary = window.MockApi.getEventSalesSummary(eventId, range);
+    const periodData = window.MockApi.getEventSalesByPeriod(eventId, range);
+    let maxItem = null, minItem = null;
+    periodData.forEach(function (d) {
+      if (!maxItem || d.amount > maxItem.amount) maxItem = d;
+      if (!minItem || d.amount < minItem.amount) minItem = d;
+    });
+    const showHighlight = periodData.length > 1 && maxItem !== minItem;
+    const rows = periodData.length
+      ? periodData.map(function (d) {
+          let cls = '', badge = '';
+          if (showHighlight && d === maxItem) { cls = 'sales-amount-max'; badge = ' <span class="badge badge-success-soft">최고</span>'; }
+          else if (showHighlight && d === minItem) { cls = 'sales-amount-min'; badge = ' <span class="badge badge-danger-soft">최저</span>'; }
+          return listRowHtml(d.name, d.amount, d.count, d.date, cls, badge);
+        }).join('')
+      : '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
+    return (
+      rangeFilterHtml(range) +
+      metricGridHtml(summary) +
+      '<div class="chart-card">' + window.UI.salesChartHtml('period', periodData) + '</div>' +
+      '<div class="section-title">일자별 매출' + (showHighlight ? '<span class="sales-legend-hint"> · <span class="sales-amount-max">최고</span> / <span class="sales-amount-min">최저</span></span>' : '') + '</div>' +
+      '<div class="sales-list">' + rows + '</div>'
+    );
+  }
+
+  function mainHtml(eventId, activeTab, pastRange, liveSubTab, sortDirByKey) {
+    return (
+      '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">매출 현황</div><div class="topbar-side"></div></div>' +
+      tabSwitchHtml(activeTab) +
+      '<div class="screen-scroll">' + (activeTab === 'live' ? liveTabHtml(eventId, liveSubTab, sortDirByKey) : pastTabHtml(eventId, pastRange)) + '</div>' +
+      window.EventManagerShell.tabbarHtml('eventManagerSales')
+    );
+  }
+
+  // ---------------- 날짜별 매출 상세 화면 (5탭) ----------------
+  function subTabSwitchHtml(activeSub) {
+    return '<div class="sales-subtab-row">' + SUB_TABS.map(function (t) {
+      return '<button type="button" class="sales-subtab-btn' + (activeSub === t.key ? ' active' : '') + '" data-sales-subtab="' + t.key + '">' + t.label + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function dateDetailHtml(eventId, date, subKey, sortDirByKey) {
+    const dayRange = { preset: 'custom', start: date, end: date };
+    const summary = window.MockApi.getEventSalesSummary(eventId, dayRange);
+    return (
+      '<div class="topbar">' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="ems-detail-back" aria-label="뒤로가기">←</button></div>' +
+        '<div class="topbar-title">날짜별 매출 상세</div>' +
+        '<div class="topbar-side"></div>' +
+      '</div>' +
+      '<div class="screen-scroll">' +
+        '<div class="sales-detail-date">' + date.replace(/-/g, '.') + '</div>' +
+        '<div class="sales-detail-sub">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건 · ' + window.UI.formatMoney(summary.totalAmount) + '</div>' +
+        subTabSwitchHtml(subKey) +
+        subTabBodyHtml(subKey, eventId, dayRange, sortDirByKey) +
+      '</div>'
+    );
+  }
+
+  function render() {
+    return '<div id="ems-view"></div>';
   }
 
   function mount(root, params) {
+    const view = root.querySelector('#ems-view');
     const eventId = params.eventId;
-    window.EventManagerShell.attachTabbar(root, 'eventManagerSales', eventId);
 
-    const overlay = root.querySelector('#sales-detail-overlay');
-    const backBtn = root.querySelector('#detail-back');
-    const titleEl = root.querySelector('#detail-title');
-    const bodyEl = root.querySelector('#detail-body');
-    let currentPreset = 'today';
+    let activeTab = 'live';
+    let pastRange = { preset: 'yesterday' };
+    let liveSubTab = 'store';
+    let sortDirByKey = { store: 'desc', menu: 'desc', hour: 'desc' };
+    let detailDate = null;
+    let detailSubTab = 'store';
 
-    function paintDetail(key, label) {
-      bodyEl.innerHTML = renderDetailBody(key, eventId, currentPreset);
-      const filterEl = bodyEl.querySelector('#detail-period-filter');
-      if (filterEl) {
-        filterEl.querySelectorAll('[data-preset]').forEach(function (btn) {
+    function paintMain() {
+      view.innerHTML = mainHtml(eventId, activeTab, pastRange, liveSubTab, sortDirByKey);
+      bindMain();
+    }
+
+    function bindMain() {
+      window.EventManagerShell.attachTabbar(view, 'eventManagerSales', eventId);
+
+      view.querySelectorAll('[data-sales-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activeTab = btn.getAttribute('data-sales-tab');
+          paintMain();
+        });
+      });
+      view.querySelectorAll('[data-open-date]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          openDetail(el.getAttribute('data-open-date'));
+        });
+      });
+      if (activeTab === 'live') {
+        view.querySelectorAll('[data-sales-subtab]').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            currentPreset = btn.getAttribute('data-preset');
-            paintDetail(key, label);
+            liveSubTab = btn.getAttribute('data-sales-subtab');
+            paintMain();
           });
+        });
+        view.querySelectorAll('[data-sales-sort-key]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const k = btn.getAttribute('data-sales-sort-key');
+            sortDirByKey[k] = sortDirByKey[k] === 'asc' ? 'desc' : 'asc';
+            paintMain();
+          });
+        });
+      }
+      const filterEl = view.querySelector('#ems-range-filter');
+      if (!filterEl) return;
+      filterEl.querySelectorAll('[data-range-preset]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          pastRange = { preset: btn.getAttribute('data-range-preset') };
+          paintMain();
+        });
+      });
+      const customBtn = filterEl.querySelector('#ems-range-custom-btn');
+      if (customBtn) {
+        customBtn.addEventListener('click', function () {
+          openCustomRangeSheet(function (r) { pastRange = r; paintMain(); });
         });
       }
     }
 
-    root.querySelectorAll('[data-detail-key]').forEach(function (el) {
-      el.addEventListener('click', function () {
-        const key = el.getAttribute('data-detail-key');
-        const label = el.getAttribute('data-detail-label');
-        currentPreset = 'today';
-        titleEl.textContent = label;
-        paintDetail(key, label);
-        overlay.classList.add('show');
-      });
-    });
+    function openDetail(date) {
+      detailDate = date;
+      detailSubTab = 'store';
+      paintDetail();
+    }
 
-    if (backBtn) backBtn.addEventListener('click', function () { overlay.classList.remove('show'); });
+    function paintDetail() {
+      view.innerHTML = dateDetailHtml(eventId, detailDate, detailSubTab, sortDirByKey);
+      bindDetail();
+    }
+
+    function bindDetail() {
+      view.querySelector('#ems-detail-back').addEventListener('click', function () {
+        paintMain();
+      });
+      view.querySelectorAll('[data-sales-sort-key]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const k = btn.getAttribute('data-sales-sort-key');
+          sortDirByKey[k] = sortDirByKey[k] === 'asc' ? 'desc' : 'asc';
+          paintDetail();
+        });
+      });
+      view.querySelectorAll('[data-sales-subtab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          detailSubTab = btn.getAttribute('data-sales-subtab');
+          paintDetail();
+        });
+      });
+    }
+
+    paintMain();
   }
 
   function unmount() {}

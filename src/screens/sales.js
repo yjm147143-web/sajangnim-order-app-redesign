@@ -236,40 +236,7 @@
   }
 
   function render() {
-    return (
-      '<style>' +
-      '.sales-tab-switch{display:flex;padding:0 var(--space-5);margin-bottom:var(--space-3);}' +
-      '.sales-tab-btn{flex:1;text-align:center;padding:12px 0;background:none;border:none;border-bottom:2.5px solid var(--color-divider);' +
-        'font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);cursor:pointer;}' +
-      '.sales-tab-btn.active{border-bottom-color:var(--color-text-primary);color:var(--color-text-primary);}' +
-      '.sales-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 var(--space-5) var(--space-4);}' +
-      '.sales-metric-card{background:var(--color-card-bg);border-radius:var(--radius-card);padding:12px 8px;text-align:center;}' +
-      '.sales-metric-label{font-size:12px;font-weight:700;color:var(--color-text-secondary);margin-bottom:5px;}' +
-      '.sales-metric-value{font-size:20px;font-weight:800;color:var(--color-text-primary);word-break:keep-all;}' +
-      '.sales-metric-value.accent{color:var(--color-accent-blue);}' +
-      '.sales-list{padding:0 var(--space-5) var(--space-5);display:flex;flex-direction:column;}' +
-      '.sales-list-row{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider);}' +
-      '.sales-list-row:last-child{border-bottom:none;}' +
-      '.sales-date-row{cursor:pointer;}' +
-      '.sales-list-name{font-size:var(--font-size-body);font-weight:600;}' +
-      '.sales-list-right{display:flex;align-items:center;gap:8px;}' +
-      '.sales-list-count{font-size:var(--font-size-caption);color:var(--color-text-secondary);}' +
-      '.sales-list-amount{font-size:var(--font-size-body);font-weight:700;}' +
-      '.sales-amount-max{color:var(--color-accent-green);}' +
-      '.sales-amount-min{color:var(--color-accent-red);}' +
-      '.sales-legend-hint{font-size:var(--font-size-caption);font-weight:600;}' +
-      '.sales-detail-date{text-align:center;font-size:var(--font-size-subtitle);font-weight:800;color:var(--color-text-primary);padding:var(--space-4) var(--space-5) 2px;}' +
-      '.sales-detail-sub{text-align:center;font-size:var(--font-size-caption);color:var(--color-text-secondary);padding-bottom:var(--space-4);}' +
-      '.sales-subtab-row{display:flex;gap:5px;padding:0 var(--space-5) var(--space-4);flex-wrap:wrap;}' +
-      '.sales-subtab-btn{flex:1;min-width:70px;text-align:center;padding:9px 0;border:none;border-radius:10px;background:var(--color-card-bg);' +
-        'color:var(--color-text-secondary);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}' +
-      '.sales-subtab-btn.active{background:var(--color-text-primary);color:var(--color-white);}' +
-      '.sales-sort-row{display:flex;justify-content:flex-end;padding:0 var(--space-5) var(--space-3);}' +
-      '.sales-site-caption{line-height:1.6;}' +
-      '.sales-site-link{color:var(--color-accent-blue);font-weight:700;}' +
-      '</style>' +
-      '<div id="sales-view"></div>'
-    );
+    return '<div id="sales-view"></div>';
   }
 
   function mount(root) {
