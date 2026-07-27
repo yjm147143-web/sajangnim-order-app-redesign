@@ -538,6 +538,12 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .option-group-card { border: 1px solid var(--color-divider); border-radius: var(--radius-card); padding: var(--space-4); margin-bottom: var(--space-3); }
 .option-group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
 .option-group-usage { font-size: var(--font-size-micro); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
+/* 메뉴 폼의 '기존 옵션 그룹 선택'과 옵션 그룹 화면의 '메뉴 선택' 팝업이 함께 쓰는 다중 선택 칩 */
+.existing-group-chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-3); }
+.existing-group-chip { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border: 1.5px solid var(--color-disabled); border-radius: var(--radius-card); background: var(--color-white); cursor: pointer; text-align: left; }
+.existing-group-chip.on { border-color: var(--color-accent-blue); background: var(--color-accent-blue-bg); }
+.existing-group-chip .name { font-size: var(--font-size-caption); font-weight: 800; color: var(--color-text-primary); }
+.existing-group-chip .meta { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 .option-group-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: var(--space-3); }
 .option-select-mode { display: flex; border: 1px solid var(--color-disabled); border-radius: var(--radius-pill); padding: 2px; }
 .segment-tab-sm { border: none; background: transparent; padding: 6px 12px; font-size: var(--font-size-micro); font-weight: 700; color: var(--color-text-secondary); border-radius: var(--radius-pill); cursor: pointer; }

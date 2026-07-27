@@ -397,19 +397,14 @@
     );
   }
 
-  // 옵션 쪽에서 메뉴를 골라 연결하는 칩 목록 — 메뉴 폼의 '기존 옵션 그룹에서 선택' 칩과 반대 방향.
-  function menuLinkChipsHtml(allMenuItems, linkedMenuIds) {
-    if (!allMenuItems.length) {
-      return '<div class="section-caption" style="padding:0 0 12px;">등록된 메뉴가 없어요</div>';
-    }
-    return '<div class="existing-group-chip-row">' + allMenuItems.map(function (m) {
-      var on = linkedMenuIds.indexOf(m.id) !== -1;
-      return (
-        '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-action="toggle-menu-link" data-menu-id="' + m.id + '">' +
-          '<span class="name">' + esc(m.name) + '</span>' +
-        '</button>'
-      );
-    }).join('') + '</div>';
+  // 연결된 메뉴 요약 + '메뉴 선택' 버튼 — 버튼을 누르면 등록된 메뉴 목록이 팝업(바텀시트)으로 뜨고
+  // 그 안에서 중복 선택으로 연결할 메뉴를 고른다. 메뉴 폼의 '기존 옵션 그룹에서 선택'과 반대 방향.
+  function menuLinkSummaryHtml(allMenuItems, linkedMenuIds) {
+    var linkedNames = allMenuItems.filter(function (m) { return linkedMenuIds.indexOf(m.id) !== -1; }).map(function (m) { return m.name; });
+    return (
+      '<div class="option-group-usage oge-menu-link-summary">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
+      '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 선택</button>'
+    );
   }
 
   // 신규/기존 구분 없이 '저장'을 누르기 전까지는 로컬 draft만 수정하고 MockApi에는 반영하지 않는다
@@ -441,14 +436,54 @@
     function refresh() {
       root.querySelector('#oge-content').innerHTML =
         optionGroupCardHtml(draft, 'data-group-id=""', '', !isNew, isNew) +
-        '<div class="option-groups-subtitle">연결할 메뉴 선택</div>' +
-        menuLinkChipsHtml(allMenuItems, linkedMenuIds);
+        '<div class="option-groups-subtitle">연결된 메뉴</div>' +
+        menuLinkSummaryHtml(allMenuItems, linkedMenuIds);
     }
 
     function showError(msg) {
       var el = root.querySelector('#oge-error');
       el.textContent = msg;
       el.style.display = 'block';
+    }
+
+    // '메뉴 선택' 버튼을 누르면 등록된 메뉴 전체를 팝업(바텀시트)으로 보여주고, 그 안에서
+    // 중복 선택으로 고른 뒤 '적용'을 눌러야 화면의 linkedMenuIds에 반영된다(그룹 저장 자체는
+    // 여전히 화면의 '저장' 버튼을 눌러야 확정).
+    function openMenuLinkSheet() {
+      var draftSelection = linkedMenuIds.slice();
+      function chipsHtml() {
+        if (!allMenuItems.length) {
+          return '<div class="section-caption" style="padding:0 0 12px;">등록된 메뉴가 없어요</div>';
+        }
+        return '<div class="existing-group-chip-row">' + allMenuItems.map(function (m) {
+          var on = draftSelection.indexOf(m.id) !== -1;
+          return '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-menu-id="' + m.id + '"><span class="name">' + esc(m.name) + '</span></button>';
+        }).join('') + '</div>';
+      }
+      var bodyHtml =
+        '<div class="filter-sheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">' +
+          '<div class="sheet-title" style="margin:0;">메뉴 선택</div>' +
+        '</div>' +
+        '<div id="menu-link-chip-wrap">' + chipsHtml() + '</div>' +
+        '<button type="button" class="btn btn-primary" id="menu-link-apply-btn" style="width:100%;margin-top:8px;">적용</button>';
+      window.UI.showBottomSheet(bodyHtml, function (host) {
+        function bindChips() {
+          host.querySelectorAll('[data-menu-id]').forEach(function (chip) {
+            chip.addEventListener('click', function () {
+              var mid = chip.getAttribute('data-menu-id');
+              var idx = draftSelection.indexOf(mid);
+              if (idx === -1) draftSelection.push(mid); else draftSelection.splice(idx, 1);
+              chip.classList.toggle('on', draftSelection.indexOf(mid) !== -1);
+            });
+          });
+        }
+        bindChips();
+        host.querySelector('#menu-link-apply-btn').addEventListener('click', function () {
+          linkedMenuIds = draftSelection;
+          window.UI.closeModal();
+          refresh();
+        });
+      });
     }
 
     root.querySelector('#oge-back').addEventListener('click', function () {
@@ -489,12 +524,8 @@
         deleteOptionGroupWithConfirm(groupId, function () { window.Router.back(); });
         return;
       }
-      var menuLinkBtn = e.target.closest('[data-action="toggle-menu-link"]');
-      if (menuLinkBtn) {
-        var mId = menuLinkBtn.getAttribute('data-menu-id');
-        var idx = linkedMenuIds.indexOf(mId);
-        if (idx === -1) linkedMenuIds.push(mId); else linkedMenuIds.splice(idx, 1);
-        refresh();
+      if (e.target.closest('#oge-menu-link-btn')) {
+        openMenuLinkSheet();
         return;
       }
       var reqBtn = e.target.closest('[data-action="toggle-required"]');
@@ -811,12 +842,6 @@
         '.info-memo{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
           'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin-top:10px;}' +
         '.promo-price-net{font-size:var(--font-size-caption);color:var(--color-text-secondary);margin-bottom:8px;}' +
-        '.existing-group-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}' +
-        '.existing-group-chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;' +
-          'border:1.5px solid var(--color-disabled);border-radius:var(--radius-card);background:var(--color-white);cursor:pointer;text-align:left;}' +
-        '.existing-group-chip.on{border-color:var(--color-accent-blue);background:var(--color-accent-blue-bg);}' +
-        '.existing-group-chip .name{font-size:var(--font-size-caption);font-weight:800;color:var(--color-text-primary);}' +
-        '.existing-group-chip .meta{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
         '.option-groups-subtitle{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin:14px 0 8px;}' +
         '.menu-edit-tab-bar{padding:0 var(--space-5) var(--space-3);}' +
         '.menu-edit-tab-bar .segment-tab{flex:1;}' +
