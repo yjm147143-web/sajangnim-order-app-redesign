@@ -397,12 +397,29 @@
     );
   }
 
+  // 옵션 쪽에서 메뉴를 골라 연결하는 칩 목록 — 메뉴 폼의 '기존 옵션 그룹에서 선택' 칩과 반대 방향.
+  function menuLinkChipsHtml(allMenuItems, linkedMenuIds) {
+    if (!allMenuItems.length) {
+      return '<div class="section-caption" style="padding:0 0 12px;">등록된 메뉴가 없어요</div>';
+    }
+    return '<div class="existing-group-chip-row">' + allMenuItems.map(function (m) {
+      var on = linkedMenuIds.indexOf(m.id) !== -1;
+      return (
+        '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-action="toggle-menu-link" data-menu-id="' + m.id + '">' +
+          '<span class="name">' + esc(m.name) + '</span>' +
+        '</button>'
+      );
+    }).join('') + '</div>';
+  }
+
   // 신규/기존 구분 없이 '저장'을 누르기 전까지는 로컬 draft만 수정하고 MockApi에는 반영하지 않는다
   // — 메뉴 추가 폼이 저장 전까지 실제 메뉴를 만들지 않는 것과 동일한 원칙을, 기존 그룹 수정에도
   // 똑같이 적용해 '저장' 버튼이 신규/수정 어느 쪽에서든 실제로 의미를 갖도록 한다.
   function mountOptionGroupEdit(root, params) {
     var groupId = params.groupId || null;
     var isNew = !groupId;
+    var storeId = currentStoreId();
+    var allMenuItems = window.MockApi.getMenuItems(storeId);
     // 편집 모드의 draft에만 id를 넣어 사용 현황 조회(g.id)가 되게 한다 — cleanOptionGroupPayload는
     // id를 복사하지 않으므로 저장 시 addOptionGroup의 기본 id 생성 로직과는 무관하게 안전하다.
     var draft = isNew
@@ -417,9 +434,15 @@
             options: (g.options || []).map(function (o) { return Object.assign({}, o); }),
           };
         })();
+    // 연결된 메뉴 목록도 draft와 마찬가지로 로컬 상태로 두고, '저장'을 눌러야 실제 메뉴들의
+    // optionGroupIds에 반영한다.
+    var linkedMenuIds = isNew ? [] : allMenuItems.filter(function (m) { return (m.optionGroupIds || []).indexOf(groupId) !== -1; }).map(function (m) { return m.id; });
 
     function refresh() {
-      root.querySelector('#oge-content').innerHTML = optionGroupCardHtml(draft, 'data-group-id=""', '', !isNew, isNew);
+      root.querySelector('#oge-content').innerHTML =
+        optionGroupCardHtml(draft, 'data-group-id=""', '', !isNew, isNew) +
+        '<div class="option-groups-subtitle">연결할 메뉴 선택</div>' +
+        menuLinkChipsHtml(allMenuItems, linkedMenuIds);
     }
 
     function showError(msg) {
@@ -437,13 +460,26 @@
         var cleaned = cleanOptionGroupPayload(draft);
         var error = validateOptionGroupPayload(cleaned);
         if (error) { showError(error); return; }
+        var finalGroupId;
         if (isNew) {
-          window.MockApi.addOptionGroup(currentStoreId(), cleaned);
+          finalGroupId = window.MockApi.addOptionGroup(storeId, cleaned).id;
           window.UI.toast('옵션 그룹을 추가했어요');
         } else {
           window.MockApi.updateOptionGroup(groupId, cleaned);
+          finalGroupId = groupId;
           window.UI.toast('저장되었어요');
         }
+        // 체크된 메뉴엔 이 그룹 id를 붙이고, 해제된 메뉴에선 뗀다.
+        allMenuItems.forEach(function (m) {
+          var shouldLink = linkedMenuIds.indexOf(m.id) !== -1;
+          var currentIds = window.MockApi.getMenuItem(m.id).optionGroupIds || [];
+          var isLinked = currentIds.indexOf(finalGroupId) !== -1;
+          if (shouldLink && !isLinked) {
+            window.MockApi.updateMenuItem(m.id, { optionGroupIds: currentIds.concat([finalGroupId]) });
+          } else if (!shouldLink && isLinked) {
+            window.MockApi.updateMenuItem(m.id, { optionGroupIds: currentIds.filter(function (id) { return id !== finalGroupId; }) });
+          }
+        });
         window.Router.back();
         return;
       }
@@ -451,6 +487,14 @@
       var removeGroupBtn = e.target.closest('[data-action="remove-group"]');
       if (removeGroupBtn) {
         deleteOptionGroupWithConfirm(groupId, function () { window.Router.back(); });
+        return;
+      }
+      var menuLinkBtn = e.target.closest('[data-action="toggle-menu-link"]');
+      if (menuLinkBtn) {
+        var mId = menuLinkBtn.getAttribute('data-menu-id');
+        var idx = linkedMenuIds.indexOf(mId);
+        if (idx === -1) linkedMenuIds.push(mId); else linkedMenuIds.splice(idx, 1);
+        refresh();
         return;
       }
       var reqBtn = e.target.closest('[data-action="toggle-required"]');
