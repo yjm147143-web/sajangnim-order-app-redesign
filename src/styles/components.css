@@ -561,6 +561,8 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 /* 자주 쓰는 옵션을 이름/선택방식/필수여부가 채워진 채로 바로 만들어주는 프리셋 칩 */
 .option-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: var(--space-3); }
 .option-preset-chip { border: none; border-radius: var(--radius-pill); padding: 9px 14px; font-size: var(--font-size-caption); font-weight: 700; cursor: pointer; background: var(--color-accent-purple-bg); color: var(--color-accent-purple); }
+.menu-edit-form-pad { padding: 20px; }
+.option-groups-subtitle { font-size: var(--font-size-micro); font-weight: 700; color: var(--color-text-secondary); margin: 14px 0 8px; }
 .option-preset-chip.ghost { background: var(--color-divider); color: var(--color-text-secondary); }
 
 /* ---------- Misc ---------- */

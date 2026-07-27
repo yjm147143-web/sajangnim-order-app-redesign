@@ -397,16 +397,17 @@
     );
   }
 
-  // 연결된 메뉴 요약 + '메뉴 선택' 버튼 — 버튼을 누르면 등록된 메뉴 목록이 팝업(바텀시트)으로 뜨고
-  // 그 안에서 중복 선택으로 연결할 메뉴를 고른다. 메뉴 폼의 '기존 옵션 그룹에서 선택'과 반대 방향.
+  // 연결된 메뉴 요약 + '메뉴 연결하기' 버튼 — 버튼을 누르면 등록된 메뉴 목록이 팝업(바텀시트)으로
+  // 뜨고 그 안에서 중복 선택으로 연결할 메뉴를 고른다. 메뉴 폼의 '기존 옵션 그룹에서 선택'과 반대
+  // 방향. option-group-card와 같은 카드로 감싸 위 카드와 좌우 여백을 맞춘다.
   function menuLinkSummaryHtml(allMenuItems, linkedMenuIds) {
     var linkedNames = allMenuItems.filter(function (m) { return linkedMenuIds.indexOf(m.id) !== -1; }).map(function (m) { return m.name; });
     return (
-      '<div class="option-groups-subtitle" style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<span>연결된 메뉴</span><span>' + linkedNames.length + '개</span>' +
-      '</div>' +
-      '<div class="option-group-usage oge-menu-link-summary">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
-      '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 선택</button>'
+      '<div class="option-group-card">' +
+        '<div class="option-groups-subtitle" style="margin-top:0;">연결된 메뉴 ' + linkedNames.length + '개</div>' +
+        '<div class="option-group-usage oge-menu-link-summary">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
+        '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 연결하기</button>' +
+      '</div>'
     );
   }
 
@@ -831,7 +832,6 @@
       '<style>' +
         '.menu-edit-subcaption{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:500;display:block;margin-top:2px;}' +
         '.menu-edit-preview-hidden{opacity:0.45;}' +
-        '.menu-edit-form-pad{padding:20px;}' +
         '.menu-image-upload-row{display:flex;align-items:center;gap:12px;}' +
         '.menu-image-thumb{width:56px;height:56px;border-radius:12px;background:var(--color-divider);display:flex;' +
           'align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:22px;}' +
@@ -844,7 +844,6 @@
         '.info-memo{font-size:var(--font-size-caption);color:var(--color-text-secondary);background:var(--color-divider);' +
           'border-left:3px solid var(--color-text-primary);border-radius:0 10px 10px 0;padding:10px 12px;line-height:1.55;margin-top:10px;}' +
         '.promo-price-net{font-size:var(--font-size-caption);color:var(--color-text-secondary);margin-bottom:8px;}' +
-        '.option-groups-subtitle{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);margin:14px 0 8px;}' +
         '.menu-edit-tab-bar{padding:0 var(--space-5) var(--space-3);}' +
         '.menu-edit-tab-bar .segment-tab{flex:1;}' +
         '.edit-tab-panel{display:none;}' +
