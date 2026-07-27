@@ -305,6 +305,10 @@
     return DB.menuItems.filter(function (m) { return (m.optionGroupIds || []).indexOf(id) !== -1; }).length;
   }
 
+  function getOptionGroupUsageNames(id) {
+    return DB.menuItems.filter(function (m) { return (m.optionGroupIds || []).indexOf(id) !== -1; }).map(function (m) { return m.name; });
+  }
+
   function addOptionGroup(storeId, payload) {
     const group = Object.assign({ id: uid('og'), storeId: storeId, name: '', required: false, multiSelect: false, options: [] }, payload);
     DB.optionGroups.push(group);
@@ -319,9 +323,18 @@
     return group;
   }
 
-  function deleteOptionGroup(id) {
+  // force=true는 사용 중인 메뉴가 있어도 확인 팝업을 거쳐 강제로 삭제하는 경우 — 이때는 각 메뉴의
+  // optionGroupIds에서도 이 그룹 id를 제거해 끊어진 참조가 남지 않게 한다.
+  function deleteOptionGroup(id, force) {
     const usage = getOptionGroupUsageCount(id);
-    if (usage > 0) return { ok: false, usage: usage };
+    if (usage > 0 && !force) return { ok: false, usage: usage };
+    if (usage > 0) {
+      DB.menuItems.forEach(function (m) {
+        if (!m.optionGroupIds) return;
+        const idx = m.optionGroupIds.indexOf(id);
+        if (idx !== -1) m.optionGroupIds.splice(idx, 1);
+      });
+    }
     DB.optionGroups = DB.optionGroups.filter(function (g) { return g.id !== id; });
     persist();
     return { ok: true };
@@ -950,7 +963,7 @@
     addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut,
     reorderMenuItems: reorderMenuItems,
     getOptionGroups: getOptionGroups, getOptionGroup: getOptionGroup, getOptionGroupsByIds: getOptionGroupsByIds,
-    getOptionGroupUsageCount: getOptionGroupUsageCount, addOptionGroup: addOptionGroup, updateOptionGroup: updateOptionGroup,
+    getOptionGroupUsageCount: getOptionGroupUsageCount, getOptionGroupUsageNames: getOptionGroupUsageNames, addOptionGroup: addOptionGroup, updateOptionGroup: updateOptionGroup,
     deleteOptionGroup: deleteOptionGroup, addOptionGroupOption: addOptionGroupOption,
     updateOptionGroupOption: updateOptionGroupOption, removeOptionGroupOption: removeOptionGroupOption,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,

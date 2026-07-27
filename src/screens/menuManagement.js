@@ -290,13 +290,24 @@
         }
         if (removeGroupLibBtn) {
           var delGroupId = removeGroupLibBtn.getAttribute('data-group-id');
-          var result = window.MockApi.deleteOptionGroup(delGroupId);
-          if (!result.ok) {
-            window.UI.toast('이 옵션 그룹은 ' + result.usage + '개 메뉴에서 사용 중이라 삭제할 수 없어요');
+          var usageNames = window.MockApi.getOptionGroupUsageNames(delGroupId);
+          if (usageNames.length) {
+            window.UI.confirmModal(
+              '이 옵션을 사용하고 있는 메뉴가 있어요',
+              esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
+              '삭제',
+              function () {
+                window.MockApi.deleteOptionGroup(delGroupId, true);
+                window.UI.toast('옵션 그룹을 삭제했어요');
+                refresh();
+              },
+              { danger: true }
+            );
           } else {
+            window.MockApi.deleteOptionGroup(delGroupId);
             window.UI.toast('옵션 그룹을 삭제했어요');
+            refresh();
           }
-          refresh();
           return;
         }
         if (reqLibBtn) {
