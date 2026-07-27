@@ -125,16 +125,31 @@
     );
   }
 
+  // 메뉴 목록과 동일하게, 옵션 목록도 요약 행만 보여주고 행을 누르면 수정 화면으로 이동한다
+  // (편집은 그 화면에서만 이루어지고, 목록에는 더 이상 입력창/토글이 노출되지 않는다).
+  function optionGroupRowHtml(g) {
+    var usage = window.MockApi.getOptionGroupUsageCount(g.id);
+    var modeLabel = g.multiSelect ? '여러개 선택' : '1개만 선택';
+    return (
+      '<div class="menu-row option-group-row" data-group-id="' + g.id + '">' +
+        '<div class="menu-row-thumb">🧩</div>' +
+        '<div class="menu-row-body">' +
+          '<div class="menu-row-name">' + esc(g.name || '(이름 없음)') + (g.required ? ' <span class="badge badge-neutral">필수</span>' : '') + '</div>' +
+          '<div class="menu-row-sub">옵션 ' + (g.options || []).length + '개 · ' + modeLabel + '</div>' +
+        '</div>' +
+        '<div class="menu-row-side">' +
+          '<div class="option-group-usage-inline">' + (usage > 0 ? usage + '개 메뉴 사용' : '미사용') + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   function optionLibraryHtml(groups) {
     var listHtml = !groups.length
       ? '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>'
-      : groups.map(function (g) {
-          return optionGroupCardHtml(g, 'data-group-id="' + g.id + '"', 'lib-', true);
-        }).join('');
-    // 옵션 목록은 이미 각 입력마다 즉시 저장되지만, 사장님이 안심할 수 있도록 확인용 저장 버튼을 둔다
+      : '<div class="menu-list">' + groups.map(optionGroupRowHtml).join('') + '</div>';
     return '<div class="option-library-list">' + listHtml +
       '<button type="button" class="btn btn-secondary" id="add-option-group-btn">+ 옵션 목록 추가</button>' +
-      '<button type="button" class="btn btn-primary" id="option-library-save-btn">저장</button>' +
       '</div>';
   }
 
@@ -153,7 +168,8 @@
         '.main-tab-menu{flex:2;font-size:var(--font-size-body);}' +
         '.main-tab-option{flex:1;font-size:var(--font-size-caption);}' +
         '.option-library-list{padding-bottom:24px;}' +
-        '.option-library-list #option-library-save-btn{margin-top:4px;}' +
+        '.option-library-list #add-option-group-btn{display:flex;margin:4px var(--space-5) 0;}' +
+        '.option-group-usage-inline{font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);white-space:nowrap;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="menu-back">←</button></div>' +
@@ -271,76 +287,13 @@
 
       if (activeMainTab === 'option') {
         if (e.target.closest('#add-option-group-btn')) {
-          window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
-          refresh();
+          var newGroup = window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
+          window.Router.showScreen('optionGroupEdit', { groupId: newGroup.id });
           return;
         }
-        var addGroupLibBtn = e.target.closest('[data-action="lib-add-option"]');
-        var removeGroupLibBtn = e.target.closest('[data-action="lib-remove-group"]');
-        var reqLibBtn = e.target.closest('[data-action="lib-toggle-required"]');
-        var singleLibBtn = e.target.closest('[data-action="lib-set-select-single"]');
-        var multiLibBtn = e.target.closest('[data-action="lib-set-select-multi"]');
-        var triLibBtn = e.target.closest('[data-action="lib-set-option-tri"]');
-        var removeOptLibBtn = e.target.closest('[data-action="lib-remove-option"]');
-
-        if (addGroupLibBtn) {
-          window.MockApi.addOptionGroupOption(addGroupLibBtn.getAttribute('data-group-id'), { name: '', price: 0 });
-          refresh();
-          return;
-        }
-        if (removeGroupLibBtn) {
-          var delGroupId = removeGroupLibBtn.getAttribute('data-group-id');
-          var usageNames = window.MockApi.getOptionGroupUsageNames(delGroupId);
-          if (usageNames.length) {
-            window.UI.confirmModal(
-              '이 옵션을 사용하고 있는 메뉴가 있어요',
-              esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
-              '삭제',
-              function () {
-                window.MockApi.deleteOptionGroup(delGroupId, true);
-                window.UI.toast('옵션 그룹을 삭제했어요');
-                refresh();
-              },
-              { danger: true }
-            );
-          } else {
-            window.MockApi.deleteOptionGroup(delGroupId);
-            window.UI.toast('옵션 그룹을 삭제했어요');
-            refresh();
-          }
-          return;
-        }
-        if (reqLibBtn) {
-          var reqGroup = window.MockApi.getOptionGroup(reqLibBtn.getAttribute('data-group-id'));
-          window.MockApi.updateOptionGroup(reqLibBtn.getAttribute('data-group-id'), { required: !reqGroup.required });
-          refresh();
-          return;
-        }
-        if (singleLibBtn) {
-          window.MockApi.updateOptionGroup(singleLibBtn.getAttribute('data-group-id'), { multiSelect: false });
-          refresh();
-          return;
-        }
-        if (multiLibBtn) {
-          window.MockApi.updateOptionGroup(multiLibBtn.getAttribute('data-group-id'), { multiSelect: true });
-          refresh();
-          return;
-        }
-        if (triLibBtn) {
-          var triLibVal = triLibBtn.getAttribute('data-value');
-          var triLibPayload = triLibVal === 'available' ? { soldOut: false, exposed: true } : triLibVal === 'soldout' ? { soldOut: true, exposed: true } : { exposed: false };
-          window.MockApi.updateOptionGroupOption(triLibBtn.getAttribute('data-group-id'), Number(triLibBtn.getAttribute('data-opt-idx')), triLibPayload);
-          refresh();
-          return;
-        }
-        if (removeOptLibBtn) {
-          window.MockApi.removeOptionGroupOption(removeOptLibBtn.getAttribute('data-group-id'), Number(removeOptLibBtn.getAttribute('data-opt-idx')));
-          refresh();
-          return;
-        }
-        if (e.target.closest('#option-library-save-btn')) {
-          window.UI.toast('저장되었어요');
-          return;
+        var optionRow = e.target.closest('.option-group-row[data-group-id]');
+        if (optionRow) {
+          window.Router.showScreen('optionGroupEdit', { groupId: optionRow.getAttribute('data-group-id') });
         }
         return;
       }
@@ -368,22 +321,124 @@
       }
     });
 
+    refresh();
+  }
+
+  window.Router.register('menuManagement', { render: renderMenuList, mount: mountMenuList, unmount: function () {} });
+
+  /* =========================================================
+   * 1-1) 옵션 그룹 수정 화면 ('optionGroupEdit')
+   * 메뉴 목록에서 메뉴를 누르면 menuEdit으로 이동하는 것과 동일하게, 옵션 목록에서도
+   * 그룹 행을 누르면 이 화면으로 이동해 상세 편집(이름/옵션/선택방식/필수여부)을 한다.
+   * ========================================================= */
+
+  function renderOptionGroupEdit() {
+    return (
+      '<div class="topbar">' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="oge-back">←</button></div>' +
+        '<div class="topbar-title">옵션 그룹 수정</div>' +
+        '<div class="topbar-side"></div>' +
+      '</div>' +
+      '<div class="screen-scroll"><div class="menu-edit-form-pad" id="oge-content"></div></div>' +
+      '<div class="cta-fixed">' +
+        '<button type="button" class="btn btn-primary" id="oge-save-btn">저장</button>' +
+      '</div>'
+    );
+  }
+
+  function mountOptionGroupEdit(root, params) {
+    var groupId = params.groupId;
+
+    function refresh() {
+      var group = window.MockApi.getOptionGroup(groupId);
+      if (!group) { window.Router.back(); return; }
+      root.querySelector('#oge-content').innerHTML = optionGroupCardHtml(group, 'data-group-id="' + group.id + '"', '', true);
+    }
+
+    root.querySelector('#oge-back').addEventListener('click', function () {
+      window.Router.back();
+    });
+
+    root.addEventListener('click', function (e) {
+      if (e.target.closest('#oge-save-btn')) {
+        window.UI.toast('저장되었어요');
+        return;
+      }
+      var removeGroupBtn = e.target.closest('[data-action="remove-group"]');
+      if (removeGroupBtn) {
+        var usageNames = window.MockApi.getOptionGroupUsageNames(groupId);
+        if (usageNames.length) {
+          window.UI.confirmModal(
+            '이 옵션을 사용하고 있는 메뉴가 있어요',
+            esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
+            '삭제',
+            function () {
+              window.MockApi.deleteOptionGroup(groupId, true);
+              window.UI.toast('옵션 그룹을 삭제했어요');
+              window.Router.back();
+            },
+            { danger: true }
+          );
+        } else {
+          window.MockApi.deleteOptionGroup(groupId);
+          window.UI.toast('옵션 그룹을 삭제했어요');
+          window.Router.back();
+        }
+        return;
+      }
+      var reqBtn = e.target.closest('[data-action="toggle-required"]');
+      if (reqBtn) {
+        var group = window.MockApi.getOptionGroup(groupId);
+        window.MockApi.updateOptionGroup(groupId, { required: !group.required });
+        refresh();
+        return;
+      }
+      if (e.target.closest('[data-action="set-select-single"]')) {
+        window.MockApi.updateOptionGroup(groupId, { multiSelect: false });
+        refresh();
+        return;
+      }
+      if (e.target.closest('[data-action="set-select-multi"]')) {
+        window.MockApi.updateOptionGroup(groupId, { multiSelect: true });
+        refresh();
+        return;
+      }
+      if (e.target.closest('[data-action="add-option"]')) {
+        window.MockApi.addOptionGroupOption(groupId, { name: '', price: 0 });
+        refresh();
+        return;
+      }
+      var triBtn = e.target.closest('[data-action="set-option-tri"]');
+      if (triBtn) {
+        var triVal = triBtn.getAttribute('data-value');
+        var triPayload = triVal === 'available' ? { soldOut: false, exposed: true } : triVal === 'soldout' ? { soldOut: true, exposed: true } : { exposed: false };
+        window.MockApi.updateOptionGroupOption(groupId, Number(triBtn.getAttribute('data-opt-idx')), triPayload);
+        refresh();
+        return;
+      }
+      var removeOptBtn = e.target.closest('[data-action="remove-option"]');
+      if (removeOptBtn) {
+        window.MockApi.removeOptionGroupOption(groupId, Number(removeOptBtn.getAttribute('data-opt-idx')));
+        refresh();
+        return;
+      }
+    });
+
     root.addEventListener('input', function (e) {
-      if (activeMainTab !== 'option') return;
       var t = e.target;
-      if (t.matches('[data-field="lib-group-name"]')) {
-        window.MockApi.updateOptionGroup(t.getAttribute('data-group-id'), { name: t.value });
-      } else if (t.matches('[data-field="lib-opt-name"]')) {
-        window.MockApi.updateOptionGroupOption(t.getAttribute('data-group-id'), Number(t.getAttribute('data-opt-idx')), { name: t.value });
-      } else if (t.matches('[data-field="lib-opt-price"]')) {
-        window.MockApi.updateOptionGroupOption(t.getAttribute('data-group-id'), Number(t.getAttribute('data-opt-idx')), { price: Number(t.value) || 0 });
+      if (t.matches('[data-field="group-name"]')) {
+        window.MockApi.updateOptionGroup(groupId, { name: t.value });
+      } else if (t.matches('[data-field="opt-name"]')) {
+        window.MockApi.updateOptionGroupOption(groupId, Number(t.getAttribute('data-opt-idx')), { name: t.value });
+      } else if (t.matches('[data-field="opt-price"]')) {
+        window.MockApi.updateOptionGroupOption(groupId, Number(t.getAttribute('data-opt-idx')), { price: Number(t.value) || 0 });
       }
     });
 
     refresh();
   }
 
-  window.Router.register('menuManagement', { render: renderMenuList, mount: mountMenuList, unmount: function () {} });
+  window.Router.register('optionGroupEdit', { render: renderOptionGroupEdit, mount: mountOptionGroupEdit, unmount: function () {} });
 
   /* =========================================================
    * 2) 메뉴 추가/수정 폼 화면 ('menuEdit')
