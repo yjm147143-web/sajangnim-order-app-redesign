@@ -402,6 +402,9 @@
   function menuLinkSummaryHtml(allMenuItems, linkedMenuIds) {
     var linkedNames = allMenuItems.filter(function (m) { return linkedMenuIds.indexOf(m.id) !== -1; }).map(function (m) { return m.name; });
     return (
+      '<div class="option-groups-subtitle" style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<span>연결된 메뉴</span><span>' + linkedNames.length + '개</span>' +
+      '</div>' +
       '<div class="option-group-usage oge-menu-link-summary">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
       '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 선택</button>'
     );
@@ -436,7 +439,6 @@
     function refresh() {
       root.querySelector('#oge-content').innerHTML =
         optionGroupCardHtml(draft, 'data-group-id=""', '', !isNew, isNew) +
-        '<div class="option-groups-subtitle">연결된 메뉴</div>' +
         menuLinkSummaryHtml(allMenuItems, linkedMenuIds);
     }
 
