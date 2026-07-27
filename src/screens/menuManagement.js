@@ -85,7 +85,7 @@
   // 옵션 그룹 카드 — 옵션 목록 탭(라이브러리)과 메뉴 수정 > 옵션 탭에서 동일한 UI/UX로 공유해서 쓴다.
   // identifierAttr로 각 컨텍스트의 식별자(data-group-id vs data-group-idx)를, actionPrefix로 각자의
   // 이벤트 위임 스코프(lib-* vs 접두어 없음)를 주입해 마크업만 통일하고 동작은 기존 그대로 유지한다.
-  function optionGroupCardHtml(g, identifierAttr, actionPrefix, showUsage) {
+  function optionGroupCardHtml(g, identifierAttr, actionPrefix, showUsage, hideRemoveGroupBtn) {
     var usage = showUsage ? window.MockApi.getOptionGroupUsageCount(g.id) : null;
     var optionsHtml = (g.options || []).map(function (o, oi) {
       var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
@@ -106,7 +106,7 @@
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
           '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
-          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">✕</button>' +
+          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">✕</button>') +
         '</div>' +
         (showUsage ? '<div class="option-group-usage">' + (usage > 0 ? usage + '개 메뉴에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
         '<div class="option-group-controls">' +
@@ -139,9 +139,33 @@
         '</div>' +
         '<div class="menu-row-side">' +
           '<div class="option-group-usage-inline">' + (usage > 0 ? usage + '개 메뉴 사용' : '미사용') + '</div>' +
+          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">✕</button>' +
         '</div>' +
       '</div>'
     );
+  }
+
+  // 사용 중인 메뉴가 있으면 확인 팝업(삭제/취소)을 띄우고, 없으면 바로 삭제한다.
+  // 목록 행의 삭제 버튼과 수정 화면의 ✕ 버튼이 이 로직을 그대로 공유한다.
+  function deleteOptionGroupWithConfirm(groupId, onDeleted) {
+    var usageNames = window.MockApi.getOptionGroupUsageNames(groupId);
+    if (usageNames.length) {
+      window.UI.confirmModal(
+        '이 옵션을 사용하고 있는 메뉴가 있어요',
+        esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
+        '삭제',
+        function () {
+          window.MockApi.deleteOptionGroup(groupId, true);
+          window.UI.toast('옵션 그룹을 삭제했어요');
+          onDeleted();
+        },
+        { danger: true }
+      );
+    } else {
+      window.MockApi.deleteOptionGroup(groupId);
+      window.UI.toast('옵션 그룹을 삭제했어요');
+      onDeleted();
+    }
   }
 
   function optionLibraryHtml(groups) {
@@ -287,8 +311,13 @@
 
       if (activeMainTab === 'option') {
         if (e.target.closest('#add-option-group-btn')) {
-          var newGroup = window.MockApi.addOptionGroup(storeId, { name: '', required: false, multiSelect: false, options: [] });
-          window.Router.showScreen('optionGroupEdit', { groupId: newGroup.id });
+          // 그룹은 이 시점엔 아직 만들지 않는다 — 수정 화면에서 '저장'을 눌러야 실제로 옵션 목록에 추가된다.
+          window.Router.showScreen('optionGroupEdit', {});
+          return;
+        }
+        var deleteBtn = e.target.closest('[data-action="delete-option-group"]');
+        if (deleteBtn) {
+          deleteOptionGroupWithConfirm(deleteBtn.getAttribute('data-group-id'), refresh);
           return;
         }
         var optionRow = e.target.closest('.option-group-row[data-group-id]');
@@ -332,11 +361,12 @@
    * 그룹 행을 누르면 이 화면으로 이동해 상세 편집(이름/옵션/선택방식/필수여부)을 한다.
    * ========================================================= */
 
-  function renderOptionGroupEdit() {
+  function renderOptionGroupEdit(params) {
+    var isNew = !(params && params.groupId);
     return (
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="oge-back">←</button></div>' +
-        '<div class="topbar-title">옵션 그룹 수정</div>' +
+        '<div class="topbar-title">' + (isNew ? '옵션 그룹 추가' : '옵션 그룹 수정') + '</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll"><div class="menu-edit-form-pad" id="oge-content"></div></div>' +
@@ -346,13 +376,22 @@
     );
   }
 
+  // isNew(신규 생성)일 때는 '저장'을 누르기 전까지 아무 것도 MockApi에 반영하지 않고, 로컬
+  // draft 객체만 수정한다 — 메뉴 추가 폼이 '저장' 전까지 실제 메뉴를 만들지 않는 것과 동일한 원칙.
   function mountOptionGroupEdit(root, params) {
-    var groupId = params.groupId;
+    var groupId = params.groupId || null;
+    var isNew = !groupId;
+    // id는 넣지 않는다 — addOptionGroup의 Object.assign이 기본 생성 id를 덮어쓰지 않도록.
+    var draft = isNew ? { name: '', required: false, multiSelect: false, options: [] } : null;
+
+    function currentGroup() {
+      return isNew ? draft : window.MockApi.getOptionGroup(groupId);
+    }
 
     function refresh() {
-      var group = window.MockApi.getOptionGroup(groupId);
+      var group = currentGroup();
       if (!group) { window.Router.back(); return; }
-      root.querySelector('#oge-content').innerHTML = optionGroupCardHtml(group, 'data-group-id="' + group.id + '"', '', true);
+      root.querySelector('#oge-content').innerHTML = optionGroupCardHtml(group, 'data-group-id=""', '', !isNew, isNew);
     }
 
     root.querySelector('#oge-back').addEventListener('click', function () {
@@ -361,50 +400,41 @@
 
     root.addEventListener('click', function (e) {
       if (e.target.closest('#oge-save-btn')) {
-        window.UI.toast('저장되었어요');
+        if (isNew) {
+          window.MockApi.addOptionGroup(currentStoreId(), draft);
+          window.UI.toast('옵션 그룹을 추가했어요');
+          window.Router.back();
+        } else {
+          window.UI.toast('저장되었어요');
+        }
         return;
       }
+      // isNew일 땐 카드에 이 버튼 자체가 렌더링되지 않는다 (아직 저장되지 않은 그룹은 지울 게 없음).
       var removeGroupBtn = e.target.closest('[data-action="remove-group"]');
       if (removeGroupBtn) {
-        var usageNames = window.MockApi.getOptionGroupUsageNames(groupId);
-        if (usageNames.length) {
-          window.UI.confirmModal(
-            '이 옵션을 사용하고 있는 메뉴가 있어요',
-            esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
-            '삭제',
-            function () {
-              window.MockApi.deleteOptionGroup(groupId, true);
-              window.UI.toast('옵션 그룹을 삭제했어요');
-              window.Router.back();
-            },
-            { danger: true }
-          );
-        } else {
-          window.MockApi.deleteOptionGroup(groupId);
-          window.UI.toast('옵션 그룹을 삭제했어요');
-          window.Router.back();
-        }
+        deleteOptionGroupWithConfirm(groupId, function () { window.Router.back(); });
         return;
       }
       var reqBtn = e.target.closest('[data-action="toggle-required"]');
       if (reqBtn) {
-        var group = window.MockApi.getOptionGroup(groupId);
-        window.MockApi.updateOptionGroup(groupId, { required: !group.required });
+        if (isNew) draft.required = !draft.required;
+        else window.MockApi.updateOptionGroup(groupId, { required: !window.MockApi.getOptionGroup(groupId).required });
         refresh();
         return;
       }
       if (e.target.closest('[data-action="set-select-single"]')) {
-        window.MockApi.updateOptionGroup(groupId, { multiSelect: false });
+        if (isNew) draft.multiSelect = false; else window.MockApi.updateOptionGroup(groupId, { multiSelect: false });
         refresh();
         return;
       }
       if (e.target.closest('[data-action="set-select-multi"]')) {
-        window.MockApi.updateOptionGroup(groupId, { multiSelect: true });
+        if (isNew) draft.multiSelect = true; else window.MockApi.updateOptionGroup(groupId, { multiSelect: true });
         refresh();
         return;
       }
       if (e.target.closest('[data-action="add-option"]')) {
-        window.MockApi.addOptionGroupOption(groupId, { name: '', price: 0 });
+        if (isNew) draft.options.push({ name: '', price: 0, soldOut: false, exposed: true });
+        else window.MockApi.addOptionGroupOption(groupId, { name: '', price: 0 });
         refresh();
         return;
       }
@@ -412,13 +442,17 @@
       if (triBtn) {
         var triVal = triBtn.getAttribute('data-value');
         var triPayload = triVal === 'available' ? { soldOut: false, exposed: true } : triVal === 'soldout' ? { soldOut: true, exposed: true } : { exposed: false };
-        window.MockApi.updateOptionGroupOption(groupId, Number(triBtn.getAttribute('data-opt-idx')), triPayload);
+        var triIdx = Number(triBtn.getAttribute('data-opt-idx'));
+        if (isNew) Object.assign(draft.options[triIdx], triPayload);
+        else window.MockApi.updateOptionGroupOption(groupId, triIdx, triPayload);
         refresh();
         return;
       }
       var removeOptBtn = e.target.closest('[data-action="remove-option"]');
       if (removeOptBtn) {
-        window.MockApi.removeOptionGroupOption(groupId, Number(removeOptBtn.getAttribute('data-opt-idx')));
+        var rmIdx = Number(removeOptBtn.getAttribute('data-opt-idx'));
+        if (isNew) draft.options.splice(rmIdx, 1);
+        else window.MockApi.removeOptionGroupOption(groupId, rmIdx);
         refresh();
         return;
       }
@@ -427,11 +461,14 @@
     root.addEventListener('input', function (e) {
       var t = e.target;
       if (t.matches('[data-field="group-name"]')) {
-        window.MockApi.updateOptionGroup(groupId, { name: t.value });
+        if (isNew) draft.name = t.value; else window.MockApi.updateOptionGroup(groupId, { name: t.value });
       } else if (t.matches('[data-field="opt-name"]')) {
-        window.MockApi.updateOptionGroupOption(groupId, Number(t.getAttribute('data-opt-idx')), { name: t.value });
+        var ni = Number(t.getAttribute('data-opt-idx'));
+        if (isNew) draft.options[ni].name = t.value; else window.MockApi.updateOptionGroupOption(groupId, ni, { name: t.value });
       } else if (t.matches('[data-field="opt-price"]')) {
-        window.MockApi.updateOptionGroupOption(groupId, Number(t.getAttribute('data-opt-idx')), { price: Number(t.value) || 0 });
+        var pi = Number(t.getAttribute('data-opt-idx'));
+        var priceVal = Number(t.value) || 0;
+        if (isNew) draft.options[pi].price = priceVal; else window.MockApi.updateOptionGroupOption(groupId, pi, { price: priceVal });
       }
     });
 
