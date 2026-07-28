@@ -87,6 +87,9 @@
       '<div class="settings-list-item" data-nav="qrMenu">' +
         '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
+      '<div class="settings-list-item" data-nav="kitchenBoard">' +
+        '<div class="icon">🍳</div><div class="label">조리 현황판 보기</div><div class="chevron">›</div>' +
+      '</div>' +
 
       '<div class="divider-line"></div>' +
 

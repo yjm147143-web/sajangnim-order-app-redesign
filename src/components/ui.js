@@ -69,10 +69,17 @@
   }
 
   // ---------------- Channel / status badges ----------------
+  // 카운터에서 접수한 현금 주문은 카드 헤더에서도 바로 구분돼야 하는 예외적인 유형이라 배지를 유지한다.
+  // 키오스크/QR오더는 흔한 기본 유형이라 헤더 배지 대신 상세보기의 '주문 유형' 행으로만 노출한다.
   function channelBadgeHtml(channel) {
-    if (channel === 'QR') return '<span class="channel-badge channel-qr">🔳 QR오더</span>';
     if (channel === 'MANUAL') return '<span class="channel-badge channel-manual">💵 현금 주문</span>';
-    return '<span class="channel-badge channel-tablet">🖥️ 키오스크</span>';
+    return '';
+  }
+
+  function channelTypeLabel(channel) {
+    if (channel === 'QR') return '🔳 QR오더';
+    if (channel === 'MANUAL') return '💵 현금 주문';
+    return '🖥️ 키오스크';
   }
 
   const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워', FIRST_COME: '선착순' };
@@ -331,7 +338,7 @@
     escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, clockLabelWithSeconds: clockLabelWithSeconds, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
     formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
-    channelBadgeHtml: channelBadgeHtml, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
+    channelBadgeHtml: channelBadgeHtml, channelTypeLabel: channelTypeLabel, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
     requirePasswordGate: requirePasswordGate, requireLockReauth: requireLockReauth,

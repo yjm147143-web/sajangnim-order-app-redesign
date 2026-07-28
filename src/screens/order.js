@@ -17,6 +17,7 @@
   let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
   let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
   let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 주문 필터 시트의 '호출 여부' 카테고리에서 설정
+  let callStatusPanelOpen = false; // 처리중 탭의 '호출 현황' 배지 펼침 상태
   let selectedIds = new Set();
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
@@ -54,13 +55,22 @@
     '.phone-btn-danger:active { background: var(--color-accent-red); color: var(--color-white); }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
     '.card-expand-toggle {' +
-      ' position: absolute; right: 0; top: -11px; width: 22px; height: 22px;' +
-      ' border: 1.5px solid var(--color-disabled); border-radius: 50%; background: var(--color-white);' +
-      ' color: var(--color-text-secondary); font-size: 10px; line-height: 1;' +
-      ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
+      ' position: absolute; right: 0; top: -11px; height: 22px; padding: 0 10px;' +
+      ' border: 1.5px solid var(--color-disabled); border-radius: var(--radius-pill); background: var(--color-white);' +
+      ' color: var(--color-text-secondary); font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap;' +
+      ' display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
-    '.kitchen-board-btn { background: var(--color-accent-purple); color: var(--color-white); flex-shrink: 0; }' +
+    '.call-status-btn { background: var(--color-accent-blue); color: var(--color-white); flex-shrink: 0; }' +
+    '.call-status-btn.active { background: #2a4fc7; }' +
+    '.call-status-panel { margin: 0 var(--space-5) var(--space-3); padding: var(--space-4); background: var(--color-accent-blue-bg); border-radius: var(--radius-card); }' +
+    '.call-status-counts { display: flex; gap: 10px; margin-bottom: 12px; }' +
+    '.call-status-count-card { flex: 1; background: var(--color-white); border-radius: var(--radius-card); padding: 14px 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }' +
+    '.call-status-count-card .cs-label { font-size: var(--font-size-caption); color: var(--color-text-secondary); font-weight: 700; margin-bottom: 4px; }' +
+    '.call-status-count-card .cs-value { font-size: 26px; font-weight: 800; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }' +
+    '.call-status-count-card .cs-value .cs-unit { font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); margin-left: 2px; }' +
+    '.call-status-btn-row { display: flex; gap: 6px; }' +
+    '.call-status-btn-row .filter-chip { flex: 1; text-align: center; background: var(--color-white); height: 30px; padding: 0 6px; font-size: 11px; display: flex; align-items: center; justify-content: center; }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
@@ -151,6 +161,47 @@
         esc(t.label) + ' <span class="count">' + tabCount(t.status) + '</span></button>';
     }).join('');
     return '<div class="order-status-seg">' + tabBtns + '</div>';
+  }
+
+  // ---------------- 호출 현황(처리중 탭 전용) ----------------
+  // 조리 현황판 배지가 있던 자리를 대신한다. 조리 현황판 자체는 설정 > '조리 현황판 보기'로 이동했다.
+  // 집계는 현재 적용된 메뉴/유형/검색 필터는 그대로 반영하되, 호출 여부 필터 자체는 무시하고 각각 강제로 계산한다.
+  function callStatusCounts() {
+    const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
+    const calledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'CALLED' })).length;
+    const notCalledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'NOT_CALLED' })).length;
+    return { calledCount: calledCount, notCalledCount: notCalledCount };
+  }
+
+  function renderCallStatusButtonHtml() {
+    if (currentStatus() !== 'PROCESSING') return '';
+    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 호출 현황 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
+  }
+
+  // '호출 주문만 보기' / '미호출 주문만 보기' 버튼은 주문 필터 시트의 '호출 여부' 칩과 완전히 같은 상태(calledFilter)를
+  // 공유한다 — 배타적 토글(같은 값을 다시 누르면 전체 보기로 해제)도 필터 시트와 동일한 로직을 그대로 쓴다.
+  function renderCallStatusPanelHtml() {
+    if (currentStatus() !== 'PROCESSING' || !callStatusPanelOpen) return '';
+    const counts = callStatusCounts();
+    return '<div class="call-status-panel">' +
+      '<div class="call-status-counts">' +
+        '<div class="call-status-count-card"><div class="cs-label">호출</div><div class="cs-value">' + counts.calledCount + '<span class="cs-unit">건</span></div></div>' +
+        '<div class="call-status-count-card"><div class="cs-label">미호출</div><div class="cs-value">' + counts.notCalledCount + '<span class="cs-unit">건</span></div></div>' +
+      '</div>' +
+      '<div class="call-status-btn-row">' +
+        '<button type="button" class="filter-chip' + (calledFilter === 'ALL' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="ALL">전체 보기</button>' +
+        '<button type="button" class="filter-chip' + (calledFilter === 'CALLED' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="CALLED">호출 주문만 보기</button>' +
+        '<button type="button" class="filter-chip' + (calledFilter === 'NOT_CALLED' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="NOT_CALLED">미호출 주문만 보기</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function updateCallStatusUI() {
+    if (!root) return;
+    const btnSlot = root.querySelector('#call-status-btn-slot');
+    if (btnSlot) btnSlot.innerHTML = renderCallStatusButtonHtml();
+    const panelSlot = root.querySelector('#call-status-panel-slot');
+    if (panelSlot) panelSlot.innerHTML = renderCallStatusPanelHtml();
   }
 
   function sortLabel() { return sortDir === 'desc' ? '최신순' : '오래된순'; }
@@ -260,7 +311,7 @@
 
     // 점선 구분선 오른쪽 하단의 화살표로 이 카드만 펼쳐보기/간단히보기를 개별 전환할 수 있다
     html += '<div class="order-card-divider">' +
-      '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' + (expanded ? '▲' : '▼') + '</button>' +
+      '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' + (expanded ? '접기 ▲' : '상세보기 ▼') + '</button>' +
       '</div>';
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
@@ -281,6 +332,7 @@
         : '';
       html += '<div class="order-card-meta">' +
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
+        '<div class="meta-row"><span class="meta-label">주문 유형</span><span class="meta-value">' + esc(window.UI.channelTypeLabel(order.channel)) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">결제</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>' +
         returnRowHtml +
@@ -350,6 +402,7 @@
     if (bulkSlot) bulkSlot.innerHTML = renderBulkBarHtml(disabled);
     const tabsEl = root.querySelector('#segment-tabs');
     if (tabsEl) tabsEl.innerHTML = renderSegmentTabsHtml();
+    updateCallStatusUI();
   }
 
   const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문만' };
@@ -392,6 +445,7 @@
     menuFilters = [];
     orderTypeFilters = [];
     calledFilter = 'ALL';
+    callStatusPanelOpen = false;
     updateFilterBtnLabel();
     updateList();
   }
@@ -794,10 +848,16 @@
       refreshAutoSoldoutBanner();
     }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
-    else if (action === 'open-kitchen-board') window.Router.showScreen('kitchenBoard');
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
     else if (action === 'toggle-sort') toggleSort();
     else if (action === 'open-order-filter') openOrderFilterSheet();
+    else if (action === 'toggle-call-status-panel') { callStatusPanelOpen = !callStatusPanelOpen; updateCallStatusUI(); }
+    else if (action === 'toggle-called-filter') {
+      const v = target.getAttribute('data-called-status');
+      calledFilter = (calledFilter === v) ? 'ALL' : v;
+      updateFilterBtnLabel();
+      updateList();
+    }
     else if (action === 'toggle-card-expand') toggleCardExpand(target.getAttribute('data-order-id'));
     else if (action === 'accept-order') handleAccept(id);
     else if (action === 'cancel-order') handleCancelOrder(id);
@@ -854,6 +914,7 @@
     menuFilters = [];
     orderTypeFilters = [];
     calledFilter = 'ALL';
+    callStatusPanelOpen = false;
     selectedIds = new Set();
     cardOverrides = {};
     autoSoldoutNames = [];
@@ -894,9 +955,10 @@
       '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
       '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length || calledFilter !== 'ALL') ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
       '</div>' +
-      '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
+      '<div id="call-status-btn-slot">' + renderCallStatusButtonHtml() + '</div>' +
       '</div>' +
       '</div>' +
+      '<div id="call-status-panel-slot">' + renderCallStatusPanelHtml() + '</div>' +
       '<div class="screen-scroll" id="order-scroll">' +
       '<div class="order-list" id="order-list-wrap">' + renderGroupsHtml(groups, orders, disabled) + '</div>' +
       '</div>' +
