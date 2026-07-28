@@ -114,9 +114,9 @@
             '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-single" ' + identifierAttr + '>1개만 선택</button>' +
             '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-multi" ' + identifierAttr + '>여러개 선택</button>' +
           '</div>' +
-          '<div class="option-required-row">' +
-            '<span class="option-required-label">필수 여부</span>' +
-            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
+          '<div class="option-required-row option-select-mode">' +
+            '<button type="button" class="segment-tab-sm' + (g.required ? ' active' : '') + '" data-action="' + actionPrefix + 'set-required" data-value="true" ' + identifierAttr + '>필수형</button>' +
+            '<button type="button" class="segment-tab-sm' + (!g.required ? ' active' : '') + '" data-action="' + actionPrefix + 'set-required" data-value="false" ' + identifierAttr + '>선택형</button>' +
           '</div>' +
         '</div>' +
         optionsHtml +
@@ -465,7 +465,7 @@
       }
       var bodyHtml =
         '<div class="filter-sheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">' +
-          '<div class="sheet-title" style="margin:0;">메뉴 선택</div>' +
+          '<div class="sheet-title" style="margin:0;">메뉴 연결하기</div>' +
         '</div>' +
         '<div id="menu-link-chip-wrap">' + chipsHtml() + '</div>' +
         '<button type="button" class="btn btn-primary" id="menu-link-apply-btn" style="width:100%;margin-top:8px;">적용</button>';
@@ -531,9 +531,9 @@
         openMenuLinkSheet();
         return;
       }
-      var reqBtn = e.target.closest('[data-action="toggle-required"]');
+      var reqBtn = e.target.closest('[data-action="set-required"]');
       if (reqBtn) {
-        draft.required = !draft.required;
+        draft.required = reqBtn.getAttribute('data-value') === 'true';
         refresh();
         return;
       }
@@ -1030,7 +1030,7 @@
               '<div class="option-preset-row">' +
                 '<button type="button" class="option-preset-chip" data-action="add-preset-group" data-preset="size">+ 사이즈</button>' +
                 '<button type="button" class="option-preset-chip" data-action="add-preset-group" data-preset="topping">+ 토핑</button>' +
-                '<button type="button" class="option-preset-chip ghost" data-action="add-group">+ 직접 만들기</button>' +
+                '<button type="button" class="option-preset-chip ghost" data-action="add-group">+ 새 옵션 그룹 추가</button>' +
               '</div>' +
               '<div id="option-groups-list">' + renderOptionGroupsList(state) + '</div>' +
             '</div>' +
@@ -1260,10 +1260,10 @@
         renderGroupsList();
         return;
       }
-      var reqBtn = e.target.closest('[data-action="toggle-required"]');
+      var reqBtn = e.target.closest('[data-action="set-required"]');
       if (reqBtn) {
         var giReq = Number(reqBtn.getAttribute('data-group-idx'));
-        state.optionGroups[giReq].required = !state.optionGroups[giReq].required;
+        state.optionGroups[giReq].required = reqBtn.getAttribute('data-value') === 'true';
         renderGroupsList();
         return;
       }
