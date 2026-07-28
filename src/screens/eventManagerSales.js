@@ -182,6 +182,17 @@
     );
   }
 
+  // 행사일(시작일~오늘) 필터는 범위가 매번 달라 사용자가 정확히 며칠치를 보고 있는지 헷갈릴 수 있어
+  // '일자별 매출' 아래에 실제 날짜 범위를 작게 덧붙인다. 하루짜리 행사면 범위 표기 대신 그 하루만 표시.
+  function eventPeriodRangeCaption(periodData) {
+    if (!periodData.length) return '';
+    const start = periodData[0].date, end = periodData[periodData.length - 1].date;
+    const startFmt = start.replace(/-/g, '.'), endFmt = end.replace(/-/g, '.');
+    if (start === end) return startFmt + '(일)';
+    const dayCount = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+    return startFmt + '-' + endFmt + '(' + dayCount + '일)';
+  }
+
   function pastTabHtml(eventId, range) {
     const summary = window.MockApi.getEventSalesSummary(eventId, range);
     const periodData = window.MockApi.getEventSalesByPeriod(eventId, range);
@@ -204,6 +215,7 @@
       metricGridHtml(summary) +
       '<div class="chart-card">' + window.UI.salesChartHtml('period', periodData) + '</div>' +
       '<div class="section-title">일자별 매출' + (showHighlight ? '<span class="sales-legend-hint"> · <span class="sales-amount-max">최고</span> / <span class="sales-amount-min">최저</span></span>' : '') + '</div>' +
+      (range.preset === 'eventPeriod' ? '<div class="section-caption" style="padding-top:0;margin-top:-6px;">' + eventPeriodRangeCaption(periodData) + '</div>' : '') +
       '<div class="sales-list">' + rows + '</div>'
     );
   }
