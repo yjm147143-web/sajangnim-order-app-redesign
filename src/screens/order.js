@@ -42,9 +42,14 @@
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
     '.status-pill-btn { background: none; border: none; padding: 0; cursor: pointer; }' +
+    '.order-network-caption { flex-shrink: 0; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: var(--radius-pill); white-space: nowrap; }' +
+    '.order-network-caption.ok { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
+    '.order-network-caption.warn { background: var(--color-accent-red-bg); color: #b02850; }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
+    '.order-toolbar-divider { height: 1px; background: #eef0f2; margin: 0 var(--space-5) var(--space-3); }' +
+    '.toolbar-left-group { display: flex; align-items: center; gap: var(--space-2); }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
     '.card-expand-toggle {' +
       ' position: absolute; right: 0; top: -11px; width: 22px; height: 22px;' +
@@ -53,7 +58,7 @@
       ' display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
-    '.kitchen-board-btn { background: var(--color-text-primary); color: var(--color-white); flex-shrink: 0; }' +
+    '.kitchen-board-btn { background: var(--color-accent-purple); color: var(--color-white); flex-shrink: 0; }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
@@ -143,8 +148,7 @@
       return '<button type="button" class="segment-tab' + (i === currentIndex ? ' active' : '') + '" data-action="switch-tab" data-tab-idx="' + i + '">' +
         esc(t.label) + ' <span class="count">' + tabCount(t.status) + '</span></button>';
     }).join('');
-    return '<div class="order-status-seg">' + tabBtns + '</div>' +
-      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>';
+    return '<div class="order-status-seg">' + tabBtns + '</div>';
   }
 
   function sortLabel() { return sortDir === 'desc' ? '최신순' : '오래된순'; }
@@ -845,6 +849,7 @@
       '</div>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
+      '<span class="order-network-caption ' + (isOnline ? 'ok' : 'warn') + '">' + (isOnline ? '원활' : '⚠️ 주의') + '</span>' +
       '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
@@ -857,12 +862,16 @@
       '<span>🔍</span>' +
       '<input type="text" inputmode="numeric" id="search-input" placeholder="호출번호로 검색" value="' + esc(searchQuery) + '" />' +
       '</div>' +
-      '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
+      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>' +
       '</div>' +
       '<div class="segment-tabs" id="segment-tabs">' + renderSegmentTabsHtml() + '</div>' +
+      '<div class="order-toolbar-divider"></div>' +
       '<div class="toolbar">' +
       '<div class="toolbar-row">' +
+      '<div class="toolbar-left-group">' +
+      '<button type="button" class="pill-btn sort-pill" id="sort-btn" data-action="toggle-sort">' + sortLabel() + ' ▾</button>' +
       '<button type="button" class="pill-btn' + ((menuFilters.length || orderTypeFilters.length || calledFilter !== 'ALL') ? ' active' : '') + '" id="order-filter-btn" data-action="open-order-filter">' + filterBtnLabel() + '</button>' +
+      '</div>' +
       '<button type="button" class="pill-btn kitchen-board-btn" data-action="open-kitchen-board">🍳 조리 현황판</button>' +
       '</div>' +
       '</div>' +
