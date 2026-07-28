@@ -200,9 +200,9 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-6) var(--space-5) var(--space-2);
+  padding: var(--space-8) var(--space-5) var(--space-2);
   flex-shrink: 0;
-  min-height: 56px;
+  min-height: 68px;
 }
 .topbar-title {
   position: absolute;
