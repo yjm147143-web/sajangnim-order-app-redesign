@@ -251,7 +251,7 @@
           window.UI.confirmModal('로그아웃', '정말 로그아웃 하시겠어요?', '로그아웃하기', function () {
             window.MockApi.logout();
             window.Router.resetTo('login');
-          }, { danger: true });
+          }, { danger: true, cancelLabel: '닫기' });
         });
       }
     }
