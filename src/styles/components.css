@@ -519,6 +519,28 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .sales-subtab-row { display: flex; gap: 5px; padding: 0 var(--space-5) var(--space-4); flex-wrap: wrap; }
 .sales-subtab-btn { flex: 1; min-width: 70px; text-align: center; padding: 9px 0; border: none; border-radius: 10px; background: var(--color-card-bg); color: var(--color-text-secondary); font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .sales-subtab-btn.active { background: var(--color-text-primary); color: var(--color-white); }
+.sales-subtab-btn { transition: background .15s ease, color .15s ease; }
+/* 행사담당자 매출현황 전용 — 5개 탭('매장별' 추가)이 균등폭 줄바꿈으로 4:1 어색하게 갈라지던 것을
+   컨텐츠 폭에 맞는 가로 스크롤 탭 스트립으로 바꿔 5개 모두 한 줄에서 또렷이 읽히게 한다. */
+.sales-subtab-row.ems-subtab-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+.sales-subtab-row.ems-subtab-row::-webkit-scrollbar { display: none; }
+.sales-subtab-row.ems-subtab-row .sales-subtab-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  scroll-snap-align: start;
+}
+.sales-subtab-row.ems-subtab-row .sales-subtab-btn.active { box-shadow: 0 2px 6px rgba(0,0,0,0.16); }
 .sales-sort-row { display: flex; justify-content: flex-end; padding: 0 var(--space-5) var(--space-3); }
 .sales-site-caption { line-height: 1.6; }
 .sales-site-link { color: var(--color-accent-blue); font-weight: 700; }

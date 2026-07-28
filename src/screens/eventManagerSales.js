@@ -230,8 +230,11 @@
   }
 
   // ---------------- 날짜별 매출 상세 화면 (5탭) ----------------
+  // 사장님 보드는 4개뿐이라 균등폭 세그먼트로 한 줄에 맞지만, 행사담당자는 '매장별'이 추가돼
+  // 5개라 같은 방식으로는 4:1로 어색하게 두 줄이 된다. 그래서 이 화면만 폭을 컨텐츠에 맞추고
+  // 가로 스크롤되는 탭 스트립으로 바꾼다(ems-subtab-row 한정 — 사장님 보드 4탭 스타일은 그대로 둔다).
   function subTabSwitchHtml(activeSub) {
-    return '<div class="sales-subtab-row">' + SUB_TABS.map(function (t) {
+    return '<div class="sales-subtab-row ems-subtab-row">' + SUB_TABS.map(function (t) {
       return '<button type="button" class="sales-subtab-btn' + (activeSub === t.key ? ' active' : '') + '" data-sales-subtab="' + t.key + '">' + t.label + '</button>';
     }).join('') + '</div>';
   }
