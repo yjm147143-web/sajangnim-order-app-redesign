@@ -21,6 +21,7 @@
   let selectedIds = new Set();
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
+  let networkWeak = false; // 완전 단절은 아니지만 신호가 희미한 상태(개발자 도구 '간헐적 끊김' 시뮬레이션) — 주문 컨트롤은 막지 않고 캡션만 경고로 바꾼다
   let autoSoldoutNames = [];   // 자동 품절 배너에 노출 중인 메뉴명 목록 (X로 닫으면 비움)
   let root = null;
 
@@ -827,6 +828,21 @@
     if (slot) slot.innerHTML = isOnline ? '' : offlineBannerHtml();
   }
 
+  // 완전 단절(isOnline)과 희미한 신호(networkWeak) 중 하나라도 해당되면 경고 캡션을 보여준다.
+  // 완전 단절이 아니면 주문 컨트롤은 그대로 두고 캡션 표시만 바꾼다.
+  function refreshNetworkCaption() {
+    const el = root.querySelector('#order-network-caption');
+    if (!el) return;
+    const warn = !isOnline || networkWeak;
+    el.className = 'order-network-caption ' + (warn ? 'warn' : 'ok');
+    el.textContent = warn ? '⚠️ 주의' : '원활';
+  }
+
+  function onNetworkQuality(e) {
+    networkWeak = !!(e.detail && e.detail.weak);
+    refreshNetworkCaption();
+  }
+
   function refreshAutoSoldoutBanner() {
     const slot = root.querySelector('#auto-soldout-banner-slot');
     if (slot) slot.innerHTML = autoSoldoutBannerHtml();
@@ -840,8 +856,8 @@
     refreshAutoSoldoutBanner();
   }
 
-  function onOffline() { isOnline = false; refreshOfflineBanner(); updateList(); }
-  function onOnline() { isOnline = true; refreshOfflineBanner(); updateList(); }
+  function onOffline() { isOnline = false; refreshOfflineBanner(); refreshNetworkCaption(); updateList(); }
+  function onOnline() { isOnline = true; refreshOfflineBanner(); refreshNetworkCaption(); updateList(); }
   // 폰 목업 바깥의 테스트 패널(devPanel.js)에서 주문을 추가했을 때 목록을 즉시 갱신한다.
   function onMockDataChanged() { updateList(); }
 
@@ -931,6 +947,7 @@
     cardOverrides = {};
     autoSoldoutNames = [];
     isOnline = navigator.onLine && !(window.DevTools && window.DevTools.isOffline());
+    networkWeak = false;
 
     const disabled = controlsDisabled();
     const orders = fetchOrders();
@@ -944,7 +961,7 @@
       '</div>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
-      '<span class="order-network-caption ' + (isOnline ? 'ok' : 'warn') + '">' + (isOnline ? '원활' : '⚠️ 주의') + '</span>' +
+      '<span class="order-network-caption ' + ((isOnline && !networkWeak) ? 'ok' : 'warn') + '" id="order-network-caption">' + ((isOnline && !networkWeak) ? '원활' : '⚠️ 주의') + '</span>' +
       '</div>' +
       '<div class="topbar-side" style="justify-content:flex-end;">' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
@@ -986,6 +1003,7 @@
     window.addEventListener('online', onOnline);
     window.addEventListener('mock:orders-changed', onMockDataChanged);
     window.addEventListener('mock:auto-soldout', onAutoSoldout);
+    window.addEventListener('mock:network-quality', onNetworkQuality);
   }
 
   function unmount() {
@@ -993,6 +1011,7 @@
     window.removeEventListener('online', onOnline);
     window.removeEventListener('mock:orders-changed', onMockDataChanged);
     window.removeEventListener('mock:auto-soldout', onAutoSoldout);
+    window.removeEventListener('mock:network-quality', onNetworkQuality);
     root = null;
   }
 

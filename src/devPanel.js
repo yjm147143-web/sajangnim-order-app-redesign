@@ -56,6 +56,9 @@
   var devOrderCountMode = '1';
   var devOrderCountCustom = 3;
   var devSimOffline = false;
+  var devSimFlaky = false;      // 간헐적 끊김 시뮬레이션 on/off
+  var flakyCurrentlyWeak = false; // 간헐적 모드일 때 지금 이 순간이 신호 희미한 구간인지
+  var flakyTimeoutId = null;
   var devPaymentMethod = 'PG';
   var panelOpen = false;
   var lastVisible = null;
@@ -159,6 +162,7 @@
             '<span class="dp-group-label">네트워크</span>' +
             '<div class="dp-pill-row">' +
               '<button type="button" class="dp-pill' + (devSimOffline ? ' active' : '') + '" data-action="dp-toggle-offline">' + (devSimOffline ? '🔴 오프라인(단절 중)' : '📶 네트워크 단절 시뮬레이션') + '</button>' +
+              '<button type="button" class="dp-pill' + (devSimFlaky ? ' active' : '') + '" data-action="dp-toggle-flaky">' + (devSimFlaky ? ('🌊 간헐적 끊김(' + (flakyCurrentlyWeak ? '지금 희미함' : '지금 원활') + ')') : '🌊 네트워크 간헐적 끊김 시뮬레이션') + '</button>' +
             '</div>' +
           '</div>' +
           pillGroupHtml('결제 방식', [{ v: 'PG', label: 'PG 결제' }, { v: 'VAN', label: 'VAN 결제' }], devPaymentMethod, 'dp-set-payment') +
@@ -170,6 +174,7 @@
           '</div>' +
         '</div>' +
         (devSimOffline ? '<div class="dp-offline-hint">오프라인 상태에서는 신규 주문이 들어올 수 없어요</div>' : '') +
+        (devSimFlaky ? '<div class="dp-offline-hint">완전 단절은 아니고, 신호가 희미해졌다 괜찮아졌다를 반복해요. 주문 접수는 그대로 되고, 캡션만 "⚠️ 주의"로 바뀌어요</div>' : '') +
       '</div>'
     );
   }
@@ -244,6 +249,36 @@
     render();
   }
 
+  // 완전 단절(오프라인)이 아니라 '신호가 희미한' 상태를 흉내낸다 — 주문 접수/컨트롤은 그대로 두고
+  // 화면의 네트워크 캡션만 랜덤한 간격으로 원활⇄주의를 오가게 해서, 실제 와이파이가 약해졌다
+  // 괜찮아졌다 하는 상황을 재현한다. 완전 단절 토글(devSimOffline)과는 서로 무관하게 동작한다.
+  function scheduleFlakyFlip() {
+    flakyCurrentlyWeak = !flakyCurrentlyWeak;
+    window.dispatchEvent(new CustomEvent('mock:network-quality', { detail: { weak: flakyCurrentlyWeak } }));
+    render();
+    var duration = flakyCurrentlyWeak
+      ? (1500 + Math.random() * 2500)   // 희미한 구간 1.5~4초
+      : (3000 + Math.random() * 4000);  // 원활한 구간 3~7초
+    flakyTimeoutId = setTimeout(scheduleFlakyFlip, duration);
+  }
+
+  function toggleFlaky() {
+    devSimFlaky = !devSimFlaky;
+    if (devSimFlaky) {
+      flakyCurrentlyWeak = false;
+      window.UI.toast('네트워크 간헐적 끊김(신호 희미함) 시뮬레이션을 시작해요');
+      scheduleFlakyFlip();
+      return;
+    }
+    if (flakyTimeoutId) { clearTimeout(flakyTimeoutId); flakyTimeoutId = null; }
+    if (flakyCurrentlyWeak) {
+      flakyCurrentlyWeak = false;
+      window.dispatchEvent(new CustomEvent('mock:network-quality', { detail: { weak: false } }));
+    }
+    window.UI.toast('간헐적 끊김 시뮬레이션을 껐어요');
+    render();
+  }
+
   function triggerAutoSoldout() {
     var user = currentOwnerContext();
     if (!user) return;
@@ -275,6 +310,7 @@
     else if (action === 'dp-set-payment') devPaymentMethod = value;
     else if (action === 'dp-add-order') { addOrders(); return; }
     else if (action === 'dp-toggle-offline') { toggleOffline(); return; }
+    else if (action === 'dp-toggle-flaky') { toggleFlaky(); return; }
     else if (action === 'dp-trigger-soldout') { triggerAutoSoldout(); return; }
     else if (action === 'dp-toggle-panel') { panelOpen = !panelOpen; render(); return; }
     else return;
