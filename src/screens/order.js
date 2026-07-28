@@ -143,7 +143,7 @@
   function sortLabel() { return sortDir === 'desc' ? '최신순' : '오래된순'; }
 
   function offlineBannerHtml() {
-    return '<div class="offline-banner">📶 오프라인 상태예요 · 네트워크가 연결되면 다시 사용할 수 있어요</div>';
+    return '<div class="offline-banner">오프라인 상태에요. 기기 네트워크를 점검해 주세요.</div>';
   }
 
   // 여러 메뉴가 동시에 자동 품절돼도 '메뉴명 외 N개'로 뭉치지 않고, 메뉴마다 각각 별도의 배너로 띄운다.
