@@ -52,6 +52,11 @@
     '.toolbar-left-group { display: flex; align-items: center; gap: var(--space-2); }' +
     '.phone-btn-danger { background: var(--color-accent-red-bg); color: #b02850; }' +
     '.phone-btn-danger:active { background: var(--color-accent-red); color: var(--color-white); }' +
+    '.contact-link-btn { background: none; border: none; padding: 0; margin: 0; font: inherit; font-weight: 700;' +
+      ' color: var(--color-text-primary); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;' +
+      ' display: inline-flex; align-items: center; gap: 4px; }' +
+    '.contact-link-btn .cl-arrow { text-decoration: none; font-size: 13px; font-weight: 800; color: var(--color-text-secondary); }' +
+    '.contact-link-btn:active { color: #0b6b5c; }' +
     '.card-detail-toggle {' +
       ' width: 100%; border: none; background: transparent; border-top: 1px solid var(--color-divider);' +
       ' margin-top: var(--space-3); padding: 10px 0 0; font-family: inherit; cursor: pointer;' +
@@ -319,27 +324,30 @@
 
     // 인라인 힌트 행 — 안에 뭐가 있는지 미리 알려주는 텍스트로 이 카드만 펼쳐보기/간단히보기를 개별 전환할 수 있다
     html += '<button type="button" class="card-detail-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' +
-      '<span class="cdt-label">' + (expanded ? '접기' : '상세보기 <span class="cdt-hint">· 연락처·결제·주문번호</span>') + '</span>' +
+      '<span class="cdt-label">' + (expanded ? '접기' : '상세보기 <span class="cdt-hint">· 결제 취소·연락처·결제 금액 등</span>') + '</span>' +
       '<span class="cdt-chev">' + (expanded ? '▴' : '▾') + '</span>' +
       '</button>';
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
+    // 순서: 취소성 액션(배지) → 연락처(문구형 링크) → 주문 유형 → 결제정보 → 주문번호
     if (expanded) {
       // 현금 주문 생성(카운터 접수)은 손님 연락처를 안 남기고 접수할 수도 있으므로, 없으면 안내 문구를 둔다
+      // 연락처는 더 이상 버튼형 배지가 아니라 문구형 링크로 노출한다 — 밑줄 + '›' 화살표로 연결된 동작(전화/메일)이
+      // 있다는 것만 알려주고, 클릭 동작(open-contact) 자체는 기존과 동일하다.
       const contactHtml = order.customerContact
         ? (function () {
             const contact = window.UI.formatContact(order.customerContact);
             const isEmailContact = order.customerContact.indexOf('@') !== -1;
             const contactIcon = isEmailContact ? '✉️' : '📞';
-            return '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
+            return '<button type="button" class="contact-link-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '<span class="cl-arrow">›</span></button>';
           })()
         : '연락처 없음(카운터 접수)';
       html += '<div class="order-card-meta">' +
+        cancelActionRowHtml(order, tabStatus, disabled) +
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문 유형</span><span class="meta-value">' + esc(window.UI.channelTypeLabel(order.channel)) + '</span></div>' +
-        '<div class="meta-row"><span class="meta-label">결제</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
+        '<div class="meta-row"><span class="meta-label">결제정보</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>' +
-        cancelActionRowHtml(order, tabStatus, disabled) +
         '</div>';
     }
 
