@@ -213,7 +213,8 @@
                   var result = window.MockApi.updateAutoAccept(storeId, true);
                   window.UI.toast('자동 수락을 켰어요 · 미수락 상태였던 ' + result.autoAcceptedCount + '건을 자동 수락했어요');
                   refresh();
-                }
+                },
+                { cancelLabel: '닫기' }
               );
               return;
             }
