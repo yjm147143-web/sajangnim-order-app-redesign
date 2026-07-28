@@ -60,7 +60,13 @@
     '.refresh-btn { background: none; border: none; padding: 4px; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; margin-left: auto; }' +
     '.order-title-text { font-size: 18px; }' +
     '.refresh-btn.spinning { animation: order-refresh-spin 0.6s linear; }' +
-    '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+    '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
+    // 미수락/처리중/완료 탭 — 따로 떨어진 배지형 버튼 대신, 하나의 캡슐 안에서 전환되는
+    // 세그먼트 스타일로 변경(메뉴관리의 '1개만 선택/여러개 선택'과 같은 톤). 새로고침 버튼은
+    // 이 캡슐 바깥에 그대로 분리해서 둔다.
+    '.order-status-seg { display: flex; flex: 1; border: 1.5px solid var(--color-disabled); border-radius: var(--radius-pill); padding: 3px; background: var(--color-card-bg); }' +
+    '.order-status-seg .segment-tab { flex: 1; background: transparent; }' +
+    '.order-status-seg .segment-tab.active { box-shadow: 0 1px 4px rgba(0,0,0,.15); }';
 
   // ---------------- 탭 구성 ----------------
   // 자동수락 ON이면 신규 주문이 대기 없이 바로 처리중으로 인입되므로 대기 탭 자체를 숨긴다.
@@ -137,7 +143,8 @@
       return '<button type="button" class="segment-tab' + (i === currentIndex ? ' active' : '') + '" data-action="switch-tab" data-tab-idx="' + i + '">' +
         esc(t.label) + ' <span class="count">' + tabCount(t.status) + '</span></button>';
     }).join('');
-    return tabBtns + '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>';
+    return '<div class="order-status-seg">' + tabBtns + '</div>' +
+      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>';
   }
 
   function sortLabel() { return sortDir === 'desc' ? '최신순' : '오래된순'; }
