@@ -6,7 +6,6 @@
  * - 취소되지 않은 주문의 메뉴 라인을 메뉴명 기준으로 합산. '호출 완료'는 주문 단위 판정이라,
  *   한 주문에 여러 메뉴가 섞여 있으면 호출 시 그 주문에 속한 메뉴가 전부 같이 완료 처리된다.
  * - 신규 주문 발생(mock:orders-changed) 시 화면이 열려 있는 동안 자동으로 다시 집계한다.
- * - 화면 어디를 눌러도 뒤로 돌아간다.
  */
 (function () {
   const esc = window.UI.escapeHtml;
@@ -165,16 +164,16 @@
       root.querySelector('#kb-content').innerHTML = contentHtml(storeId);
     }
 
-    // 화면 어디를 눌러도 뒤로 돌아가지만, '조리완료' 버튼만은 예외로 그 자리에서 수기차감을 처리하고
-    // 화면에 머무른다.
+    root.querySelector('#kb-back').addEventListener('click', function () {
+      window.Router.back();
+    });
+
     root.addEventListener('click', function (e) {
       var deductBtn = e.target.closest('[data-action="kb-manual-deduct"]');
       if (deductBtn) {
         window.MockApi.addKitchenManualDeduction(storeId, deductBtn.getAttribute('data-name'), 1);
         refresh();
-        return;
       }
-      window.Router.back();
     });
 
     onOrdersChanged = refresh;
