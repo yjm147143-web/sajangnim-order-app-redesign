@@ -50,6 +50,8 @@
     '.sort-pill { flex-shrink: 0; }' +
     '.order-toolbar-divider { height: 1px; background: #eef0f2; margin: 0 var(--space-5) var(--space-3); }' +
     '.toolbar-left-group { display: flex; align-items: center; gap: var(--space-2); }' +
+    '.phone-btn-danger { background: var(--color-accent-red-bg); color: #b02850; }' +
+    '.phone-btn-danger:active { background: var(--color-accent-red); color: var(--color-white); }' +
     '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
     '.card-expand-toggle {' +
       ' position: absolute; right: 0; top: -11px; width: 22px; height: 22px;' +
@@ -173,18 +175,27 @@
     return n > 0 ? ' (' + n + '회)' : '';
   }
 
+  // 취소 계열 버튼(주문 거절/결제 취소)은 오조작 방지를 위해 기본적으로 숨겨두고, 주문카드의
+  // 펼쳐보기 화살표(▼)를 눌러 카드를 펼쳤을 때만 그 자리에 나타난다. 드러난 뒤의 동작/로직은 기존과
+  // 동일하다. 간단히 보기 상태에서는 버튼 자체를 그리지 않아 나머지 버튼이 넓게 채워진다.
+  function cancelSlotHtml(order, revealedHtml) {
+    return isCardExpanded(order.id) ? revealedHtml : '';
+  }
+
   function renderActionsHtml(order, tabStatus, disabled) {
     const dAttr = disabled ? ' disabled' : '';
     if (tabStatus === 'WAITING') {
+      const cancelBtn = '<button type="button" class="btn btn-outline" data-action="cancel-order" data-id="' + order.id + '"' + dAttr + '>주문 거절</button>';
       return '<div class="order-card-actions">' +
-        '<button type="button" class="btn btn-outline" data-action="cancel-order" data-id="' + order.id + '"' + dAttr + '>주문 거절</button>' +
+        cancelSlotHtml(order, cancelBtn) +
         '<button type="button" class="btn btn-primary" data-action="accept-order" data-id="' + order.id + '"' + dAttr + '>주문 수락</button>' +
         '</div>';
     }
     if (tabStatus === 'PROCESSING') {
-      return '<div class="order-card-actions three">' +
+      const cancelBtn = '<button type="button" class="btn btn-danger-solid" data-action="cancel-payment" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>';
+      return '<div class="order-card-actions' + (isCardExpanded(order.id) ? ' three' : '') + '">' +
         '<button type="button" class="btn btn-outline" data-action="call-customer" data-id="' + order.id + '"' + dAttr + '>손님 호출' + countText(order.calledCount || 0) + '</button>' +
-        '<button type="button" class="btn btn-danger-solid" data-action="cancel-payment" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>' +
+        cancelSlotHtml(order, cancelBtn) +
         '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료' + countText(order.completeCount || 0) + '</button>' +
         '</div>';
     }
@@ -194,9 +205,9 @@
       const doneLabel = order.cancelType === 'CANCEL' ? '주문 취소 완료' : '결제 취소 완료';
       return '<div class="order-card-actions"><span class="badge badge-neutral cancel-done-badge">' + doneLabel + timeLabel + '</span></div>';
     }
+    // '반품'(결제 취소)은 액션 버튼이 아니라 펼쳐보기의 메타 영역에 연락처와 같은 배지 양식으로 노출한다
     return '<div class="order-card-actions">' +
       '<button type="button" class="btn btn-outline" data-action="revert-order" data-id="' + order.id + '"' + dAttr + '>되돌리기</button>' +
-      '<button type="button" class="btn btn-danger-solid" data-action="return-order" data-id="' + order.id + '"' + dAttr + '>결제 취소</button>' +
       '</div>';
   }
 
@@ -258,10 +269,16 @@
       const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
       const contactIcon = isEmailContact ? '✉️' : '📞';
       const contactHtml = '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
+      // 완료 탭의 '반품'(결제 취소)은 danger 버튼 대신, 연락처와 같은 배지 양식(라벨 + 알약 버튼)으로
+      // 메타 영역에 넣는다 — 눌렀을 때의 동작(return-order)은 기존과 동일.
+      const returnRowHtml = (tabStatus === 'DONE' && !order.canceled)
+        ? '<div class="meta-row"><span class="meta-label">반품</span><span class="meta-value"><button type="button" class="phone-btn phone-btn-danger" data-action="return-order" data-id="' + order.id + '"' + (disabled ? ' disabled' : '') + '>결제 취소</button></span></div>'
+        : '';
       html += '<div class="order-card-meta">' +
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">결제</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>' +
+        returnRowHtml +
         '</div>';
     }
 
