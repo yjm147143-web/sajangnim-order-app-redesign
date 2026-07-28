@@ -71,7 +71,7 @@
     // 이 캡슐 바깥에 그대로 분리해서 둔다.
     '.order-status-seg { display: flex; flex: 1; border: 1.5px solid var(--color-disabled); border-radius: var(--radius-pill); padding: 3px; background: var(--color-card-bg); }' +
     '.order-status-seg .segment-tab { flex: 1; background: transparent; }' +
-    '.order-status-seg .segment-tab.active { box-shadow: 0 1px 4px rgba(0,0,0,.15); }';
+    '.order-status-seg .segment-tab.active { background: var(--color-text-primary); color: var(--color-white); box-shadow: 0 1px 4px rgba(0,0,0,.15); }';
 
   // ---------------- 탭 구성 ----------------
   // 자동수락 ON이면 신규 주문이 대기 없이 바로 처리중으로 인입되므로 대기 탭 자체를 숨긴다.
