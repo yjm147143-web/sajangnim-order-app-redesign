@@ -48,19 +48,11 @@
   function menuCardHtml(name, total, called, manual, idx, isSoldOut) {
     var remaining = Math.max(0, total - called - manual);
     var hasRemaining = remaining > 0;
-    var calledPct = total ? Math.round((called / total) * 100) : 0;
-    var manualPct = total ? Math.round((manual / total) * 100) : 0;
-    var remainingPct = Math.max(0, 100 - calledPct - manualPct);
     return (
       '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
         '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
         '<div class="kb-card-total-label">남은 주문</div>' +
-        '<div class="kb-ratio-bar">' +
-          '<div class="fill-called" style="width:' + calledPct + '%"></div>' +
-          '<div class="fill-manual" style="width:' + manualPct + '%"></div>' +
-          '<div class="fill-remaining" style="width:' + remainingPct + '%"></div>' +
-        '</div>' +
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-called">호출 ' + called + '</span>' +
           '<span class="kb-tag kb-tag-total">누적 ' + total + (manual > 0 ? '<span class="kb-manual-note">(조리완료 ' + manual + ')</span>' : '') + '</span>' +
@@ -131,10 +123,6 @@
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
         '.kb-card-total .unit{font-size:11px;font-weight:600;color:var(--color-text-secondary);margin-left:2px;}' +
         '.kb-card-total-label{font-size:10px;font-weight:700;color:var(--color-text-secondary);margin-top:-7px;}' +
-        '.kb-ratio-bar{height:6px;background:var(--color-disabled);border-radius:999px;overflow:hidden;display:flex;}' +
-        '.kb-ratio-bar .fill-called{background:var(--color-accent-green);height:100%;}' +
-        '.kb-ratio-bar .fill-manual{background:var(--color-accent-purple);opacity:0.55;height:100%;}' +
-        '.kb-ratio-bar .fill-remaining{background:var(--color-accent-amber);height:100%;}' +
         '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}' +
         '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-pill);font-size:var(--font-size-caption);font-weight:700;white-space:nowrap;}' +
         '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
