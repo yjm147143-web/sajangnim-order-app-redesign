@@ -194,12 +194,10 @@
       const resTime = new Date(order.reservationTime || order.orderedAt).getTime();
       const overdueMins = Math.round((Date.now() - resTime) / 60000);
       const isOverdue = overdueMins > 0;
-      let html = '<span class="elapsed-badge reservation">📅 예약 ' + window.UI.clockLabel(order.reservationTime || order.orderedAt) + '</span>';
-      if (isOverdue) {
-        const urgencyCls = overdueMins >= 10 ? 'urgent' : 'normal';
-        html += '<span class="elapsed-badge ' + urgencyCls + '">● ' + overdueMins + '분 지남</span>';
-      }
-      return html;
+      const timeLabel = window.UI.clockLabel(order.reservationTime || order.orderedAt);
+      const urgencyCls = isOverdue ? (overdueMins >= 10 ? ' urgent' : ' normal') : '';
+      const overdueText = isOverdue ? ' · ' + overdueMins + '분 지남' : '';
+      return '<span class="elapsed-badge reservation' + urgencyCls + '">📅 ' + timeLabel + ' 예약' + overdueText + '</span>';
     }
     const mins = window.UI.elapsedMinutes(order.orderedAt);
     const urgencyCls = mins >= 10 ? 'urgent' : 'normal';
