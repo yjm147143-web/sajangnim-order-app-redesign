@@ -242,8 +242,11 @@
     );
   }
 
+  // #ems-view는 .screen(부모)의 flex-column 레이아웃을 그대로 이어받아야 안의 화면-스크롤
+  // 영역만 늘어나고 하단 탭바가 뷰포트 바닥에 고정된다 — display/flex를 안 주면 콘텐츠 높이만큼만
+  // 차지해서 탭바가 콘텐츠 뒤에 떠버리고(고정 안 됨), 짧은 화면에서는 중간에 붕 뜨게 된다.
   function render() {
-    return '<div id="ems-view"></div>';
+    return '<div id="ems-view" style="display:flex;flex-direction:column;flex:1;min-height:0;"></div>';
   }
 
   function mount(root, params) {

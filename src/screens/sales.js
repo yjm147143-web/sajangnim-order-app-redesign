@@ -235,8 +235,10 @@
     );
   }
 
+  // #sales-view는 .screen(부모)의 flex-column 레이아웃을 그대로 이어받아야 화면-스크롤 영역이
+  // 뷰포트 높이에 맞게 제대로 늘어난다(안 주면 콘텐츠 높이만큼만 차지해 하단에 빈 공간이 남는다).
   function render() {
-    return '<div id="sales-view"></div>';
+    return '<div id="sales-view" style="display:flex;flex-direction:column;flex:1;min-height:0;"></div>';
   }
 
   function mount(root) {
