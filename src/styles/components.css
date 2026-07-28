@@ -107,7 +107,7 @@
 .summary-card .summary-value.accent-red { color: var(--color-accent-red); }
 
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: 0 var(--space-5); }
-.summary-grid .summary-card .summary-value { font-size: 24px; }
+.summary-grid .summary-card .summary-value { font-size: 15px; white-space: nowrap; }
 
 /* ---------- Badge / Pill ---------- */
 .badge {
@@ -200,9 +200,9 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5) var(--space-2);
+  padding: var(--space-6) var(--space-5) var(--space-2);
   flex-shrink: 0;
-  min-height: 44px;
+  min-height: 56px;
 }
 .topbar-title {
   position: absolute;

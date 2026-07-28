@@ -31,9 +31,11 @@
     return null;
   }
 
-  function networkBadgeHtml(store) {
-    const online = store.networkStatus !== 'OFFLINE';
-    return '<span class="network-badge ' + (online ? 'online' : 'offline') + '">' + (online ? '🟢 온라인' : '🔴 오프라인') + '</span>';
+  // 온라인일 땐 아무 표시도 하지 않고, 네트워크 상태가 안 좋을 때만 빨간 경고 문구를 보여준다 —
+  // 영업상태 배지(🟢영업 중)와 겹쳐 보여 헷갈리던 '🟢 온라인' 배지를 없앤 것.
+  function networkWarningHtml(store) {
+    if (store.networkStatus !== 'OFFLINE') return '';
+    return '<span class="store-network-warning">⚠️ 네트워크 상태가 원활하지 않아요</span>';
   }
 
   // 누적 주문건수는 mockApi에 필드가 없어, 오늘 매출 대비 누적 매출 비율로 근사치를 계산한다.
@@ -50,7 +52,7 @@
         '<div class="store-status-left">' +
           '<span class="store-status-name">' + esc(s.name) + '</span>' +
           '<div class="store-status-meta">' +
-            networkBadgeHtml(s) +
+            networkWarningHtml(s) +
             (timeLabel ? '<span class="store-status-time">' + esc(timeLabel) + '</span>' : '') +
           '</div>' +
         '</div>' +
@@ -103,9 +105,7 @@
         '.store-status-name{font-weight:700;font-size:var(--font-size-body);}' +
         '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}' +
         '.store-status-time{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
-        '.network-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-pill);font-size:var(--font-size-micro);font-weight:700;white-space:nowrap;}' +
-        '.network-badge.online{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
-        '.network-badge.offline{background:var(--color-accent-red-bg);color:#b02850;}' +
+        '.store-network-warning{font-size:var(--font-size-micro);font-weight:700;color:var(--color-accent-red);white-space:nowrap;}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
       '</style>' +
