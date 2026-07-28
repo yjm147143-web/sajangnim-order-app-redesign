@@ -177,7 +177,7 @@
               window.UI.confirmModal(
                 '지금 영업을 시작할까요?',
                 '영업을 시작하면 손님이 주문을 할 수 있어요.',
-                '시작하기',
+                '개점하기',
                 function () {
                   window.MockApi.updateOperatingStatus(storeId, newStatus);
                   window.UI.toast('영업 상태가 변경되었어요');
