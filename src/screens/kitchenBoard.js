@@ -45,7 +45,7 @@
   // 강조한다. 기본은 호출 버튼에 따른 자동 차감이고, "조리완료" 버튼은 카운터가 바빠 호출을 늦게
   // 눌러도 조리 담당자가 남은 수량에 미리 반영할 수 있게 하는 수기 차감 옵션이다 — 사용자가 직접
   // 남은 수량을 올릴 수는 없고 줄이기만 한다.
-  function menuCardHtml(name, total, called, manual, idx) {
+  function menuCardHtml(name, total, called, manual, idx, isSoldOut) {
     var remaining = Math.max(0, total - called - manual);
     var hasRemaining = remaining > 0;
     var calledPct = total ? Math.round((called / total) * 100) : 0;
@@ -53,7 +53,7 @@
     var remainingPct = Math.max(0, 100 - calledPct - manualPct);
     return (
       '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
-        '<div class="kb-card-name">' + esc(name) + '</div>' +
+        '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
         '<div class="kb-card-total-label">남은 주문</div>' +
         '<div class="kb-ratio-bar">' +
@@ -82,9 +82,10 @@
   function contentHtml(storeId) {
     var stats = aggregateByMenu(storeId);
     var categories = window.MockApi.getCategories(storeId);
-    var allMenuItems = window.MockApi.getMenuItems(storeId);
-    // 조리 현황판은 지금 판매되고 있는(품절이 아닌) 메뉴만 대상으로 한다
-    var menuItems = allMenuItems.filter(function (m) { return !m.soldOut; });
+    var menuItems = window.MockApi.getMenuItems(storeId);
+    // 품절 메뉴도 노출 메뉴판에는 그대로 남아있는 메뉴이므로 카드는 계속 보여주되, 품절 배지로 구분한다.
+    var soldOutByName = {};
+    menuItems.forEach(function (m) { soldOutByName[m.name] = !!m.soldOut; });
 
     if (!menuItems.length) {
       return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>판매 중인 메뉴가 없어요</div></div>';
@@ -100,19 +101,18 @@
       html += '<div class="kb-grid">' +
         names.map(function (name) {
           var s = stats[name] || { total: 0, called: 0, manual: 0 };
-          return menuCardHtml(name, s.total, s.called, s.manual, idx++);
+          return menuCardHtml(name, s.total, s.called, s.manual, idx++, soldOutByName[name]);
         }).join('') +
         '</div>';
     });
 
-    // '기타'(미분류) 후보는 카탈로그(품절 포함) 전체 기준으로 걸러낸다 — 품절 메뉴는 여기로도 새어
-    // 들어오면 안 되므로, 카테고리가 없는 진짜 미분류 메뉴만 남긴다.
-    var knownNames = allMenuItems.map(function (m) { return m.name; });
+    // '기타'(미분류) 후보는 카탈로그 전체 기준으로 걸러낸다 — 카테고리가 없는 진짜 미분류 메뉴만 남긴다.
+    var knownNames = menuItems.map(function (m) { return m.name; });
     var uncategorized = sortByActivity(Object.keys(stats).filter(function (name) { return knownNames.indexOf(name) === -1; }), stats);
     if (uncategorized.length) {
       html += '<div class="section-title">기타</div>';
       html += '<div class="kb-grid">' +
-        uncategorized.map(function (name) { return menuCardHtml(name, stats[name].total, stats[name].called, stats[name].manual, idx++); }).join('') +
+        uncategorized.map(function (name) { return menuCardHtml(name, stats[name].total, stats[name].called, stats[name].manual, idx++, false); }).join('') +
         '</div>';
     }
 
