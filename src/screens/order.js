@@ -26,7 +26,10 @@
   let root = null;
 
   const SCOPED_STYLE = '' +
-    '.topbar-title { max-width: 62%; display: flex; align-items: center; gap: 6px; overflow: visible; }' +
+    // 영업상태 배지-매장명-설정 버튼을 화면 좌우로 흩어놓지 않고, 하나의 그룹으로 묶어 가운데 정렬한다
+    '.order-topbar-centered { justify-content: center; gap: var(--space-3); }' +
+    '.order-topbar-centered .status-pill-btn, .order-topbar-centered .icon-btn { flex-shrink: 0; }' +
+    '.topbar-title { position: static; transform: none; max-width: 45vw; display: flex; align-items: center; gap: 6px; overflow: visible; }' +
     '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
@@ -955,17 +958,13 @@
 
     return '' +
       '<style>' + SCOPED_STYLE + '</style>' +
-      '<div class="topbar">' +
-      '<div class="topbar-side">' +
+      '<div class="topbar order-topbar-centered">' +
       '<button type="button" class="status-pill-btn" id="status-pill-btn" data-action="toggle-operating-status">' + window.UI.statusPillHtml(store.operatingStatus) + '</button>' +
-      '</div>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
       '<span class="order-network-caption ' + ((isOnline && !networkWeak) ? 'ok' : 'warn') + '" id="order-network-caption">' + ((isOnline && !networkWeak) ? '원활' : '⚠️ 주의') + '</span>' +
       '</div>' +
-      '<div class="topbar-side" style="justify-content:flex-end;">' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
-      '</div>' +
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
       '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +
