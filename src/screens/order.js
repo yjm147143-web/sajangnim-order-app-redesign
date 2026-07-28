@@ -58,7 +58,7 @@
       ' display: flex; align-items: center; justify-content: space-between; text-align: left; }' +
     '.card-detail-toggle .cdt-label { font-size: 12.5px; color: var(--color-text-secondary); font-weight: 700; }' +
     '.card-detail-toggle .cdt-hint { font-weight: 600; opacity: 0.8; }' +
-    '.card-detail-toggle .cdt-chev { font-size: 10px; color: var(--color-text-secondary); flex-shrink: 0; margin-left: 8px; }' +
+    '.card-detail-toggle .cdt-chev { font-size: 24px; font-weight: 800; color: var(--color-text-secondary); flex-shrink: 0; margin-left: 8px; line-height: 1; }' +
     '.card-detail-toggle:active .cdt-label { color: #0b6b5c; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
