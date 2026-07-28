@@ -319,7 +319,7 @@
     if (tabsEl) tabsEl.innerHTML = renderSegmentTabsHtml();
   }
 
-  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문' };
+  const ORDER_TYPE_LABELS = { RESERVATION: '예약 주문만', DELIVERY: '배달 주문만' };
 
   // 주문 방식 관리(설정)에서 꺼둔 유형은 필터 목록에서도 숨긴다 — 받지도 않는 유형을 필터로 보여주는 건 혼란스럽다
   function getOrderTypeOptions() {
