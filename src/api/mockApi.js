@@ -380,14 +380,7 @@
   // ---------------- Orders ----------------
   function getOrder(id) { return DB.orders.find(function (o) { return o.id === id; }); }
 
-  function nextPickupNo(storeId) {
-    const existingNums = DB.orders
-      .filter(function (o) { return o.storeId === storeId; })
-      .map(function (o) { return parseInt(o.pickupNo, 10) || 0; });
-    return String((existingNums.length ? Math.max.apply(null, existingNums) : 1000) + 1);
-  }
-
-  // 손님 연락처가 이메일이면 순차 발급 대신 랜덤 4자리로 픽업번호를 구성한다 (같은 매장 내 중복 회피).
+  // 손님 연락처가 이메일이면 전화번호 뒷자리가 없으니 랜덤 4자리로 픽업번호를 구성한다 (같은 매장 내 중복 회피).
   function randomPickupNo(storeId) {
     const existing = new Set(DB.orders.filter(function (o) { return o.storeId === storeId; }).map(function (o) { return o.pickupNo; }));
     let candidate;
@@ -442,11 +435,14 @@
       amount += line.price * line.quantity;
     }
 
+    const customerContact = isEmailContact ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)];
+
     let identifierValue;
     if (identifierType === 'SEAT') {
       identifierValue = seatCodes[Math.floor(Math.random() * seatCodes.length)];
     } else {
-      identifierValue = isEmailContact ? randomPickupNo(storeId) : nextPickupNo(storeId);
+      // 호출번호 = 핸드폰 번호 맨 뒤 4자리(이메일 케이스만 뒷자리가 없으니 랜덤 4자리로 대체).
+      identifierValue = isEmailContact ? randomPickupNo(storeId) : customerContact.slice(-4);
     }
 
     const autoAccept = !!(store && store.autoAcceptOrders);
@@ -463,7 +459,7 @@
       paymentMethod: paymentMethod,
       amount: amount,
       items: lines,
-      customerContact: isEmailContact ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)],
+      customerContact: customerContact,
       orderedAt: new Date().toISOString(),
       acceptedAt: autoAccept ? new Date().toISOString() : null, doneAt: null,
       status: autoAccept ? 'PROCESSING' : 'WAITING', called: false, calledCount: 0, completeCount: 0,
