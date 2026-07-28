@@ -52,12 +52,14 @@
     '.toolbar-left-group { display: flex; align-items: center; gap: var(--space-2); }' +
     '.phone-btn-danger { background: var(--color-accent-red-bg); color: #b02850; }' +
     '.phone-btn-danger:active { background: var(--color-accent-red); color: var(--color-white); }' +
-    '.order-card-divider { position: relative; border-top: 1px dashed var(--color-disabled); margin-top: var(--space-3); height: 0; }' +
-    '.card-expand-toggle {' +
-      ' position: absolute; right: 0; top: -11px; height: 22px; padding: 0 10px;' +
-      ' border: 1.5px solid var(--color-disabled); border-radius: var(--radius-pill); background: var(--color-white);' +
-      ' color: var(--color-text-secondary); font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap;' +
-      ' display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }' +
+    '.card-detail-toggle {' +
+      ' width: 100%; border: none; background: transparent; border-top: 1px solid var(--color-divider);' +
+      ' margin-top: var(--space-3); padding: 10px 0 0; font-family: inherit; cursor: pointer;' +
+      ' display: flex; align-items: center; justify-content: space-between; text-align: left; }' +
+    '.card-detail-toggle .cdt-label { font-size: 12.5px; color: var(--color-text-secondary); font-weight: 700; }' +
+    '.card-detail-toggle .cdt-hint { font-weight: 600; opacity: 0.8; }' +
+    '.card-detail-toggle .cdt-chev { font-size: 10px; color: var(--color-text-secondary); flex-shrink: 0; margin-left: 8px; }' +
+    '.card-detail-toggle:active .cdt-label { color: #0b6b5c; }' +
     '.top-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }' +
     '.elapsed-badge.reservation { background: var(--color-accent-blue-bg); color: #3355b8; border-color: rgba(92,130,232,0.35); }' +
     '.call-status-btn { background: var(--color-accent-blue); color: var(--color-white); flex-shrink: 0; }' +
@@ -315,10 +317,11 @@
       html += '<div class="order-card-cancel-reason">[' + typeLabel + '] ' + esc(order.cancelReason || '') + '</div>';
     }
 
-    // 점선 구분선 오른쪽 하단의 화살표로 이 카드만 펼쳐보기/간단히보기를 개별 전환할 수 있다
-    html += '<div class="order-card-divider">' +
-      '<button type="button" class="card-expand-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' + (expanded ? '접기 ▲' : '상세보기 ▼') + '</button>' +
-      '</div>';
+    // 인라인 힌트 행 — 안에 뭐가 있는지 미리 알려주는 텍스트로 이 카드만 펼쳐보기/간단히보기를 개별 전환할 수 있다
+    html += '<button type="button" class="card-detail-toggle" data-action="toggle-card-expand" data-order-id="' + order.id + '">' +
+      '<span class="cdt-label">' + (expanded ? '접기' : '상세보기 <span class="cdt-hint">· 연락처·결제·주문번호</span>') + '</span>' +
+      '<span class="cdt-chev">' + (expanded ? '▴' : '▾') + '</span>' +
+      '</button>';
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
     if (expanded) {
