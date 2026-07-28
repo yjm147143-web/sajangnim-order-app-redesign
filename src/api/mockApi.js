@@ -475,6 +475,40 @@
     return order;
   }
 
+  // 주문 관리 > 현금 주문 생성 — 사장님이 카운터에서 손님 대신 메뉴를 골라 현금 주문을 등록한다.
+  // 이미 현장에서 결제까지 끝난 뒤 접수하는 것이라 미수락 단계 없이 바로 '처리중'으로 들어간다.
+  // 손님 연락처는 화면에서 필수 입력(핸드폰 번호 또는 이메일 선택). 호출번호 = 핸드폰 번호 뒷자리 4자리
+  // (이메일 케이스는 뒷자리가 없으니 기존 QR/태블릿 흐름과 동일하게 랜덤 4자리로 대체).
+  function createCashOrder(storeId, cartItems, cashReceived, customerContact, isEmailContact) {
+    const amount = cartItems.reduce(function (sum, it) { return sum + it.price * it.quantity; }, 0);
+    const lines = cartItems.map(function (it) { return { menuName: it.menuName, optionNames: [], quantity: it.quantity }; });
+    const contact = (customerContact || '').trim();
+    const order = {
+      id: uid('order'), storeId: storeId,
+      paymentOrderNo: 'PG-' + Math.floor(800000 + Math.random() * 99999),
+      pickupNo: (contact && !isEmailContact) ? contact.slice(-4) : randomPickupNo(storeId),
+      identifierType: 'PICKUP',
+      channel: 'MANUAL',
+      paymentMethod: '현금',
+      amount: amount,
+      items: lines,
+      customerContact: contact,
+      orderedAt: new Date().toISOString(),
+      acceptedAt: new Date().toISOString(), doneAt: null,
+      status: 'PROCESSING', called: false, calledCount: 0, completeCount: 0,
+      canceled: false, cancelReason: null, cancelType: null,
+      isReservation: false, reservationTime: null,
+      customerNote: null,
+      isReusableContainer: false,
+      promoType: null,
+      cashReceived: cashReceived,
+      cashChange: cashReceived - amount,
+    };
+    DB.orders.unshift(order);
+    persist();
+    return order;
+  }
+
   // 개발자 도구 > 메뉴 자동품절 시뮬레이션: 재고 감소 없이 즉시 품절 처리하고 실제 자동품절과 같은 이벤트를 쏜다.
   function triggerRandomAutoSoldout(storeId) {
     const candidates = DB.menuItems.filter(function (m) { return m.storeId === storeId && !m.soldOut; });
@@ -1053,7 +1087,7 @@
     deleteOptionGroup: deleteOptionGroup, addOptionGroupOption: addOptionGroupOption,
     updateOptionGroupOption: updateOptionGroupOption, removeOptionGroupOption: removeOptionGroupOption,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,
-    createCustomOrder: createCustomOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
+    createCustomOrder: createCustomOrder, createCashOrder: createCashOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
     callCustomer: callCustomer, completeOrder: completeOrder, cancelPayment: cancelPayment,
     getKitchenManualDeductions: getKitchenManualDeductions, addKitchenManualDeduction: addKitchenManualDeduction,
     revertOrder: revertOrder, returnOrder: returnOrder, bulkAction: bulkAction,

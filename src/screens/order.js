@@ -265,10 +265,15 @@
 
     // 연락처/결제수단/주문번호는 '펼쳐보기'에서만 노출한다 (접수·예약시각은 상단 배지로 이동)
     if (expanded) {
-      const contact = window.UI.formatContact(order.customerContact);
-      const isEmailContact = (order.customerContact || '').indexOf('@') !== -1;
-      const contactIcon = isEmailContact ? '✉️' : '📞';
-      const contactHtml = '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
+      // 현금 주문 생성(카운터 접수)은 손님 연락처를 안 남기고 접수할 수도 있으므로, 없으면 안내 문구를 둔다
+      const contactHtml = order.customerContact
+        ? (function () {
+            const contact = window.UI.formatContact(order.customerContact);
+            const isEmailContact = order.customerContact.indexOf('@') !== -1;
+            const contactIcon = isEmailContact ? '✉️' : '📞';
+            return '<button type="button" class="phone-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '</button>';
+          })()
+        : '연락처 없음(카운터 접수)';
       // 완료 탭의 '반품'(결제 취소)은 danger 버튼 대신, 연락처와 같은 배지 양식(라벨 + 알약 버튼)으로
       // 메타 영역에 넣는다 — 눌렀을 때의 동작(return-order)은 기존과 동일.
       const returnRowHtml = (tabStatus === 'DONE' && !order.canceled)

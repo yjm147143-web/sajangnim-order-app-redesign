@@ -23,6 +23,11 @@
           '<div class="label-group"><div class="label">주문 방식 관리</div><div class="label-sub">포장 · 배달 · 매장 등 받을 주문 방식을 설정해요</div></div>' +
           '<div class="chevron">›</div>' +
         '</div>' +
+        '<div class="settings-list-item" data-nav="cashOrderCreate">' +
+          '<div class="icon">💰</div>' +
+          '<div class="label-group"><div class="label">현금 주문 생성</div><div class="label-sub">카운터에서 메뉴를 직접 골라 현금 주문을 등록해요</div></div>' +
+          '<div class="chevron">›</div>' +
+        '</div>' +
       '</div>'
     );
   }
