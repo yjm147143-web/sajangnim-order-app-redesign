@@ -638,13 +638,14 @@
 
   function handleRevert(id) {
     window.UI.confirmModal(
-      '정말 되돌릴까요?',
-      '처리중 상태로 되돌리면 완료 처리를 다시 해야 해요.',
+      '정말 주문을 되돌릴까요?',
+      '주문이 처리중 상태로 돌아가요.',
       '되돌리기',
       function () {
         window.MockApi.revertOrder(id);
         updateList();
-      }
+      },
+      { cancelLabel: '닫기' }
     );
   }
 
