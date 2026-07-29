@@ -85,10 +85,9 @@
     '.cs-menu-row:last-child { border-bottom: none; }' +
     '.cs-menu-name { font-weight: 800; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; margin-right: 8px; }' +
     '.cs-menu-pills { display: flex; gap: 5px; flex-shrink: 0; }' +
-    // 호출(완료)=민트, 미호출(대기)=앰버로 상태를 색으로 바로 구분한다. 0건은 회색으로 낮춰 시선을 뺏지 않는다.
+    // 신규(대기)=앰버, 완료=블루로 상태를 색으로 바로 구분한다. 0건은 회색으로 낮춰 시선을 뺏지 않는다.
     '.cs-pill { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }' +
     '.cs-pill b { font-weight: 800; }' +
-    '.cs-pill.called { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
     '.cs-pill.notCalled { background: var(--color-accent-amber-bg); color: #a15c00; }' +
     '.cs-pill.total { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
     '.cs-pill.zero { background: var(--color-card-bg); color: var(--color-text-secondary); }' +
@@ -189,33 +188,45 @@
   // 집계는 현재 적용된 메뉴/유형/검색 필터는 그대로 반영하되, 호출 여부 필터 자체는 무시하고 각각 강제로 계산한다.
   function callStatusCounts() {
     const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
-    const calledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'CALLED' })).length;
     const notCalledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'NOT_CALLED' })).length;
-    // 누적 = 완료(취소 제외) + 호출 + 미호출 — 오늘 이 화면의 필터 조건에 해당하는 전체 접수 건수
+    // 호출 여부와 무관하게 처리중인 전체 건수(신규+호출됨을 나눠 세지 않고 한 번에 구한다)
+    const processingCount = window.MockApi.getOrders(storeId, base).length;
+    // 완료 = 처리중(호출 여부 무관) + 완료(취소 제외) — 오늘 이 화면의 필터 조건에 해당하는 전체 접수 건수
     const doneBase = { status: 'DONE', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
     const doneCount = window.MockApi.getOrders(storeId, doneBase).filter(function (o) { return !o.canceled; }).length;
-    const totalCount = calledCount + notCalledCount + doneCount;
-    return { calledCount: calledCount, notCalledCount: notCalledCount, doneCount: doneCount, totalCount: totalCount };
+    const totalCount = processingCount + doneCount;
+    return { notCalledCount: notCalledCount, totalCount: totalCount };
   }
 
-  // 메뉴별로 호출/미호출 수량을 집계한다(KDS와 같은 방식 — 호출은 주문 단위 판정이라
-  // 한 주문에 여러 메뉴가 섞여 있으면 그 주문에 속한 메뉴 수량이 전부 같은 호출 상태로 잡힌다).
-  // 아직 안 불린(미호출) 수량이 많은 메뉴가 가장 급하므로 그 순서로 앞에 오도록 정렬한다.
+  // 메뉴별로 신규(미호출)/완료 수량을 집계한다. 완료는 호출됨+완료 상태를 구분 없이 합친 값이라
+  // 호출된 주문만 따로 세는 로직은 두지 않는다. 아직 안 불린(신규) 수량이 많은 메뉴가 가장
+  // 급하므로 그 순서로 앞에 오도록 정렬한다.
   function callStatusMenuBreakdown() {
     const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
     const orders = window.MockApi.getOrders(storeId, base);
+    const doneBase = { status: 'DONE', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
+    const doneOrders = window.MockApi.getOrders(storeId, doneBase).filter(function (o) { return !o.canceled; });
     const stats = {};
     const names = [];
+    function ensure(name) {
+      if (!stats[name]) { stats[name] = { notCalled: 0, done: 0 }; names.push(name); }
+    }
     orders.forEach(function (o) {
       const isCalled = !!o.called;
       o.items.forEach(function (it) {
-        if (!stats[it.menuName]) { stats[it.menuName] = { called: 0, notCalled: 0 }; names.push(it.menuName); }
-        if (isCalled) stats[it.menuName].called += it.quantity;
-        else stats[it.menuName].notCalled += it.quantity;
+        ensure(it.menuName);
+        stats[it.menuName].done += it.quantity;
+        if (!isCalled) stats[it.menuName].notCalled += it.quantity;
+      });
+    });
+    doneOrders.forEach(function (o) {
+      o.items.forEach(function (it) {
+        ensure(it.menuName);
+        stats[it.menuName].done += it.quantity;
       });
     });
     return names
-      .map(function (name) { return { name: name, called: stats[name].called, notCalled: stats[name].notCalled }; })
+      .map(function (name) { return { name: name, notCalled: stats[name].notCalled, done: stats[name].done }; })
       .sort(function (a, b) { return b.notCalled - a.notCalled; });
   }
 
@@ -223,13 +234,13 @@
     return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 KDS ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
-  // 호출/미호출 수를 회색 텍스트가 아니라 색이 있는 알약(호출=민트/완료, 미호출=앰버/대기)으로 보여줘
+  // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버/대기)으로 보여줘
   // 한눈에 상태를 구분하기 쉽게 한다. 0건인 쪽은 톤을 낮춰(zero) 시선이 안 가게 한다.
-  // labelOverride가 있으면 kind 기본 라벨(호출/미호출) 대신 그 문구를 쓴다(요약 줄의 '신규'/'누적').
+  // labelOverride가 있으면 kind 기본 라벨(신규/완료) 대신 그 문구를 쓴다.
   function csPillHtml(kind, count, unit, labelOverride) {
     const cls = count === 0 ? 'cs-pill zero' : 'cs-pill ' + kind;
-    const icon = kind === 'called' ? '✓' : (kind === 'total' ? '' : '⏳');
-    const label = labelOverride || (kind === 'called' ? '호출' : '미호출');
+    const icon = kind === 'total' ? '' : '⏳';
+    const label = labelOverride || (kind === 'total' ? '완료' : '신규');
     return '<span class="' + cls + '">' + (icon ? icon + ' ' : '') + label + ' <b>' + count + '</b>' + unit + '</span>';
   }
 
@@ -240,11 +251,11 @@
     const menuListHtml = breakdown.length
       ? breakdown.map(function (row) {
           return '<div class="cs-menu-row"><span class="cs-menu-name">' + esc(row.name) + '</span>' +
-            '<span class="cs-menu-pills">' + csPillHtml('called', row.called, '개') + csPillHtml('notCalled', row.notCalled, '개') + '</span></div>';
+            '<span class="cs-menu-pills">' + csPillHtml('notCalled', row.notCalled, '개', '신규') + csPillHtml('total', row.done, '개', '완료') + '</span></div>';
         }).join('')
       : '<div class="cs-menu-row"><span class="cs-menu-name">처리중인 메뉴가 없어요</span></div>';
     return '<div class="call-status-panel">' +
-      '<div class="call-status-summary">' + csPillHtml('notCalled', counts.notCalledCount, '건', '신규') + csPillHtml('total', counts.totalCount, '건', '누적') + '</div>' +
+      '<div class="call-status-summary">' + csPillHtml('notCalled', counts.notCalledCount, '개', '신규') + csPillHtml('total', counts.totalCount, '개', '완료') + '</div>' +
       '<div class="call-status-menu-list">' + menuListHtml + '</div>' +
       '</div>';
   }
