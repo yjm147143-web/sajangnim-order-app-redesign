@@ -7,6 +7,8 @@
 
   // 일괄 통제 대신, 체크한 매장에만 상태 변경을 적용한다 (화면을 나갔다 들어오면 초기화됨)
   let selectedIds = new Set();
+  // '전체 선택' 버튼에서 참조할, 현재 화면에 나열된 매장 id 목록
+  let currentStoreIds = [];
 
   function formatDateRange(start, end) {
     return String(start || '').replace(/-/g, '.') + ' ~ ' + String(end || '').replace(/-/g, '.');
@@ -81,6 +83,7 @@
     const summary = window.MockApi.getEventDashboardSummary(eventId);
     const stores = window.MockApi.getStoresByEvent(eventId);
     selectedIds = new Set();
+    currentStoreIds = stores.map(function (s) { return s.id; });
 
     const storeRowsHtml = stores.length
       ? stores.map(storeRowHtml).join('')
@@ -103,6 +106,8 @@
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
         '.store-ctrl-fixed{flex-shrink:0;background:var(--color-white);border-top:1px solid var(--color-divider);box-shadow:0 -4px 16px rgba(0,0,0,0.06);}' +
+        '.section-title-row{display:flex;align-items:center;justify-content:space-between;padding:var(--space-2) var(--space-5) 0;}' +
+        '.select-all-btn{background:none;border:none;padding:4px 0;font-size:var(--font-size-caption);font-weight:700;color:var(--color-accent-blue-strong);cursor:pointer;}' +
       '</style>' +
       '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">' + esc(event.name) + '</div><div class="topbar-side"></div></div>' +
       '<div class="section-caption">' + formatDateRange(event.startDate, event.endDate) + ' · ' + esc(event.managerName || '') + ' 담당</div>' +
@@ -125,7 +130,10 @@
           '<div class="summary-card"><span class="summary-label">누적 주문건수</span><span class="summary-value">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건</span></div>' +
         '</div>' +
 
-        '<div class="section-title">매장 운영 현황</div>' +
+        '<div class="section-title-row">' +
+          '<div class="section-title" style="padding:0;">매장 운영 현황</div>' +
+          (stores.length ? '<button type="button" class="select-all-btn" id="select-all-btn">전체 선택</button>' : '') +
+        '</div>' +
         '<div class="section-caption">영업 중 ' + summary.open + '개소 · 일시중지 ' + summary.paused + '개소 · 마감 ' + summary.closed + '개소 (총 ' + summary.storeCount + '개)</div>' +
         '<div style="padding:8px 20px 20px;">' +
           '<div class="card card-flat">' + storeRowsHtml + '</div>' +
@@ -176,13 +184,34 @@
       if (closeBtn) closeBtn.addEventListener('click', function () { handle('CLOSED', '마감', true); });
     }
 
+    function updateSelectAllLabel() {
+      const btn = root.querySelector('#select-all-btn');
+      if (!btn) return;
+      const allSelected = currentStoreIds.length > 0 && selectedIds.size === currentStoreIds.length;
+      btn.textContent = allSelected ? '전체 해제' : '전체 선택';
+    }
+
     root.querySelectorAll('.store-select-cb').forEach(function (cb) {
       cb.addEventListener('change', function () {
         const id = cb.getAttribute('data-store-id');
         if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+        updateSelectAllLabel();
         refreshCtrlPanel();
       });
     });
+
+    const selectAllBtn = root.querySelector('#select-all-btn');
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', function () {
+        const allSelected = currentStoreIds.length > 0 && selectedIds.size === currentStoreIds.length;
+        selectedIds = allSelected ? new Set() : new Set(currentStoreIds);
+        root.querySelectorAll('.store-select-cb').forEach(function (cb) {
+          cb.checked = selectedIds.has(cb.getAttribute('data-store-id'));
+        });
+        updateSelectAllLabel();
+        refreshCtrlPanel();
+      });
+    }
 
     // 매장 하나를 골라 그 매장인 것처럼 설정 화면으로 들어간다 — 뒤로가기를 반복하면 이 홈으로 돌아온다
     root.querySelectorAll('[data-action="open-store-settings"]').forEach(function (btn) {
