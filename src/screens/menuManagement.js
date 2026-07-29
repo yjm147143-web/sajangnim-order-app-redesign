@@ -73,7 +73,7 @@
         '<div class="menu-row-side">' +
           '<div class="menu-row-soldout-toggle">' +
             '<span class="menu-row-toggle-label">품절</span>' +
-            '<button type="button" class="toggle' + (item.soldOut ? ' on' : '') + '" data-action="toggle-soldout" data-menu-id="' + item.id + '"><span class="toggle-knob"></span></button>' +
+            '<button type="button" class="toggle' + (item.soldOut ? ' on' : '') + '" role="switch" aria-checked="' + (item.soldOut ? 'true' : 'false') + '" data-action="toggle-soldout" data-menu-id="' + item.id + '"><span class="toggle-knob"></span></button>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -101,7 +101,7 @@
           '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="' + actionPrefix + 'opt-price" ' + identifierAttr + ' data-opt-idx="' + oi + '" />' +
           '<div class="option-soldout-toggle">' +
             '<span class="option-soldout-toggle-label">' + (isSoldOut ? '품절' : '판매중') + '</span>' +
-            '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
+            '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" role="switch" aria-checked="' + (isSoldOut ? 'true' : 'false') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
           '</div>' +
           '<button type="button" class="icon-btn icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '" aria-label="옵션 삭제">' + TRASH_ICON + '</button>' +
         '</div>'
@@ -121,8 +121,8 @@
         '<div class="option-groups-subtitle" style="margin-top:0;">손님 선택 방식 설정</div>' +
         '<div class="option-select-settings">' +
           '<div class="option-setting-row">' +
-            '<span class="option-setting-label">이 옵션은 필수 선택이에요</span>' +
-            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
+            '<span class="option-setting-label">이 옵션 그룹은 필수 선택이에요</span>' +
+            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" role="switch" aria-checked="' + (g.required ? 'true' : 'false') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
           '</div>' +
           '<div class="option-setting-row">' +
             '<span class="option-setting-label">주문할 때 최대 몇 개를 선택할까요?</span>' +
@@ -160,9 +160,9 @@
   // 목록 행의 삭제 버튼과 수정 화면의 🗑️ 버튼이 이 로직을 그대로 공유한다.
   function deleteOptionGroupWithConfirm(groupId, onDeleted) {
     var usageNames = window.MockApi.getOptionGroupUsageNames(groupId);
-    var title = usageNames.length ? '이 옵션을 사용하고 있는 메뉴가 있어요' : '옵션 그룹을 삭제할까요?';
+    var title = usageNames.length ? '이 옵션 그룹을 사용하고 있는 메뉴가 있어요' : '옵션 그룹을 삭제할까요?';
     var body = usageNames.length
-      ? esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?'
+      ? esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션 그룹이에요. 정말 삭제하시나요?'
       : '삭제하면 되돌릴 수 없어요. 정말 삭제하시나요?';
     window.UI.confirmModal(
       title,
@@ -202,7 +202,7 @@
       ? '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>'
       : '<div class="menu-list">' + groups.map(optionGroupRowHtml).join('') + '</div>';
     return '<div class="option-library-list">' + listHtml +
-      '<button type="button" class="menu-add-btn" id="add-option-group-btn">+ 옵션 목록 추가</button>' +
+      '<button type="button" class="menu-add-btn" id="add-option-group-btn">+ 옵션 그룹 추가</button>' +
       '</div>';
   }
 
@@ -212,7 +212,7 @@
         '.menu-list{padding-bottom:24px;}' +
         '.menu-row-soldout-toggle{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}' +
         '.menu-row-toggle-label{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:700;}' +
-        '.menu-add-btn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 14px;border:none;border-radius:var(--radius-pill);' +
+        '.menu-add-btn{display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 14px;border:none;border-radius:var(--radius-pill);' +
           'background:var(--color-accent-blue-bg);font-size:var(--font-size-caption);font-weight:800;color:var(--color-accent-blue);cursor:pointer;white-space:nowrap;}' +
         '.main-tab-row{display:flex;gap:8px;padding:0 var(--space-5) var(--space-3);}' +
         '.main-tab{border:none;cursor:pointer;border-radius:var(--radius-button);font-weight:800;' +
@@ -307,7 +307,7 @@
       root.querySelectorAll('[data-main-tab]').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-main-tab') === activeMainTab);
       });
-      // '+ 옵션 추가'는 옵션 목록 아래의 '+ 옵션 목록 추가' 버튼으로 이동했으므로, 상단바 액션 버튼은
+      // '+ 옵션 추가'는 옵션 목록 아래의 '+ 옵션 그룹 추가' 버튼으로 이동했으므로, 상단바 액션 버튼은
       // 메뉴 목록 탭에서만 노출한다.
       root.querySelector('#menu-topbar-action-btn').style.display = activeMainTab === 'menu' ? '' : 'none';
 
@@ -773,6 +773,17 @@
         return { field: 'firstComePrice', message: '선착순 수량 미입력' };
       }
     }
+    if (state.useOptionGroups) {
+      var groupError = null;
+      state.optionGroups
+        .filter(function (g) { return g.name && g.name.trim(); })
+        .some(function (g) {
+          var err = validateOptionGroupPayload(cleanOptionGroupPayload(g));
+          if (err) { groupError = err; return true; }
+          return false;
+        });
+      if (groupError) return { field: 'optionGroup', message: groupError };
+    }
     return null;
   }
 
@@ -940,7 +951,7 @@
                 '<span class="input-label" style="margin:0;">자동 품절</span>' +
                 '<span class="menu-edit-subcaption">준비량이 0이 되면 자동으로 품절 처리해요</span>' +
               '</div>' +
-              '<button type="button" class="toggle' + (state.autoSoldoutEnabled ? ' on' : '') + '" id="toggle-auto-soldout"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (state.autoSoldoutEnabled ? ' on' : '') + '" role="switch" aria-checked="' + (state.autoSoldoutEnabled ? 'true' : 'false') + '" id="toggle-auto-soldout"><span class="toggle-knob"></span></button>' +
             '</div>' +
           '</div>' +
 
@@ -960,7 +971,7 @@
                 '<span class="input-label" style="margin:0;">메뉴 숨기기</span>' +
                 '<span class="menu-edit-subcaption">켜면 손님 화면에서 이 메뉴가 보이지 않아요</span>' +
               '</div>' +
-              '<button type="button" class="toggle' + (!state.exposed ? ' on' : '') + '" id="toggle-exposed"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (!state.exposed ? ' on' : '') + '" role="switch" aria-checked="' + (!state.exposed ? 'true' : 'false') + '" id="toggle-exposed"><span class="toggle-knob"></span></button>' +
             '</div>' +
           '</div>' +
 
@@ -972,7 +983,7 @@
                 '<span class="input-label" style="margin:0;">해피아워 가격 설정</span>' +
                 '<span class="menu-edit-subcaption">정해진 시간 동안만 할인 가격으로 판매해요</span>' +
               '</div>' +
-              '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (state.happyHourEnabled ? ' on' : '') + '" role="switch" aria-checked="' + (state.happyHourEnabled ? 'true' : 'false') + '" id="toggle-happy-hour"><span class="toggle-knob"></span></button>' +
             '</div>' +
             '<div id="happy-hour-detail" style="margin-top:12px;' + (state.happyHourEnabled ? '' : 'display:none;') + '">' +
               '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
@@ -997,7 +1008,7 @@
                 '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
                 '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
               '</div>' +
-              '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" role="switch" aria-checked="' + (state.firstComeEnabled ? 'true' : 'false') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
             '</div>' +
             '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
               '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
@@ -1038,7 +1049,7 @@
           '<div class="input-group">' +
             '<div class="toggle-row">' +
               '<span class="input-label" style="margin:0;">옵션 그룹 사용</span>' +
-              '<button type="button" class="toggle' + (state.useOptionGroups ? ' on' : '') + '" data-action="toggle-use-option-groups"><span class="toggle-knob"></span></button>' +
+              '<button type="button" class="toggle' + (state.useOptionGroups ? ' on' : '') + '" role="switch" aria-checked="' + (state.useOptionGroups ? 'true' : 'false') + '" data-action="toggle-use-option-groups"><span class="toggle-knob"></span></button>' +
             '</div>' +
             '<div id="option-groups-wrap" style="margin-top:12px;' + (state.useOptionGroups ? '' : 'display:none;') + '">' +
               '<div class="option-groups-subtitle">기존 옵션 그룹에서 선택</div>' +
@@ -1081,7 +1092,7 @@
     }
 
     // 필드가 어느 탭에 있는지 알아야, 검증 에러가 나면 그 탭으로 이동시켜 사용자가 에러를 놓치지 않게 한다
-    var FIELD_TAB = { name: 'basic', category: 'basic', price: 'basic', stock: 'etc', happyHourPrice: 'etc', firstComePrice: 'etc' };
+    var FIELD_TAB = { name: 'basic', category: 'basic', price: 'basic', stock: 'etc', happyHourPrice: 'etc', firstComePrice: 'etc', optionGroup: 'option' };
 
     function switchEditTab(tabKey) {
       root.querySelectorAll('[data-edit-tab]').forEach(function (btn) {
