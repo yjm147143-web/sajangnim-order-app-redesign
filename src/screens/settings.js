@@ -195,7 +195,7 @@
             refresh();
           }
 
-          window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경', applyStatusChange);
+          window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', applyStatusChange);
         });
       });
 

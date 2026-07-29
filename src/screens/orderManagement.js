@@ -32,13 +32,23 @@
     );
   }
 
+  var GATED_NAV = { cashOrderCreate: { scopeKey: 'cashOrderCreate', label: '임의 주문 생성' } };
+
   function mount(root) {
+    var storeId = window.MockApi.getContextStoreId();
     root.querySelector('#om-back').addEventListener('click', function () {
       window.Router.back();
     });
     root.querySelectorAll('[data-nav]').forEach(function (row) {
       row.addEventListener('click', function () {
-        window.Router.showScreen(row.getAttribute('data-nav'), {});
+        var target = row.getAttribute('data-nav');
+        function proceed() { window.Router.showScreen(target, {}); }
+        var gate = GATED_NAV[target];
+        if (gate) {
+          window.UI.requirePasswordGate(storeId, gate.scopeKey, gate.label, proceed);
+        } else {
+          proceed();
+        }
       });
     });
   }

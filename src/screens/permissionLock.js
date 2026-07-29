@@ -8,8 +8,9 @@
 (function () {
   var SCOPE_DEFS = [
     { key: 'sales', label: '매출 조회' },
-    { key: 'statusChange', label: '영업상태 변경' },
+    { key: 'statusChange', label: '영업상태 변경(개점·마감)' },
     { key: 'paymentCancel', label: '결제 취소' },
+    { key: 'cashOrderCreate', label: '임의 주문 생성' },
   ];
 
   var STYLE = '' +
@@ -98,7 +99,7 @@
 
   // 비밀번호 설정(최초)/변경 공용 모달 — 비밀번호 입력 + 보호 항목 체크리스트를 한 번에 저장한다.
   function openSetupModal(storeId, isChange, currentScopes, onDone) {
-    var scopes = Object.assign({ sales: true, statusChange: true, paymentCancel: true }, currentScopes || {});
+    var scopes = Object.assign({ sales: true, statusChange: true, paymentCancel: true, cashOrderCreate: true }, currentScopes || {});
     var host = document.getElementById('modal-host');
     host.innerHTML =
       '<div class="modal-overlay" id="pl-setup-modal">' +
@@ -227,7 +228,7 @@
           window.UI.requireLockReauth(storeId, '잠금 해제', function () {
             window.UI.confirmModal(
               '잠금을 해제할까요?',
-              '해제하면 이 계정을 쓰는 누구나 비밀번호 없이 매출 조회 · 영업상태 변경 · 결제 취소를 바로 할 수 있어요.',
+              '해제하면 이 계정을 쓰는 누구나 비밀번호 없이 매출 조회 · 영업상태 변경(개점·마감) · 결제 취소를 바로 할 수 있어요.',
               '해제하기',
               function () {
                 window.MockApi.clearPermissionLockPassword(storeId);

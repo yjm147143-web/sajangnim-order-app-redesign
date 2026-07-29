@@ -215,7 +215,7 @@
   }
 
   // ---------------- 권한 잠금 (사장님 계정 하나를 여러 사람이 함께 쓸 때, 선택한 민감 기능만 비밀번호로 보호) ----------------
-  const DEFAULT_LOCK_SCOPES = { sales: false, statusChange: false, paymentCancel: false };
+  const DEFAULT_LOCK_SCOPES = { sales: false, statusChange: false, paymentCancel: false, cashOrderCreate: false };
 
   function getPermissionLockStatus(storeId) {
     const store = findStore(storeId);
@@ -228,7 +228,7 @@
   function setPermissionLockPassword(storeId, password, scopes) {
     const store = findStore(storeId);
     store.permissionLockPassword = password;
-    store.permissionLockScopes = scopes || { sales: true, statusChange: true, paymentCancel: true };
+    store.permissionLockScopes = scopes || { sales: true, statusChange: true, paymentCancel: true, cashOrderCreate: true };
     persist();
     return getPermissionLockStatus(storeId);
   }

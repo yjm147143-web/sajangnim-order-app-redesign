@@ -342,15 +342,15 @@
       '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '자리' : '픽업') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
       '</div>';
 
-    // 주문채널·배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
+    // 배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
     // 선착순은 주문 건 단위가 아니라 메뉴별 배지(itemListHtml)로 표시하므로 헤더에서는 제외한다
     // 해피아워는 주문 카드에 배지로 표시하지 않는다 — 대신 해피아워가 시작되는 순간 팝업으로 알린다(handleHappyHourStarted)
-    const channelHtml = window.UI.channelBadgeHtml(order.channel);
+    // 주문 채널(키오스크/QR오더/임의 생성 주문)도 헤더 배지 없이 상세보기의 '주문 유형' 행으로만 노출한다
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
     const promoHtml = (order.promoType === 'FIRST_COME' || order.promoType === 'HAPPY_HOUR') ? '' : window.UI.promoBadgeHtml(order.promoType);
-    if (channelHtml || deliveryHtml || promoHtml) {
-      html += '<div class="order-card-header-row">' + channelHtml + deliveryHtml + promoHtml + '</div>';
+    if (deliveryHtml || promoHtml) {
+      html += '<div class="order-card-header-row">' + deliveryHtml + promoHtml + '</div>';
     }
 
     html += '<div class="order-card-items">' + itemListHtml(order) + '</div>';
@@ -861,7 +861,7 @@
       if (pillBtn) pillBtn.innerHTML = window.UI.statusPillHtml(store.operatingStatus);
       updateList();
     }
-    window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경', apply);
+    window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', apply);
   }
 
   function refreshOfflineBanner() {
