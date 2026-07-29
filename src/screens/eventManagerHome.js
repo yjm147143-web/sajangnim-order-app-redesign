@@ -105,7 +105,7 @@
         '.store-status-name{font-weight:700;font-size:var(--font-size-body);}' +
         '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}' +
         '.store-status-time{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
-        '.store-network-warning{font-size:var(--font-size-micro);font-weight:700;color:var(--color-accent-red);white-space:nowrap;}' +
+        '.store-network-warning{font-size:var(--font-size-micro);font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-red-bg);color:#b02850;white-space:nowrap;}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
       '</style>' +
