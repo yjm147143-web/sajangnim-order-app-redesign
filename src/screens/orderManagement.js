@@ -20,7 +20,7 @@
         '</div>' +
         '<div class="settings-list-item" data-nav="orderChannelSettings">' +
           '<div class="icon">🧾</div>' +
-          '<div class="label-group"><div class="label">주문 방식 관리</div><div class="label-sub">포장 · 배달 · 매장 등 받을 주문 방식을 설정해요</div></div>' +
+          '<div class="label-group"><div class="label">주문 방식 관리</div><div class="label-sub">예약, 배달 등 주문 방식을 설정해요.</div></div>' +
           '<div class="chevron">›</div>' +
         '</div>' +
         '<div class="settings-list-item" data-nav="cashOrderCreate">' +
