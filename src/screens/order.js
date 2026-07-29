@@ -17,12 +17,13 @@
   let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
   let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
   let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 주문 필터 시트의 '호출 여부' 카테고리에서 설정
-  let callStatusPanelOpen = false; // 처리중 탭의 '호출 현황' 배지 펼침 상태
+  let callStatusPanelOpen = false; // 'KDS' 배지 펼침 상태
   let selectedIds = new Set();
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
   let networkWeak = false; // 완전 단절은 아니지만 신호가 희미한 상태(개발자 도구 '간헐적 끊김' 시뮬레이션) — 주문 컨트롤은 막지 않고 캡션만 경고로 바꾼다
   let autoSoldoutNames = [];   // 자동 품절 배너에 노출 중인 메뉴명 목록 (X로 닫으면 비움)
+  let happyHourPromos = [];    // 해피아워 시작 배너에 노출 중인 { name, price, start, end } 목록 (X로 닫으면 비움)
   let root = null;
 
   const SCOPED_STYLE = '' +
@@ -89,6 +90,7 @@
     '.cs-pill b { font-weight: 800; }' +
     '.cs-pill.called { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
     '.cs-pill.notCalled { background: var(--color-accent-amber-bg); color: #a15c00; }' +
+    '.cs-pill.total { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
     '.cs-pill.zero { background: var(--color-card-bg); color: var(--color-text-secondary); }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
@@ -182,14 +184,18 @@
     return '<div class="order-status-seg">' + tabBtns + '</div>';
   }
 
-  // ---------------- 호출 현황(처리중 탭 전용) ----------------
-  // KDS 배지가 있던 자리를 대신한다. KDS 자체는 설정 화면 상단바의 🍳 버튼으로 이동했다.
+  // ---------------- KDS 요약(모든 탭에서 노출) ----------------
+  // 이름은 'KDS'지만 실제 조리 현황판(kitchenBoard.js)과는 별개의 요약 위젯이다.
   // 집계는 현재 적용된 메뉴/유형/검색 필터는 그대로 반영하되, 호출 여부 필터 자체는 무시하고 각각 강제로 계산한다.
   function callStatusCounts() {
     const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
     const calledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'CALLED' })).length;
     const notCalledCount = window.MockApi.getOrders(storeId, Object.assign({}, base, { calledFilter: 'NOT_CALLED' })).length;
-    return { calledCount: calledCount, notCalledCount: notCalledCount };
+    // 누적 = 완료(취소 제외) + 호출 + 미호출 — 오늘 이 화면의 필터 조건에 해당하는 전체 접수 건수
+    const doneBase = { status: 'DONE', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
+    const doneCount = window.MockApi.getOrders(storeId, doneBase).filter(function (o) { return !o.canceled; }).length;
+    const totalCount = calledCount + notCalledCount + doneCount;
+    return { calledCount: calledCount, notCalledCount: notCalledCount, doneCount: doneCount, totalCount: totalCount };
   }
 
   // 메뉴별로 호출/미호출 수량을 집계한다(KDS와 같은 방식 — 호출은 주문 단위 판정이라
@@ -214,21 +220,21 @@
   }
 
   function renderCallStatusButtonHtml() {
-    if (currentStatus() !== 'PROCESSING') return '';
-    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 호출 현황 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
+    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 KDS ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
   // 호출/미호출 수를 회색 텍스트가 아니라 색이 있는 알약(호출=민트/완료, 미호출=앰버/대기)으로 보여줘
   // 한눈에 상태를 구분하기 쉽게 한다. 0건인 쪽은 톤을 낮춰(zero) 시선이 안 가게 한다.
-  function csPillHtml(kind, count, unit) {
+  // labelOverride가 있으면 kind 기본 라벨(호출/미호출) 대신 그 문구를 쓴다(요약 줄의 '신규'/'누적').
+  function csPillHtml(kind, count, unit, labelOverride) {
     const cls = count === 0 ? 'cs-pill zero' : 'cs-pill ' + kind;
-    const icon = kind === 'called' ? '✓' : '⏳';
-    const label = kind === 'called' ? '호출' : '미호출';
-    return '<span class="' + cls + '">' + icon + ' ' + label + ' <b>' + count + '</b>' + unit + '</span>';
+    const icon = kind === 'called' ? '✓' : (kind === 'total' ? '' : '⏳');
+    const label = labelOverride || (kind === 'called' ? '호출' : '미호출');
+    return '<span class="' + cls + '">' + (icon ? icon + ' ' : '') + label + ' <b>' + count + '</b>' + unit + '</span>';
   }
 
   function renderCallStatusPanelHtml() {
-    if (currentStatus() !== 'PROCESSING' || !callStatusPanelOpen) return '';
+    if (!callStatusPanelOpen) return '';
     const counts = callStatusCounts();
     const breakdown = callStatusMenuBreakdown();
     const menuListHtml = breakdown.length
@@ -238,7 +244,7 @@
         }).join('')
       : '<div class="cs-menu-row"><span class="cs-menu-name">처리중인 메뉴가 없어요</span></div>';
     return '<div class="call-status-panel">' +
-      '<div class="call-status-summary">' + csPillHtml('called', counts.calledCount, '건') + csPillHtml('notCalled', counts.notCalledCount, '건') + '</div>' +
+      '<div class="call-status-summary">' + csPillHtml('notCalled', counts.notCalledCount, '건', '신규') + csPillHtml('total', counts.totalCount, '건', '누적') + '</div>' +
       '<div class="call-status-menu-list">' + menuListHtml + '</div>' +
       '</div>';
   }
@@ -263,6 +269,20 @@
       return '<div class="auto-soldout-banner">' +
         '<span>⚠️ ' + esc(n) + ' 메뉴가 자동 품절됐어요.</span>' +
         '<button type="button" class="auto-soldout-banner-close" data-action="dismiss-auto-soldout" data-name="' + esc(n) + '" aria-label="닫기">✕</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  // 해피아워 시작도 자동 품절과 동일한 방식(팝업이 아니라 화면 상단 배너)으로 알린다 — 여러 메뉴가
+  // 동시에 시작해도 메뉴마다 각각 별도의 배너로 띄운다.
+  function happyHourBannerHtml() {
+    return happyHourPromos.map(function (p) {
+      const timeRange = (p.start && p.end) ? (p.start + '~' + p.end) : '';
+      const priceText = (p.price != null) ? window.UI.formatMoney(p.price) : '';
+      const detail = priceText ? (priceText + (timeRange ? ' · ' + timeRange : '')) : timeRange;
+      return '<div class="happy-hour-banner">' +
+        '<span>🔥 ' + esc(p.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '') + '</span>' +
+        '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour" data-name="' + esc(p.name) + '" aria-label="닫기">✕</button>' +
         '</div>';
     }).join('');
   }
@@ -336,10 +356,10 @@
     const cls = 'order-card' + (order.canceled ? ' canceled' : '') + (selectedIds.has(order.id) ? ' selected' : '');
     let html = '<div class="' + cls + '">';
 
-    // 상단 상태 행: 경과시간/예약시간(좌) + 픽업번호(우) — 조리 우선순위와 픽업 정보를 한눈에
+    // 상단 상태 행: 경과시간/예약시간(좌) + 호출번호(우) — 조리 우선순위와 호출 정보를 한눈에
     html += '<div class="order-card-top-row">' +
       '<div class="top-badges">' + topBadgesHtml(order) + '</div>' +
-      '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '자리' : '픽업') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
+      '<span class="pickup-inline"><span class="pickup-label">' + (order.identifierType === 'SEAT' ? '자리' : '호출번호') + '</span><span class="pickup-value">' + esc(order.pickupNo) + '</span></span>' +
       '</div>';
 
     // 배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
@@ -697,7 +717,7 @@
     if (order && order.channel === 'TABLET' && order.paymentMethod === 'VAN') {
       window.UI.showModal({
         title: '실물 카드가 필요해요',
-        message: "결제 취소에 '실물 카드'가 필요해요.<br/><strong>키오스크에서 취소</strong>해 주세요.",
+        message: "주문 거절에 '실물 카드'가 필요해요.<br/><strong>키오스크에서 취소</strong>해 주세요.",
         buttons: [{ label: '확인', variant: 'btn-primary' }],
       });
       return;
@@ -755,12 +775,15 @@
 
   function handleCancelPayment(id) {
     const order = window.MockApi.getOrder(id);
-    blockIfVanTabletPayment(order, function () {
+    function proceed() {
       openReasonModal(function (reason) {
         const res = window.MockApi.cancelPayment(id, reason);
         window.UI.toast('카카오 알림톡 발송: ' + res.notification);
         updateList();
       });
+    }
+    blockIfVanTabletPayment(order, function () {
+      window.UI.requirePasswordGate(storeId, 'paymentCancel', '결제 취소', proceed);
     });
   }
 
@@ -888,19 +911,19 @@
     if (slot) slot.innerHTML = autoSoldoutBannerHtml();
   }
 
-  // 해피아워는 주문 카드에 배지로 표시하지 않는 대신, 시작되는 순간 팝업으로 알린다(개발자 도구 시뮬레이션)
+  function refreshHappyHourBanner() {
+    const slot = root.querySelector('#happy-hour-banner-slot');
+    if (slot) slot.innerHTML = happyHourBannerHtml();
+  }
+
+  // 해피아워는 주문 카드에 배지로 표시하지 않는 대신, 시작되는 순간 자동 품절과 동일한 방식으로
+  // 화면 상단 배너로 알린다(개발자 도구 시뮬레이션)
   function onHappyHourStarted(e) {
     const detail = e.detail || {};
     if (!detail.name) return;
-    const timeRange = (detail.start && detail.end) ? (detail.start + '~' + detail.end) : '';
-    const priceText = (detail.price != null) ? window.UI.formatMoney(detail.price) : '';
-    const lines = [esc(detail.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요.'];
-    if (priceText) lines.push('할인가 ' + priceText + (timeRange ? ' · ' + timeRange : ''));
-    window.UI.showModal({
-      title: '🔥 해피아워가 시작됐습니다',
-      message: lines.join('<br/>'),
-      buttons: [{ label: '확인', variant: 'btn-primary' }],
-    });
+    if (happyHourPromos.some(function (p) { return p.name === detail.name; })) return;
+    happyHourPromos.push({ name: detail.name, price: detail.price, start: detail.start, end: detail.end });
+    refreshHappyHourBanner();
   }
 
   // 주문 수락으로 준비량이 소진되어 자동 품절되면 하단 배너로 알린다
@@ -929,6 +952,11 @@
       const dismissName = target.getAttribute('data-name');
       autoSoldoutNames = autoSoldoutNames.filter(function (n) { return n !== dismissName; });
       refreshAutoSoldoutBanner();
+    }
+    else if (action === 'dismiss-happy-hour') {
+      const dismissName = target.getAttribute('data-name');
+      happyHourPromos = happyHourPromos.filter(function (p) { return p.name !== dismissName; });
+      refreshHappyHourBanner();
     }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
     else if (action === 'switch-tab') switchTab(parseInt(target.getAttribute('data-tab-idx'), 10));
@@ -995,6 +1023,7 @@
     selectedIds = new Set();
     cardOverrides = {};
     autoSoldoutNames = [];
+    happyHourPromos = [];
     isOnline = navigator.onLine && !(window.DevTools && window.DevTools.isOffline());
     networkWeak = false;
 
@@ -1014,6 +1043,7 @@
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
       '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +
+      '<div id="happy-hour-banner-slot">' + happyHourBannerHtml() + '</div>' +
       '<div class="search-row">' +
       '<div class="search-box">' +
       '<span>🔍</span>' +

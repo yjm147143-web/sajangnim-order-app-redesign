@@ -52,10 +52,10 @@
       '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
         '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
-        '<div class="kb-card-total-label">남은 주문</div>' +
+        '<div class="kb-card-total-label">남은 주문' + (manual > 0 ? '<span class="kb-manual-note"> (조리완료 -' + manual + ')</span>' : '') + '</div>' +
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-called">호출 ' + called + '</span>' +
-          '<span class="kb-tag kb-tag-total">누적 ' + total + (manual > 0 ? '<span class="kb-manual-note">(조리완료 ' + manual + ')</span>' : '') + '</span>' +
+          '<span class="kb-tag kb-tag-total">누적 ' + total + '</span>' +
         '</div>' +
         '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>조리완료 −1</button>' +
       '</div>'
