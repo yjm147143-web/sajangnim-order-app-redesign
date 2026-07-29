@@ -85,11 +85,11 @@
     '.cs-menu-row:last-child { border-bottom: none; }' +
     '.cs-menu-name { font-weight: 800; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; margin-right: 8px; }' +
     '.cs-menu-pills { display: flex; gap: 5px; flex-shrink: 0; }' +
-    // 신규(대기)=앰버, 완료=블루로 상태를 색으로 바로 구분한다. 0건은 회색으로 낮춰 시선을 뺏지 않는다.
+    // 신규(대기)=앰버, 완료=그린으로 상태를 색으로 바로 구분한다. 0건은 회색으로 낮춰 시선을 뺏지 않는다.
     '.cs-pill { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }' +
     '.cs-pill b { font-weight: 800; }' +
     '.cs-pill.notCalled { background: var(--color-accent-amber-bg); color: #a15c00; }' +
-    '.cs-pill.total { background: var(--color-accent-blue-bg); color: var(--color-accent-blue); }' +
+    '.cs-pill.total { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
     '.cs-pill.zero { background: var(--color-card-bg); color: var(--color-text-secondary); }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
