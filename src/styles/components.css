@@ -211,7 +211,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 /* .icon-btn과 함께(class="icon-btn icon-btn-sm") 써서 크기/색만 덮어쓰는 modifier — 단독으로
    쓰면 .icon-btn의 display/border/cursor 등 기본기가 빠져 배경색이 안 먹는 등의 문제가 재발한다. */
 .icon-btn-sm {
-  width: 26px; height: 22px; font-size: 13px; border-radius: 6px;
+  width: 32px; height: 32px; font-size: 13px; border-radius: 6px;
   background: var(--color-card-bg); color: var(--color-text-secondary);
 }
 .icon-btn-sm:active { background: var(--color-card-bg); }
@@ -593,6 +593,11 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 /* 옵션별 판매중/품절 — 메뉴 목록 행의 품절 토글과 같은 형태(작은 라벨 + 스위치)를 그대로 재사용 */
 .option-soldout-toggle { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
 .option-soldout-toggle-label { font-size: 9px; font-weight: 700; color: var(--color-text-secondary); white-space: nowrap; }
+/* 옵션 행의 삭제 버튼(.icon-btn-sm)을 키운 만큼 토글도 같이 줄여 행 높이 균형을 맞춘다 — 이 옵션
+   행에만 적용되는 축소판이며, 다른 화면의 .toggle(48x28) 크기에는 영향을 주지 않는다. */
+.option-soldout-toggle .toggle { width: 38px; height: 22px; }
+.option-soldout-toggle .toggle .toggle-knob { width: 18px; height: 18px; }
+.option-soldout-toggle .toggle.on .toggle-knob { transform: translateX(16px); }
 /* 손님 선택 방식 설정 — 필수 여부 토글 + 최대 선택 개수 스테퍼 */
 .option-select-settings { border-top: 1px solid var(--color-divider); padding-top: var(--space-2); margin-bottom: var(--space-3); }
 .option-setting-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 10px 0; }
