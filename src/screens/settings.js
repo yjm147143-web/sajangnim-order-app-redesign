@@ -87,9 +87,6 @@
       '<div class="settings-list-item" data-nav="qrMenu">' +
         '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
-      '<div class="settings-list-item" data-nav="kitchenBoard">' +
-        '<div class="icon">🍳</div><div class="label">조리 현황판 보기</div><div class="chevron">›</div>' +
-      '</div>' +
 
       '<div class="divider-line"></div>' +
 
@@ -142,7 +139,7 @@
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">' + window.UI.escapeHtml(titleText) + '</div>' +
-        '<div class="topbar-side"></div>' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="kds-btn" aria-label="KDS 보기">🍳</button></div>' +
       '</div>' +
       '<div class="screen-scroll"><div id="settings-list-wrap"></div></div>'
     );
@@ -276,6 +273,10 @@
 
     root.querySelector('#settings-back').addEventListener('click', function () {
       window.Router.back();
+    });
+
+    root.querySelector('#kds-btn').addEventListener('click', function () {
+      window.Router.showScreen('kitchenBoard', {});
     });
 
     refresh();

@@ -1,5 +1,5 @@
 /*
- * 조리 현황판 화면 (설정 > '조리 현황판 보기'에서 진입)
+ * KDS(조리 현황판) 화면 (설정 화면 상단바의 🍳 버튼에서 진입)
  * - 메뉴판의 모든 메뉴를 항상 노출하되, 오늘 주문이 들어온 메뉴는 강조 처리 후 상단으로 올린다.
  * - 메뉴별 호출 완료 수량 / 남은 수량 / 오늘 누적 판매 수량을 카테고리별로 보여준다.
  *   누적 수량은 완료된 주문까지 모두 합산한, '오늘 하루 총 판매 수량'이다.
@@ -15,7 +15,7 @@
     return user && user.storeId;
   }
 
-  // 조리 현황판의 누적/호출/수기차감은 모두 '오늘 최초 개점 시각' 이후 범위로 집계한다 — 마감 자체가
+  // KDS의 누적/호출/수기차감은 모두 '오늘 최초 개점 시각' 이후 범위로 집계한다 — 마감 자체가
   // 아니라 그 다음 새로운 날의 개점 시점에 셋이 함께 초기화되는 것과 같은 기준선을 쓰기 위함이다.
   // (주문 기록 자체는 지우지 않는다 — 매출조회 등 다른 화면은 여전히 전체 이력을 본다.)
   function aggregateByMenu(storeId) {
@@ -136,7 +136,7 @@
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="kb-back" aria-label="뒤로가기">←</button></div>' +
-        '<div class="topbar-title">조리 현황판</div>' +
+        '<div class="topbar-title">KDS</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll"><div id="kb-content"></div></div>'

@@ -183,7 +183,7 @@
   }
 
   // ---------------- 호출 현황(처리중 탭 전용) ----------------
-  // 조리 현황판 배지가 있던 자리를 대신한다. 조리 현황판 자체는 설정 > '조리 현황판 보기'로 이동했다.
+  // KDS 배지가 있던 자리를 대신한다. KDS 자체는 설정 화면 상단바의 🍳 버튼으로 이동했다.
   // 집계는 현재 적용된 메뉴/유형/검색 필터는 그대로 반영하되, 호출 여부 필터 자체는 무시하고 각각 강제로 계산한다.
   function callStatusCounts() {
     const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
@@ -192,7 +192,7 @@
     return { calledCount: calledCount, notCalledCount: notCalledCount };
   }
 
-  // 메뉴별로 호출/미호출 수량을 집계한다(조리 현황판과 같은 방식 — 호출은 주문 단위 판정이라
+  // 메뉴별로 호출/미호출 수량을 집계한다(KDS와 같은 방식 — 호출은 주문 단위 판정이라
   // 한 주문에 여러 메뉴가 섞여 있으면 그 주문에 속한 메뉴 수량이 전부 같은 호출 상태로 잡힌다).
   // 아직 안 불린(미호출) 수량이 많은 메뉴가 가장 급하므로 그 순서로 앞에 오도록 정렬한다.
   function callStatusMenuBreakdown() {

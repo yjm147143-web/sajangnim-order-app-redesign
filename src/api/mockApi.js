@@ -610,10 +610,10 @@
     return { order: o, notification: '주문 거절' };
   }
 
-  // ---------------- 조리 현황판: 수기 차감(호출 전에 미리 조리완료로 표시) ----------------
+  // ---------------- KDS: 수기 차감(호출 전에 미리 조리완료로 표시) ----------------
   // 카운터가 바빠 호출을 늦게 눌러도, 조리 담당자가 "이미 다 됐어요"를 남은 수량에 직접 반영할 수
   // 있게 하는 보조 수단이다. 메뉴별 카운터를 매장에 저장해두고, '오늘 최초 개점 시각'
-  // (todayFirstOpenAt)이 바뀌는 시점(=다음 날 개점)에 자동으로 초기화한다 — 조리 현황판의
+  // (todayFirstOpenAt)이 바뀌는 시점(=다음 날 개점)에 자동으로 초기화한다 — KDS의
   // 누적/호출 집계도 같은 기준으로 리셋되므로 셋이 항상 같은 날짜 범위를 본다.
   function ensureFreshKitchenDeductions(store) {
     if (store.kitchenManualDeductionsOpenAt !== store.todayFirstOpenAt) {
