@@ -41,7 +41,7 @@
     const total = sumAmount(data);
     const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.count); }).join('');
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('channel', data) + '</div>' +
       '<div class="sales-list">' + rows + '</div>'
     );
@@ -54,7 +54,7 @@
     const data = raw.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
     const total = sumAmount(data);
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       sortToggleHtml('menu', sortDir) +
       '<div class="chart-card">' + window.UI.salesChartHtml('menu', data) + '</div>'
     );
@@ -73,7 +73,7 @@
       return listRowHtml(d.name, d.amount, d.count, null, '', badge);
     }).join('');
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('hour', data) + '</div>' +
       sortToggleHtml('hour', sortDir) +
       '<div class="sales-list">' + rows + '</div>'
@@ -85,7 +85,7 @@
     const total = sumAmount(data);
     const rows = data.map(function (d) { return listRowHtml(d.name, d.amount, d.count); }).join('');
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('payment', data) + '</div>' +
       '<div class="sales-list">' + rows + '</div>'
     );

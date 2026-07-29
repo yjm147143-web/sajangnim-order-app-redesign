@@ -44,7 +44,7 @@
     const data = raw.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
     const total = sumAmount(data);
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       sortToggleHtml('store', sortDir) +
       '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>'
     );
@@ -56,7 +56,7 @@
     const data = raw.slice().sort(function (a, b) { return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount; });
     const total = sumAmount(data);
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       sortToggleHtml('menu', sortDir) +
       '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>'
     );
@@ -74,7 +74,7 @@
       return listRowHtml(d.name, d.amount, null, null, '', badge);
     }).join('');
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('hour', data) + '</div>' +
       sortToggleHtml('hour', sortDir) +
       '<div class="sales-list">' + rows + '</div>'
@@ -85,7 +85,7 @@
     const data = window.MockApi.getEventSalesByChannel(eventId, range);
     const total = sumAmount(data);
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('channel', data) + '</div>'
     );
   }
@@ -94,7 +94,7 @@
     const data = window.MockApi.getEventSalesByPayment(eventId, range);
     const total = sumAmount(data);
     return (
-      '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
+      '<div class="section-caption">총 매출액 ' + window.UI.formatMoney(total) + '</div>' +
       '<div class="chart-card">' + window.UI.salesChartHtml('payment', data) + '</div>'
     );
   }
