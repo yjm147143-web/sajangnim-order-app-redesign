@@ -97,9 +97,9 @@
         '.store-select-cb{width:20px;height:20px;flex-shrink:0;cursor:pointer;}' +
         '.store-status-left{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;}' +
         '.store-status-name{font-weight:700;font-size:var(--font-size-body);}' +
-        '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}' +
+        '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;}' +
         '.store-status-time{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
-        '.store-network-warning{font-size:var(--font-size-micro);font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-red-bg);color:#b02850;white-space:nowrap;}' +
+        '.store-network-warning{font-size:var(--font-size-micro);font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-red-bg);color:#b02850;white-space:normal;max-width:100%;}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
         '.store-ctrl-fixed{flex-shrink:0;background:var(--color-white);border-top:1px solid var(--color-divider);box-shadow:0 -4px 16px rgba(0,0,0,0.06);}' +
