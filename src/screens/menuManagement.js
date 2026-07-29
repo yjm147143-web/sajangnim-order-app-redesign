@@ -103,7 +103,7 @@
             '<span class="option-soldout-toggle-label">' + (isSoldOut ? '품절' : '판매중') + '</span>' +
             '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
           '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '" aria-label="옵션 삭제">' + TRASH_ICON + '</button>' +
+          '<button type="button" class="icon-btn icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '" aria-label="옵션 삭제">' + TRASH_ICON + '</button>' +
         '</div>'
       );
     }).join('');
@@ -111,7 +111,7 @@
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
           '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
-          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>') +
+          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>') +
         '</div>' +
         (showUsage ? '<div class="option-group-usage">' + (usageNames.length ? esc(usageNames.join(', ')) + '에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
         optionsHtml +
@@ -150,7 +150,7 @@
         '</div>' +
         '<div class="menu-row-side">' +
           '<div class="option-group-usage-inline">' + (usage > 0 ? usage + '개 메뉴 사용' : '미사용') + '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>' +
+          '<button type="button" class="icon-btn icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>' +
         '</div>' +
       '</div>'
     );
@@ -1265,7 +1265,7 @@
       var addOptionBtn = e.target.closest('[data-action="add-option"]');
       if (addOptionBtn) {
         var giAdd = Number(addOptionBtn.getAttribute('data-group-idx'));
-        state.optionGroups[giAdd].options.push({ name: '', price: 0 });
+        state.optionGroups[giAdd].options.push({ name: '', price: 0, soldOut: false });
         renderGroupsList();
         return;
       }

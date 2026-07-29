@@ -67,7 +67,6 @@
         '.notification-sub-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 60px;flex-wrap:wrap;}' +
         '.notification-sub-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.notification-chip-row{display:flex;gap:6px;flex-wrap:wrap;}' +
-        '.notification-chip-row .pill-btn.active{background:var(--color-accent-blue);color:var(--color-white);}' +
         '.notification-repeat-row{display:flex;align-items:center;gap:14px;padding:var(--space-2) var(--space-5) var(--space-4) 60px;}' +
         '.notification-repeat-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.repeat-stepper{display:flex;align-items:center;gap:12px;}' +

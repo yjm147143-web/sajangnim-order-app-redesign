@@ -208,11 +208,13 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   color: var(--color-text-primary); font-size: 20px;
 }
 .icon-btn:active { background: var(--color-divider); }
+/* .icon-btn과 함께(class="icon-btn icon-btn-sm") 써서 크기/색만 덮어쓰는 modifier — 단독으로
+   쓰면 .icon-btn의 display/border/cursor 등 기본기가 빠져 배경색이 안 먹는 등의 문제가 재발한다. */
 .icon-btn-sm {
-  display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 22px; font-size: 13px; border-radius: 6px;
-  background: var(--color-card-bg); border: none; color: var(--color-text-secondary); cursor: pointer;
+  background: var(--color-card-bg); color: var(--color-text-secondary);
 }
+.icon-btn-sm:active { background: var(--color-card-bg); }
 
 /* ---------- Segmented Tabs ---------- */
 .segment-tabs {

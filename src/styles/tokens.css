@@ -28,8 +28,8 @@
   --color-white: #ffffff;
 
   /* Gradients */
-  --gradient-brand: linear-gradient(135deg, #7C2FF0 0%, #5C82E8 65%, #4FC9B8 100%);
-  --gradient-brand-soft: linear-gradient(135deg, #F3E9FE 0%, #EAF0FE 55%, #E1F7F3 100%);
+  --gradient-brand: linear-gradient(135deg, var(--color-accent-purple) 0%, var(--color-accent-blue) 65%, var(--color-accent-green) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, var(--color-accent-purple-bg) 0%, var(--color-accent-blue-bg) 55%, var(--color-accent-green-bg) 100%);
   --shadow-glow-purple: 0 10px 24px -8px rgba(124,47,240,0.45);
   --shadow-card: 0 2px 14px rgba(30,29,43,0.06);
 
