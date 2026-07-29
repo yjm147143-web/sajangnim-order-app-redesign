@@ -9,7 +9,7 @@
   function render() {
     return (
       '<style>' +
-      '.login-wordmark{padding:56px 0 6px;text-align:center;font-size:28px;font-weight:800;letter-spacing:-0.5px;background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--color-wordmark);}' +
+      '.login-wordmark{padding:56px 0 6px;text-align:center;font-size:28px;font-weight:800;letter-spacing:-0.5px;background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--color-text-primary);}' +
       '.login-subtitle{text-align:center;color:var(--color-text-secondary);font-size:var(--font-size-caption);margin-bottom:32px;}' +
       '.role-toggle{display:flex;gap:8px;padding:0 20px 28px;}' +
       '.role-toggle .segment-tab{flex:1;height:52px;font-size:var(--font-size-body);}' +
@@ -112,8 +112,8 @@
         } else if (msg.indexOf('계정이 아니에요') !== -1) {
           showIdError(root, msg);
         } else {
-          // 아이디 또는 비밀번호가 올바르지 않아요.
-          showIdError(root, msg);
+          // 아이디 또는 비밀번호가 올바르지 않아요. — 아이디/비밀번호 중 무엇이 틀렸는지 알려주지 않기 위해
+          // 비밀번호 필드에만 표시한다(아이디 필드에 중복 표시하지 않음).
           showPwError(root, msg);
         }
         return;
