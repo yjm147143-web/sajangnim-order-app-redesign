@@ -74,13 +74,22 @@
     '.call-status-btn { background: var(--color-accent-blue); color: var(--color-white); flex-shrink: 0; }' +
     '.call-status-btn.active { background: #2a4fc7; }' +
     '.call-status-panel { margin: 0 var(--space-5) var(--space-3); padding: var(--space-4); background: var(--color-accent-blue-bg); border-radius: var(--radius-card); }' +
-    '.call-status-counts { display: flex; gap: 10px; margin-bottom: 12px; }' +
-    '.call-status-count-card { flex: 1; background: var(--color-white); border-radius: var(--radius-card); padding: 14px 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }' +
-    '.call-status-count-card .cs-label { font-size: var(--font-size-caption); color: var(--color-text-secondary); font-weight: 700; margin-bottom: 4px; }' +
-    '.call-status-count-card .cs-value { font-size: 26px; font-weight: 800; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }' +
-    '.call-status-count-card .cs-value .cs-unit { font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); margin-left: 2px; }' +
-    '.call-status-btn-row { display: flex; gap: 6px; }' +
-    '.call-status-btn-row .filter-chip { flex: 1; text-align: center; background: var(--color-white); height: 30px; padding: 0 6px; font-size: 11px; display: flex; align-items: center; justify-content: center; }' +
+    '.call-status-summary { display: flex; gap: 8px; margin-bottom: 10px; }' +
+    '.call-status-summary .cs-pill { font-size: 13px; padding: 7px 12px; }' +
+    // 메뉴가 많아도 패널이 한없이 길어지지 않도록 자체 스크롤 영역으로 감싼다 — 펼쳐도 주문 카드가
+    // 최소 하나는 화면에 걸쳐 보이도록 이 영역의 높이를 일부러 낮게 제한한다. 아직 안 불린 수량이
+    // 많은 메뉴가 위로 정렬되므로(callStatusMenuBreakdown) 스크롤 없이도 가장 급한 메뉴부터 보인다.
+    '.call-status-menu-list { max-height: 148px; overflow-y: auto; border-radius: 10px; background: var(--color-white); }' +
+    '.cs-menu-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; font-size: 13px; border-bottom: 1px solid var(--color-divider); }' +
+    '.cs-menu-row:last-child { border-bottom: none; }' +
+    '.cs-menu-name { font-weight: 800; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; margin-right: 8px; }' +
+    '.cs-menu-pills { display: flex; gap: 5px; flex-shrink: 0; }' +
+    // 호출(완료)=민트, 미호출(대기)=앰버로 상태를 색으로 바로 구분한다. 0건은 회색으로 낮춰 시선을 뺏지 않는다.
+    '.cs-pill { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }' +
+    '.cs-pill b { font-weight: 800; }' +
+    '.cs-pill.called { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
+    '.cs-pill.notCalled { background: var(--color-accent-amber-bg); color: #a15c00; }' +
+    '.cs-pill.zero { background: var(--color-card-bg); color: var(--color-text-secondary); }' +
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
@@ -183,26 +192,54 @@
     return { calledCount: calledCount, notCalledCount: notCalledCount };
   }
 
+  // 메뉴별로 호출/미호출 수량을 집계한다(조리 현황판과 같은 방식 — 호출은 주문 단위 판정이라
+  // 한 주문에 여러 메뉴가 섞여 있으면 그 주문에 속한 메뉴 수량이 전부 같은 호출 상태로 잡힌다).
+  // 아직 안 불린(미호출) 수량이 많은 메뉴가 가장 급하므로 그 순서로 앞에 오도록 정렬한다.
+  function callStatusMenuBreakdown() {
+    const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
+    const orders = window.MockApi.getOrders(storeId, base);
+    const stats = {};
+    const names = [];
+    orders.forEach(function (o) {
+      const isCalled = !!o.called;
+      o.items.forEach(function (it) {
+        if (!stats[it.menuName]) { stats[it.menuName] = { called: 0, notCalled: 0 }; names.push(it.menuName); }
+        if (isCalled) stats[it.menuName].called += it.quantity;
+        else stats[it.menuName].notCalled += it.quantity;
+      });
+    });
+    return names
+      .map(function (name) { return { name: name, called: stats[name].called, notCalled: stats[name].notCalled }; })
+      .sort(function (a, b) { return b.notCalled - a.notCalled; });
+  }
+
   function renderCallStatusButtonHtml() {
     if (currentStatus() !== 'PROCESSING') return '';
     return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 호출 현황 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
-  // '호출 주문만 보기' / '미호출 주문만 보기' 버튼은 주문 필터 시트의 '호출 여부' 칩과 완전히 같은 상태(calledFilter)를
-  // 공유한다 — 배타적 토글(같은 값을 다시 누르면 전체 보기로 해제)도 필터 시트와 동일한 로직을 그대로 쓴다.
+  // 호출/미호출 수를 회색 텍스트가 아니라 색이 있는 알약(호출=민트/완료, 미호출=앰버/대기)으로 보여줘
+  // 한눈에 상태를 구분하기 쉽게 한다. 0건인 쪽은 톤을 낮춰(zero) 시선이 안 가게 한다.
+  function csPillHtml(kind, count, unit) {
+    const cls = count === 0 ? 'cs-pill zero' : 'cs-pill ' + kind;
+    const icon = kind === 'called' ? '✓' : '⏳';
+    const label = kind === 'called' ? '호출' : '미호출';
+    return '<span class="' + cls + '">' + icon + ' ' + label + ' <b>' + count + '</b>' + unit + '</span>';
+  }
+
   function renderCallStatusPanelHtml() {
     if (currentStatus() !== 'PROCESSING' || !callStatusPanelOpen) return '';
     const counts = callStatusCounts();
+    const breakdown = callStatusMenuBreakdown();
+    const menuListHtml = breakdown.length
+      ? breakdown.map(function (row) {
+          return '<div class="cs-menu-row"><span class="cs-menu-name">' + esc(row.name) + '</span>' +
+            '<span class="cs-menu-pills">' + csPillHtml('called', row.called, '개') + csPillHtml('notCalled', row.notCalled, '개') + '</span></div>';
+        }).join('')
+      : '<div class="cs-menu-row"><span class="cs-menu-name">처리중인 메뉴가 없어요</span></div>';
     return '<div class="call-status-panel">' +
-      '<div class="call-status-counts">' +
-        '<div class="call-status-count-card"><div class="cs-label">호출</div><div class="cs-value">' + counts.calledCount + '<span class="cs-unit">건</span></div></div>' +
-        '<div class="call-status-count-card"><div class="cs-label">미호출</div><div class="cs-value">' + counts.notCalledCount + '<span class="cs-unit">건</span></div></div>' +
-      '</div>' +
-      '<div class="call-status-btn-row">' +
-        '<button type="button" class="filter-chip' + (calledFilter === 'ALL' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="ALL">전체 보기</button>' +
-        '<button type="button" class="filter-chip' + (calledFilter === 'CALLED' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="CALLED">호출 주문만 보기</button>' +
-        '<button type="button" class="filter-chip' + (calledFilter === 'NOT_CALLED' ? ' on' : '') + '" data-action="toggle-called-filter" data-called-status="NOT_CALLED">미호출 주문만 보기</button>' +
-      '</div>' +
+      '<div class="call-status-summary">' + csPillHtml('called', counts.calledCount, '건') + csPillHtml('notCalled', counts.notCalledCount, '건') + '</div>' +
+      '<div class="call-status-menu-list">' + menuListHtml + '</div>' +
       '</div>';
   }
 
@@ -308,9 +345,10 @@
     // 주문채널·배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
     // 선착순은 주문 건 단위가 아니라 메뉴별 배지(itemListHtml)로 표시하므로 헤더에서는 제외한다
+    // 해피아워는 주문 카드에 배지로 표시하지 않는다 — 대신 해피아워가 시작되는 순간 팝업으로 알린다(handleHappyHourStarted)
     const channelHtml = window.UI.channelBadgeHtml(order.channel);
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
-    const promoHtml = order.promoType === 'FIRST_COME' ? '' : window.UI.promoBadgeHtml(order.promoType);
+    const promoHtml = (order.promoType === 'FIRST_COME' || order.promoType === 'HAPPY_HOUR') ? '' : window.UI.promoBadgeHtml(order.promoType);
     if (channelHtml || deliveryHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + channelHtml + deliveryHtml + promoHtml + '</div>';
     }
@@ -851,6 +889,21 @@
     if (slot) slot.innerHTML = autoSoldoutBannerHtml();
   }
 
+  // 해피아워는 주문 카드에 배지로 표시하지 않는 대신, 시작되는 순간 팝업으로 알린다(개발자 도구 시뮬레이션)
+  function onHappyHourStarted(e) {
+    const detail = e.detail || {};
+    if (!detail.name) return;
+    const timeRange = (detail.start && detail.end) ? (detail.start + '~' + detail.end) : '';
+    const priceText = (detail.price != null) ? window.UI.formatMoney(detail.price) : '';
+    const lines = [esc(detail.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요.'];
+    if (priceText) lines.push('할인가 ' + priceText + (timeRange ? ' · ' + timeRange : ''));
+    window.UI.showModal({
+      title: '🔥 해피아워가 시작됐습니다',
+      message: lines.join('<br/>'),
+      buttons: [{ label: '확인', variant: 'btn-primary' }],
+    });
+  }
+
   // 주문 수락으로 준비량이 소진되어 자동 품절되면 하단 배너로 알린다
   function onAutoSoldout(e) {
     const names = (e.detail && e.detail.names) || [];
@@ -883,12 +936,6 @@
     else if (action === 'toggle-sort') toggleSort();
     else if (action === 'open-order-filter') openOrderFilterSheet();
     else if (action === 'toggle-call-status-panel') { callStatusPanelOpen = !callStatusPanelOpen; updateCallStatusUI(); }
-    else if (action === 'toggle-called-filter') {
-      const v = target.getAttribute('data-called-status');
-      calledFilter = (calledFilter === v) ? 'ALL' : v;
-      updateFilterBtnLabel();
-      updateList();
-    }
     else if (action === 'toggle-card-expand') toggleCardExpand(target.getAttribute('data-order-id'));
     else if (action === 'accept-order') handleAccept(id);
     else if (action === 'cancel-order') handleCancelOrder(id);
@@ -1003,6 +1050,7 @@
     window.addEventListener('mock:orders-changed', onMockDataChanged);
     window.addEventListener('mock:auto-soldout', onAutoSoldout);
     window.addEventListener('mock:network-quality', onNetworkQuality);
+    window.addEventListener('mock:happy-hour-started', onHappyHourStarted);
   }
 
   function unmount() {
@@ -1011,6 +1059,7 @@
     window.removeEventListener('mock:orders-changed', onMockDataChanged);
     window.removeEventListener('mock:auto-soldout', onAutoSoldout);
     window.removeEventListener('mock:network-quality', onNetworkQuality);
+    window.removeEventListener('mock:happy-hour-started', onHappyHourStarted);
     root = null;
   }
 

@@ -520,6 +520,18 @@
     return item.name;
   }
 
+  // 개발자 도구 > 해피아워 시작 시뮬레이션: 해피아워로 설정된 메뉴 중 하나가 지금 막 시작된 것처럼 알린다.
+  // 데이터를 바꾸는 건 아니고(이미 해피아워 설정이 켜져 있는 메뉴), 시작 알림 이벤트만 쏜다.
+  function triggerHappyHourStart(storeId) {
+    const candidates = DB.menuItems.filter(function (m) { return m.storeId === storeId && m.happyHourEnabled; });
+    if (!candidates.length) return null;
+    const item = candidates[Math.floor(Math.random() * candidates.length)];
+    window.dispatchEvent(new CustomEvent('mock:happy-hour-started', {
+      detail: { name: item.name, price: item.happyHourPrice, start: item.happyHourStart, end: item.happyHourEnd },
+    }));
+    return item.name;
+  }
+
   // 유형별 필터 각 항목이 실제 주문에 해당하는지 판정
   function matchesOrderType(order, type) {
     if (type === 'RESERVATION') return !!order.isReservation;
@@ -1088,6 +1100,7 @@
     updateOptionGroupOption: updateOptionGroupOption, removeOptionGroupOption: removeOptionGroupOption,
     getOrder: getOrder, getOrders: getOrders, acceptOrder: acceptOrder, cancelOrder: cancelOrder,
     createCustomOrder: createCustomOrder, createCashOrder: createCashOrder, triggerRandomAutoSoldout: triggerRandomAutoSoldout,
+    triggerHappyHourStart: triggerHappyHourStart,
     callCustomer: callCustomer, completeOrder: completeOrder, cancelPayment: cancelPayment,
     getKitchenManualDeductions: getKitchenManualDeductions, addKitchenManualDeduction: addKitchenManualDeduction,
     revertOrder: revertOrder, returnOrder: returnOrder, bulkAction: bulkAction,

@@ -172,6 +172,12 @@
               '<button type="button" class="dp-pill" data-action="dp-trigger-soldout">🚫 메뉴 자동품절 발생</button>' +
             '</div>' +
           '</div>' +
+          '<div class="dp-group">' +
+            '<span class="dp-group-label">프로모션</span>' +
+            '<div class="dp-pill-row">' +
+              '<button type="button" class="dp-pill" data-action="dp-trigger-happy-hour">🔥 해피아워 시작</button>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         (devSimOffline ? '<div class="dp-offline-hint">오프라인 상태에서는 신규 주문이 들어올 수 없어요</div>' : '') +
         (devSimFlaky ? '<div class="dp-offline-hint">완전 단절은 아니고, 신호가 희미해졌다 괜찮아졌다를 반복해요. 주문 접수는 그대로 되고, 캡션만 "⚠️ 주의"로 바뀌어요</div>' : '') +
@@ -288,6 +294,15 @@
     window.UI.toast(name + ' 메뉴를 자동품절 처리했어요');
   }
 
+  // 해피아워로 설정해 둔 메뉴 중 하나가 지금 막 시작된 것처럼 알린다(사장님 보드에 팝업으로 노출).
+  function triggerHappyHour() {
+    var user = currentOwnerContext();
+    if (!user) return;
+    var name = window.MockApi.triggerHappyHourStart(user.storeId);
+    if (!name) { window.UI.toast('해피아워로 설정된 메뉴가 없어요 · 메뉴 관리에서 먼저 켜주세요'); return; }
+    window.UI.toast(name + ' 메뉴의 해피아워 시작을 알렸어요');
+  }
+
   function onToggle(key) {
     if (key === 'reusable') devReusable = !devReusable;
     else if (key === 'reservation') devIsReservation = !devIsReservation;
@@ -312,6 +327,7 @@
     else if (action === 'dp-toggle-offline') { toggleOffline(); return; }
     else if (action === 'dp-toggle-flaky') { toggleFlaky(); return; }
     else if (action === 'dp-trigger-soldout') { triggerAutoSoldout(); return; }
+    else if (action === 'dp-trigger-happy-hour') { triggerHappyHour(); return; }
     else if (action === 'dp-toggle-panel') { panelOpen = !panelOpen; render(); return; }
     else return;
     render();
