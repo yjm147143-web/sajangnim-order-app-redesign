@@ -496,8 +496,8 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .sales-metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 var(--space-5) var(--space-4); }
 .sales-metric-card { background: var(--color-card-bg); border-radius: var(--radius-card); padding: 12px 8px; text-align: center; }
 .sales-metric-label { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 5px; }
-.sales-metric-value { font-size: 20px; font-weight: 800; color: var(--color-text-primary); word-break: keep-all; }
-.sales-metric-value.accent { color: var(--color-accent-blue); }
+.sales-metric-value { font-size: 15px; font-weight: 800; color: var(--color-text-primary); white-space: nowrap; }
+.sales-metric-value.accent { color: var(--color-accent-blue-strong); }
 .sales-list { padding: 0 var(--space-5) var(--space-5); display: flex; flex-direction: column; }
 .sales-list-row { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-divider); }
 .sales-list-row:last-child { border-bottom: none; }

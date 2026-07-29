@@ -35,7 +35,7 @@
   // 영업상태 배지(🟢영업 중)와 겹쳐 보여 헷갈리던 '🟢 온라인' 배지를 없앤 것.
   function networkWarningHtml(store) {
     if (store.networkStatus !== 'OFFLINE') return '';
-    return '<span class="store-network-warning">⚠️ 네트워크 상태가 원활하지 않아요</span>';
+    return '<span class="store-network-warning">⚠️ 네트워크 끊김</span>';
   }
 
 
@@ -99,7 +99,7 @@
         '.store-status-name{font-weight:700;font-size:var(--font-size-body);}' +
         '.store-status-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:100%;}' +
         '.store-status-time{font-size:var(--font-size-micro);color:var(--color-text-secondary);}' +
-        '.store-network-warning{font-size:var(--font-size-micro);font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-red-bg);color:#b02850;white-space:normal;max-width:100%;}' +
+        '.store-network-warning{font-size:var(--font-size-caption);font-weight:700;color:var(--color-accent-red);}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
         '.store-ctrl-fixed{flex-shrink:0;background:var(--color-white);border-top:1px solid var(--color-divider);box-shadow:0 -4px 16px rgba(0,0,0,0.06);}' +
