@@ -72,26 +72,33 @@
 
       '<div class="divider-line"></div>' +
 
-      '<div class="settings-list-item" data-nav="notificationSettings">' +
-        '<div class="icon">🔔</div><div class="label">알림 설정</div><div class="chevron">›</div>' +
+      '<div class="settings-group-title">바로가기</div>' +
+      '<div class="settings-list-item settings-shortcut-item" data-nav="kitchenBoard">' +
+        '<div class="icon">🍳</div><div class="label">KDS 보기</div><div class="chevron">›</div>' +
       '</div>' +
+
+      '<div class="settings-group-title">매장 관리</div>' +
       '<div class="settings-list-item" data-nav="menuManagement">' +
-        '<div class="icon">🍽️</div><div class="label">메뉴 추가 및 수정</div><div class="chevron">›</div>' +
-      '</div>' +
-      '<div class="settings-list-item" data-nav="orderManagement">' +
-        '<div class="icon">📦</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
+        '<div class="icon">🍽️</div><div class="label">메뉴 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="customerGuideSettings">' +
         '<div class="icon">📢</div><div class="label">손님 대기 관리</div><div class="chevron">›</div>' +
+      '</div>' +
+      '<div class="settings-list-item" data-nav="orderManagement">' +
+        '<div class="icon">📦</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="qrMenu">' +
         '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
-      '<div class="divider-line"></div>' +
-
+      '<div class="settings-group-title">매출</div>' +
       '<div class="settings-list-item" data-nav="sales">' +
         '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
+      '</div>' +
+
+      '<div class="settings-group-title">환경설정</div>' +
+      '<div class="settings-list-item" data-nav="notificationSettings">' +
+        '<div class="icon">🔔</div><div class="label">알림 설정</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="permissionLock">' +
         '<div class="icon">🔐</div><div class="label">권한 잠금 설정</div><div class="chevron">›</div>' +
@@ -135,11 +142,15 @@
         '.settings-footer-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:24px var(--space-5) 32px;}' +
         '.settings-footer-link{background:none;border:none;padding:2px;font-size:11px;color:var(--color-text-secondary);opacity:0.6;cursor:pointer;}' +
         '.settings-footer-sep{font-size:11px;color:var(--color-text-secondary);opacity:0.4;}' +
+        '.settings-group-title{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);padding:var(--space-4) var(--space-5) var(--space-2);}' +
+        '.settings-shortcut-item{margin:0 var(--space-4);border:1.5px solid var(--color-accent-blue);border-radius:var(--radius-button);}' +
+        '.settings-shortcut-item .label{color:var(--color-accent-blue);font-weight:800;}' +
+        '.settings-shortcut-item .chevron{color:var(--color-accent-blue);}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">' + window.UI.escapeHtml(titleText) + '</div>' +
-        '<div class="topbar-side"><button type="button" class="icon-btn" id="kds-btn" aria-label="KDS 보기">🍳</button></div>' +
+        '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="screen-scroll"><div id="settings-list-wrap"></div></div>'
     );
@@ -273,10 +284,6 @@
 
     root.querySelector('#settings-back').addEventListener('click', function () {
       window.Router.back();
-    });
-
-    root.querySelector('#kds-btn').addEventListener('click', function () {
-      window.Router.showScreen('kitchenBoard', {});
     });
 
     refresh();
