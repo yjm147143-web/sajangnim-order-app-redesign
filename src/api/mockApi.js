@@ -419,8 +419,12 @@
     const itemsWithOption = menuItems.filter(function (m) {
       return getOptionGroupsByIds(m.optionGroupIds).some(function (g) { return (g.options || []).length; });
     });
-    function buildLine(preferOption) {
-      const pool = (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
+    // 선착순: 지금 선착순 가격이 설정된 메뉴만 후보로 삼는다(주문 카드의 선착순 배지는
+    // 이 메뉴 플래그를 보고 뜨므로, 완전 랜덤 배정이면 우연히 하나도 안 뽑혀 배지가 안 보일 수 있다).
+    const itemsWithFirstCome = menuItems.filter(function (m) { return m.firstComeEnabled; });
+    function buildLine(preferOption, preferFirstCome) {
+      const pool = (preferFirstCome && itemsWithFirstCome.length) ? itemsWithFirstCome
+        : (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
       const menu = pool[Math.floor(Math.random() * pool.length)];
       const qty = 1 + Math.floor(Math.random() * 2);
       let optionNames = [];
@@ -435,10 +439,21 @@
     const lines = [];
     let amount = 0;
     for (let i = 0; i < lineCount; i++) {
-      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서 우선 배정한다.
-      const line = buildLine(!!opts.hasOption && i === 0);
+      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서, 선착순을 선택했을 땐
+      // 최소 1개 메뉴엔 선착순 메뉴가 붙도록 그 다음 줄(줄이 하나뿐이면 그 줄)에서 우선 배정한다.
+      const wantFirstComeHere = !!opts.hasFirstCome && (opts.hasOption && lineCount > 1 ? i === 1 : i === 0);
+      const line = buildLine(!!opts.hasOption && i === 0, wantFirstComeHere);
       lines.push({ menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity });
       amount += line.price * line.quantity;
+    }
+    // 줄이 하나뿐인데 옵션·선착순을 동시에 요청해 위 배정에서 선착순이 밀린 경우를 대비한 안전망 —
+    // 그래도 선착순 메뉴가 한 줄도 없으면 강제로 하나를 선착순 메뉴로 바꿔 배지가 반드시 뜨게 한다.
+    if (opts.hasFirstCome && itemsWithFirstCome.length && !lines.some(function (l) { return itemsWithFirstCome.some(function (m) { return m.name === l.menuName; }); })) {
+      const oldLine = lines[0];
+      const oldMenu = menuItems.find(function (m) { return m.name === oldLine.menuName; });
+      const menu = itemsWithFirstCome[Math.floor(Math.random() * itemsWithFirstCome.length)];
+      lines[0] = { menuName: menu.name, optionNames: [], quantity: oldLine.quantity };
+      amount += (menu.price - (oldMenu ? oldMenu.price : 0)) * oldLine.quantity;
     }
 
     const customerContact = isEmailContact ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)];
