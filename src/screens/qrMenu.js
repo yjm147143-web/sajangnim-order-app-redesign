@@ -39,7 +39,13 @@
           '<button type="button" class="btn btn-secondary btn-sm" id="copy-link-btn">링크 복사</button>' +
         '</div>' +
       '</div>' +
-      '<div class="qr-image-wrap"><img src="' + qrSrc + '" alt="QR 코드" id="qr-image" /></div>' +
+      '<div class="qr-image-wrap">' +
+        '<img src="' + qrSrc + '" alt="QR 코드" id="qr-image" />' +
+        '<div class="empty-state" id="qr-image-error" style="display:none;">' +
+          '<div class="empty-state-emoji">📵</div><div>QR 코드를 불러오지 못했어요</div>' +
+          '<button type="button" class="btn-text" id="qr-retry-btn">다시 시도</button>' +
+        '</div>' +
+      '</div>' +
       '<div class="qr-download-wrap">' +
         '<button type="button" class="btn btn-outline" id="download-qr-btn">QR 코드 다운로드</button>' +
       '</div>'
@@ -53,6 +59,21 @@
 
     root.querySelector('#qr-back').addEventListener('click', function () {
       window.Router.back();
+    });
+
+    function bindQrImage() {
+      var img = root.querySelector('#qr-image');
+      img.addEventListener('error', function () {
+        img.style.display = 'none';
+        root.querySelector('#qr-image-error').style.display = '';
+      });
+    }
+    bindQrImage();
+    root.querySelector('#qr-retry-btn').addEventListener('click', function () {
+      var img = root.querySelector('#qr-image');
+      root.querySelector('#qr-image-error').style.display = 'none';
+      img.style.display = '';
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(info.url) + '&_retry=' + Date.now();
     });
 
     root.querySelector('#copy-link-btn').addEventListener('click', function () {

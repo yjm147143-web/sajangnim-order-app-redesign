@@ -56,7 +56,7 @@
     return (
       '<div class="section-caption">합계 매출 ' + window.UI.formatMoney(total) + '</div>' +
       sortToggleHtml('menu', sortDir) +
-      '<div class="chart-card">' + window.UI.rankListHtml(data) + '</div>'
+      '<div class="chart-card">' + window.UI.salesChartHtml('menu', data) + '</div>'
     );
   }
 

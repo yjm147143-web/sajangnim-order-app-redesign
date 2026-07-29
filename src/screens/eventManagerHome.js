@@ -136,8 +136,10 @@
           '<div class="card card-flat">' + storeRowsHtml + '</div>' +
         '</div>' +
 
-        '<div class="section-title">매장 통제</div>' +
-        '<div id="store-ctrl-panel" style="padding:8px 20px 28px;">' + ctrlPanelHtml() + '</div>' +
+        (stores.length ? (
+          '<div class="section-title">매장 통제</div>' +
+          '<div id="store-ctrl-panel" style="padding:8px 20px 28px;">' + ctrlPanelHtml() + '</div>'
+        ) : '') +
 
       '</div>' +
       window.EventManagerShell.tabbarHtml('eventManagerHome')
