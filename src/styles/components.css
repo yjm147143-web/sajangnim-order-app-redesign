@@ -517,25 +517,19 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .sales-subtab-btn.active { background: var(--color-text-primary); color: var(--color-white); }
 .sales-subtab-btn { transition: background .15s ease, color .15s ease; }
 /* 행사담당자 매출현황 전용 — 5개 탭('매장별' 추가)이 균등폭 줄바꿈으로 4:1 어색하게 갈라지던 것을
-   콘텐츠 폭에 맞는 가로 스크롤 탭 스트립으로 바꿔 5개 모두 한 줄에서 또렷이 읽히게 한다. */
+   가로 스크롤 탭 스트립으로 바꿨었으나, 스크롤 위치에 따라 맨 앞/뒤 탭이 가장자리 마스크에
+   가려 잘려 보이는 문제가 있었다. 대신 탭 폭을 좁혀 5개 모두 스크롤 없이 한 줄에 들어가게 한다.
+   (텍스트가 더 길어지는 경우를 대비해 ellipsis는 안전장치로 남겨둔다.) */
 .sales-subtab-row.ems-subtab-row {
   flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
-  scroll-padding: 0 var(--space-5);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
-.sales-subtab-row.ems-subtab-row::-webkit-scrollbar { display: none; }
 .sales-subtab-row.ems-subtab-row .sales-subtab-btn {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-width: 0;
-  padding: 9px 16px;
+  padding: 9px 6px;
   border-radius: var(--radius-pill);
-  scroll-snap-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sales-subtab-row.ems-subtab-row .sales-subtab-btn.active { box-shadow: 0 2px 6px rgba(0,0,0,0.16); }
 .sales-sort-row { display: flex; justify-content: flex-end; padding: 0 var(--space-5) var(--space-3); }
