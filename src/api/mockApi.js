@@ -377,6 +377,12 @@
     persist();
   }
 
+  // 기존 주문의 메뉴 라인은 menuName(문자열)로 남아있어 메뉴를 삭제해도 과거 주문/매출 이력에는 영향이 없다.
+  function deleteMenuItem(id) {
+    DB.menuItems = DB.menuItems.filter(function (m) { return m.id !== id; });
+    persist();
+  }
+
   // ---------------- Orders ----------------
   function getOrder(id) { return DB.orders.find(function (o) { return o.id === id; }); }
 
@@ -1093,7 +1099,7 @@
     clearPermissionLockPassword: clearPermissionLockPassword, verifyPermissionLockPassword: verifyPermissionLockPassword,
     getCategories: getCategories, getMenuItems: getMenuItems, getMenuItem: getMenuItem,
     addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut,
-    reorderMenuItems: reorderMenuItems,
+    reorderMenuItems: reorderMenuItems, deleteMenuItem: deleteMenuItem,
     getOptionGroups: getOptionGroups, getOptionGroup: getOptionGroup, getOptionGroupsByIds: getOptionGroupsByIds,
     getOptionGroupUsageCount: getOptionGroupUsageCount, getOptionGroupUsageNames: getOptionGroupUsageNames, addOptionGroup: addOptionGroup, updateOptionGroup: updateOptionGroup,
     deleteOptionGroup: deleteOptionGroup, addOptionGroupOption: addOptionGroupOption,

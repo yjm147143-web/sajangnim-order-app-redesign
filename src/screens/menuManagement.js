@@ -913,6 +913,12 @@
             '<div id="menu-preview-container">' + renderPreviewHtml(state) + '</div>' +
           '</div>' +
 
+          (state.isEdit ?
+            '<div class="input-group">' +
+              '<button type="button" class="btn btn-danger-solid" id="menu-delete-btn">메뉴 삭제</button>' +
+            '</div>'
+          : '') +
+
           '</div>' +
 
           '<div class="edit-tab-panel" data-edit-panel="etc">' +
@@ -1310,6 +1316,23 @@
       if (err) { showError(err.field, err.message); return; }
       doSave(state);
     });
+
+    var deleteBtn = root.querySelector('#menu-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function () {
+        window.UI.confirmModal(
+          '정말 메뉴를 삭제하시나요?',
+          '삭제하면 이 메뉴 정보를 되돌릴 수 없어요.',
+          '삭제',
+          function () {
+            window.MockApi.deleteMenuItem(state.id);
+            window.UI.toast('메뉴를 삭제했어요');
+            window.Router.back();
+          },
+          { danger: true }
+        );
+      });
+    }
   }
 
   window.Router.register('menuEdit', { render: renderMenuEdit, mount: mountMenuEdit, unmount: function () {} });
