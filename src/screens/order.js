@@ -289,7 +289,7 @@
         '<button type="button" class="btn btn-primary" data-action="complete-order" data-id="' + order.id + '"' + dAttr + '>완료' + countText(order.completeCount || 0) + '</button>' +
         '</div>';
     }
-    // 완료 탭에서 취소/반품 처리된 건은 되돌리기·결제취소 버튼 대신, 처리 완료 시각이 담긴 뱃지로 대체한다
+    // 완료 탭에서 취소/반품 처리된 건은 주문 복구·결제취소 버튼 대신, 처리 완료 시각이 담긴 뱃지로 대체한다
     if (order.canceled) {
       const timeLabel = order.cancelledAt ? ' (' + window.UI.clockLabelWithSeconds(order.cancelledAt) + ')' : '';
       const doneLabel = order.cancelType === 'CANCEL' ? '주문 취소 완료' : '결제 취소 완료';
@@ -297,7 +297,7 @@
     }
     // '반품'(결제 취소)은 액션 버튼이 아니라 펼쳐보기의 메타 영역에 연락처와 같은 배지 양식으로 노출한다
     return '<div class="order-card-actions">' +
-      '<button type="button" class="btn btn-outline" data-action="revert-order" data-id="' + order.id + '"' + dAttr + '>되돌리기</button>' +
+      '<button type="button" class="btn btn-outline" data-action="revert-order" data-id="' + order.id + '"' + dAttr + '>주문 복구</button>' +
       '</div>';
   }
 
@@ -393,7 +393,7 @@
         '</div>';
     }
 
-    // 주문취소/결제취소/반품 처리된 완료 탭 건은 되돌리기·반품 버튼을 비활성화한다
+    // 주문취소/결제취소/반품 처리된 완료 탭 건은 주문 복구·반품 버튼을 비활성화한다
     const actionsDisabled = disabled || (tabStatus === 'DONE' && order.canceled);
     html += renderActionsHtml(order, tabStatus, actionsDisabled);
     html += '</div>';
@@ -436,7 +436,7 @@
       '</div>';
   }
 
-  // 모든 주문 컨트롤(수락/취소/호출/완료/되돌리기/반품 등)은 오프라인이거나 매장이 '마감' 상태면
+  // 모든 주문 컨트롤(수락/취소/호출/완료/주문 복구/반품 등)은 오프라인이거나 매장이 '마감' 상태면
   // 비활성화한다. '일시중지'는 새 주문만 잠시 안 받는 것이라, 이미 들어온 주문은 그대로 처리할 수 있어야
   // 하므로 컨트롤을 막지 않는다.
   function controlsDisabled() {
@@ -778,9 +778,9 @@
 
   function handleRevert(id) {
     window.UI.confirmModal(
-      '정말 주문을 되돌릴까요?',
+      '정말 주문을 복구할까요?',
       '주문이 처리중 상태로 돌아가요.',
-      '되돌리기',
+      '주문 복구',
       function () {
         window.MockApi.revertOrder(id);
         updateList();
