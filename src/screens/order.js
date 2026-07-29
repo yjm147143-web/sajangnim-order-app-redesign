@@ -851,17 +851,15 @@
     window.UI.toast('주문 목록을 새로고침했어요');
   }
 
-  // 영업중 ⇄ 일시중지 2단 순환. 잠금 설정이 되어 있으면 비밀번호 확인 후 변경한다.
+  // 영업중 ⇄ 일시중지 2단 순환. 일시중지는 잠금 보호 대상이 아니라(개점·마감만 보호),
+  // 비밀번호 확인 없이 바로 바꾼다.
   function handleToggleOperatingStatus() {
     const next = store.operatingStatus === 'OPEN' ? 'PAUSED' : 'OPEN';
-    function apply() {
-      store = window.MockApi.updateOperatingStatus(storeId, next);
-      window.UI.toast(next === 'OPEN' ? '영업을 시작했어요' : '일시중지로 변경했어요');
-      const pillBtn = root.querySelector('#status-pill-btn');
-      if (pillBtn) pillBtn.innerHTML = window.UI.statusPillHtml(store.operatingStatus);
-      updateList();
-    }
-    window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', apply);
+    store = window.MockApi.updateOperatingStatus(storeId, next);
+    window.UI.toast(next === 'OPEN' ? '영업을 시작했어요' : '일시중지로 변경했어요');
+    const pillBtn = root.querySelector('#status-pill-btn');
+    if (pillBtn) pillBtn.innerHTML = window.UI.statusPillHtml(store.operatingStatus);
+    updateList();
   }
 
   function refreshOfflineBanner() {

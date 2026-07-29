@@ -195,7 +195,14 @@
             refresh();
           }
 
-          window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', applyStatusChange);
+          // 일시중지/일시중지 해제는 보호 대상이 아니다 — 실제 '개점'(마감→영업)과 '마감'만 잠금으로 보호한다.
+          var isRealOpen = newStatus === 'OPEN' && storeBefore.operatingStatus === 'CLOSED';
+          var isClose = newStatus === 'CLOSED';
+          if (isRealOpen || isClose) {
+            window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', applyStatusChange);
+          } else {
+            applyStatusChange();
+          }
         });
       });
 
