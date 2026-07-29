@@ -6,6 +6,22 @@
 (function () {
   const esc = window.UI.escapeHtml;
 
+  // 네트워크 상태 아이콘 — 원활(초록)/간헐적 희미함(빨강)/완전 단절(빨강 + X)을 와이파이 아이콘
+  // 하나로 표현한다. 색만으로는 '희미함'과 '단절'이 구분 안 되니, 단절일 때만 X를 겹쳐 그린다.
+  function networkIconHtml(state) {
+    const color = state === 'ok' ? '#0b6b5c' : '#b02850';
+    const xMark = state === 'off'
+      ? '<line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line>'
+      : '';
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path>' +
+      '<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>' +
+      '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>' +
+      '<circle cx="12" cy="20" r="1.4" fill="' + color + '" stroke="none"></circle>' +
+      xMark +
+      '</svg>';
+  }
+
   // ---- 화면 상태 (mount 될 때마다 render()에서 초기화) ----
   let user = null;
   let storeId = null;
@@ -17,7 +33,7 @@
   let menuFilters = [];        // 선택된 메뉴명 배열 — 카테고리 내에서는 중복 선택(OR) 가능
   let orderTypeFilters = [];   // 'RESERVATION' | 'DELIVERY' 중 선택된 값 배열
   let calledFilter = 'ALL';    // 'ALL' | 'CALLED' | 'NOT_CALLED' — 주문 필터 시트의 '호출 여부' 카테고리에서 설정
-  let callStatusPanelOpen = false; // 'KDS' 배지 펼침 상태
+  let callStatusPanelOpen = false; // '주문 요약' 배지 펼침 상태
   let selectedIds = new Set();
   let cardOverrides = {};      // { [orderId:string]: boolean } 주문카드 단위 펼침 오버라이드 (기본값: 간단히 보기)
   let isOnline = true;
@@ -46,10 +62,8 @@
     '.filter-sheet-actions .btn { height: 48px; }' +
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
-    '.status-pill-btn { background: none; border: none; padding: 0; cursor: pointer; }' +
-    '.order-network-caption { flex-shrink: 0; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: var(--radius-pill); white-space: nowrap; }' +
-    '.order-network-caption.ok { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
-    '.order-network-caption.warn { background: var(--color-accent-red-bg); color: #b02850; }' +
+    '.status-pill-btn { display: inline-flex; }' +
+    '.order-network-caption { flex-shrink: 0; display: inline-flex; align-items: center; }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
@@ -183,8 +197,8 @@
     return '<div class="order-status-seg">' + tabBtns + '</div>';
   }
 
-  // ---------------- KDS 요약(모든 탭에서 노출) ----------------
-  // 이름은 'KDS'지만 실제 조리 현황판(kitchenBoard.js)과는 별개의 요약 위젯이다.
+  // ---------------- 주문 요약(모든 탭에서 노출) ----------------
+  // 실제 조리 현황판(kitchenBoard.js, 'KDS')과는 별개의 요약 위젯이다.
   // 집계는 현재 적용된 메뉴/유형/검색 필터는 그대로 반영하되, 호출 여부 필터 자체는 무시하고 각각 강제로 계산한다.
   function callStatusCounts() {
     const base = { status: 'PROCESSING', menuFilters: menuFilters, orderTypeFilters: orderTypeFilters, search: searchQuery || undefined };
@@ -231,7 +245,7 @@
   }
 
   function renderCallStatusButtonHtml() {
-    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 KDS ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
+    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
   // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버/대기)으로 보여줘
@@ -889,30 +903,19 @@
     window.UI.toast('주문 목록을 새로고침했어요');
   }
 
-  // 영업중 ⇄ 일시중지 2단 순환. 일시중지는 잠금 보호 대상이 아니라(개점·마감만 보호),
-  // 비밀번호 확인 없이 바로 바꾼다.
-  function handleToggleOperatingStatus() {
-    const next = store.operatingStatus === 'OPEN' ? 'PAUSED' : 'OPEN';
-    store = window.MockApi.updateOperatingStatus(storeId, next);
-    window.UI.toast(next === 'OPEN' ? '영업을 시작했어요' : '일시중지로 변경했어요');
-    const pillBtn = root.querySelector('#status-pill-btn');
-    if (pillBtn) pillBtn.innerHTML = window.UI.statusPillHtml(store.operatingStatus);
-    updateList();
-  }
-
   function refreshOfflineBanner() {
     const slot = root.querySelector('#offline-banner-slot');
     if (slot) slot.innerHTML = isOnline ? '' : offlineBannerHtml();
   }
 
-  // 완전 단절(isOnline)과 희미한 신호(networkWeak) 중 하나라도 해당되면 경고 캡션을 보여준다.
-  // 완전 단절이 아니면 주문 컨트롤은 그대로 두고 캡션 표시만 바꾼다.
+  // 완전 단절(isOnline)이 최우선, 그 다음 희미한 신호(networkWeak) 순으로 상태를 정한다.
+  // 완전 단절이 아니면 주문 컨트롤은 그대로 두고 아이콘 표시만 바꾼다.
+  function networkState() { return !isOnline ? 'off' : (networkWeak ? 'weak' : 'ok'); }
+
   function refreshNetworkCaption() {
     const el = root.querySelector('#order-network-caption');
     if (!el) return;
-    const warn = !isOnline || networkWeak;
-    el.className = 'order-network-caption ' + (warn ? 'warn' : 'ok');
-    el.textContent = warn ? '⚠️ 주의' : '원활';
+    el.innerHTML = networkIconHtml(networkState());
   }
 
   function onNetworkQuality(e) {
@@ -961,7 +964,6 @@
     const id = target.getAttribute('data-id');
     if (action === 'open-settings') onSettingsClick();
     else if (action === 'refresh-orders') handleRefresh(target);
-    else if (action === 'toggle-operating-status') handleToggleOperatingStatus();
     else if (action === 'dismiss-auto-soldout') {
       const dismissName = target.getAttribute('data-name');
       autoSoldoutNames = autoSoldoutNames.filter(function (n) { return n !== dismissName; });
@@ -1048,10 +1050,10 @@
     return '' +
       '<style>' + SCOPED_STYLE + '</style>' +
       '<div class="topbar order-topbar-centered">' +
-      '<button type="button" class="status-pill-btn" id="status-pill-btn" data-action="toggle-operating-status">' + window.UI.statusPillHtml(store.operatingStatus) + '</button>' +
+      '<span class="status-pill-btn">' + window.UI.statusPillHtml(store.operatingStatus) + '</span>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
-      '<span class="order-network-caption ' + ((isOnline && !networkWeak) ? 'ok' : 'warn') + '" id="order-network-caption">' + ((isOnline && !networkWeak) ? '원활' : '⚠️ 주의') + '</span>' +
+      '<span class="order-network-caption" id="order-network-caption">' + networkIconHtml(networkState()) + '</span>' +
       '</div>' +
       '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
       '</div>' +
