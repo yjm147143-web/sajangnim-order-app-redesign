@@ -131,7 +131,7 @@
         '</div>' +
 
         '<div class="section-title">매장 운영 현황</div>' +
-        '<div class="section-caption">영업중 ' + summary.open + '개소 · 일시중지 ' + summary.paused + '개소 · 마감 ' + summary.closed + '개소 (총 ' + summary.storeCount + '개)</div>' +
+        '<div class="section-caption">영업 중 ' + summary.open + '개소 · 일시중지 ' + summary.paused + '개소 · 마감 ' + summary.closed + '개소 (총 ' + summary.storeCount + '개)</div>' +
         '<div style="padding:8px 20px 20px;">' +
           '<div class="card card-flat">' + storeRowsHtml + '</div>' +
         '</div>' +

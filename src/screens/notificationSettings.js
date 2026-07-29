@@ -57,18 +57,18 @@
   function render() {
     return (
       '<style>' +
-        '.notification-volume-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;}' +
+        '.notification-volume-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 60px;}' +
         '.notification-volume-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.notification-volume-label{font-size:var(--font-size-caption);color:var(--color-text-secondary);font-weight:600;flex-shrink:0;white-space:nowrap;}' +
         '.notification-volume-row input[type=range]{flex:1;accent-color:var(--color-text-primary);}' +
         '.notification-volume-value{font-size:var(--font-size-caption);font-weight:700;width:28px;text-align:right;flex-shrink:0;}' +
         '.notification-volume-row .pill-btn{flex-shrink:0;}' +
-        '.notification-volume-hint{font-size:var(--font-size-micro);color:var(--color-text-secondary);padding:0 var(--space-5) var(--space-3) 48px;}' +
-        '.notification-sub-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 48px;flex-wrap:wrap;}' +
+        '.notification-volume-hint{font-size:var(--font-size-micro);color:var(--color-text-secondary);padding:0 var(--space-5) var(--space-3) 60px;}' +
+        '.notification-sub-row{display:flex;align-items:center;gap:10px;padding:0 var(--space-5) var(--space-3) 60px;flex-wrap:wrap;}' +
         '.notification-sub-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.notification-chip-row{display:flex;gap:6px;flex-wrap:wrap;}' +
         '.notification-chip-row .pill-btn.active{background:var(--color-accent-blue);color:var(--color-white);}' +
-        '.notification-repeat-row{display:flex;align-items:center;gap:14px;padding:var(--space-2) var(--space-5) var(--space-4) 48px;}' +
+        '.notification-repeat-row{display:flex;align-items:center;gap:14px;padding:var(--space-2) var(--space-5) var(--space-4) 60px;}' +
         '.notification-repeat-row.disabled{opacity:0.45;pointer-events:none;}' +
         '.repeat-stepper{display:flex;align-items:center;gap:12px;}' +
         '.repeat-stepper .stepper-btn{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--color-disabled);background:var(--color-white);' +

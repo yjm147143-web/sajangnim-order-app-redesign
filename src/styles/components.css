@@ -511,7 +511,7 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .sales-subtab-btn.active { background: var(--color-text-primary); color: var(--color-white); }
 .sales-subtab-btn { transition: background .15s ease, color .15s ease; }
 /* 행사담당자 매출현황 전용 — 5개 탭('매장별' 추가)이 균등폭 줄바꿈으로 4:1 어색하게 갈라지던 것을
-   컨텐츠 폭에 맞는 가로 스크롤 탭 스트립으로 바꿔 5개 모두 한 줄에서 또렷이 읽히게 한다. */
+   콘텐츠 폭에 맞는 가로 스크롤 탭 스트립으로 바꿔 5개 모두 한 줄에서 또렷이 읽히게 한다. */
 .sales-subtab-row.ems-subtab-row {
   flex-wrap: nowrap;
   overflow-x: auto;

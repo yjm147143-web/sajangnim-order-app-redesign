@@ -125,7 +125,7 @@
             '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
           '</div>' +
           '<div class="option-setting-row">' +
-            '<span class="option-setting-label">주문할 때 최대 몇개를 선택할까요?</span>' +
+            '<span class="option-setting-label">주문할 때 최대 몇 개를 선택할까요?</span>' +
             '<div class="option-maxselect-stepper">' +
               '<button type="button" class="stepper-btn" data-action="' + actionPrefix + 'maxselect-minus" ' + identifierAttr + (maxSelect <= 1 ? ' disabled' : '') + ' aria-label="감소">−</button>' +
               '<div class="stepper-value"><span>' + maxSelect + '</span><span class="unit">개</span></div>' +

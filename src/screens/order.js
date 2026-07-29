@@ -360,7 +360,7 @@
       html += '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>';
     }
     if (order.canceled) {
-      const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제취소' : '주문거절');
+      const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제 취소' : '주문 거절');
       html += '<div class="order-card-cancel-reason">[' + typeLabel + '] ' + esc(order.cancelReason || '') + '</div>';
     }
 
