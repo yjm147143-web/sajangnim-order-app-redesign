@@ -87,18 +87,18 @@
   // 이벤트 위임 스코프(lib-* vs 접두어 없음)를 주입해 마크업만 통일하고 동작은 기존 그대로 유지한다.
   function optionGroupCardHtml(g, identifierAttr, actionPrefix, showUsage, hideRemoveGroupBtn) {
     var usageNames = showUsage ? window.MockApi.getOptionGroupUsageNames(g.id) : null;
+    var maxSelect = Math.max(1, Number(g.maxSelect) || 1);
     var optionsHtml = (g.options || []).map(function (o, oi) {
-      var triState = o.exposed === false ? 'hidden' : ((!!o.soldOut) ? 'soldout' : 'available');
+      var isSoldOut = !!o.soldOut;
       return (
         '<div class="option-row">' +
-          '<div class="option-seg-pair">' +
-            '<button type="button" class="option-seg-btn' + (triState === 'available' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="available" ' + identifierAttr + ' data-opt-idx="' + oi + '">판매중</button>' +
-            '<button type="button" class="option-seg-btn tone-red' + (triState === 'soldout' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '">품절</button>' +
-            '<button type="button" class="option-seg-btn tone-gray' + (triState === 'hidden' ? ' active' : '') + '" data-action="' + actionPrefix + 'set-option-tri" data-value="hidden" ' + identifierAttr + ' data-opt-idx="' + oi + '">숨김</button>' +
-          '</div>' +
           '<input class="input-field option-name-input" type="text" placeholder="옵션명" value="' + esc(o.name) + '" data-field="' + actionPrefix + 'opt-name" ' + identifierAttr + ' data-opt-idx="' + oi + '" />' +
           '<input class="input-field option-price-input" type="number" placeholder="금액" value="' + (o.price || 0) + '" data-field="' + actionPrefix + 'opt-price" ' + identifierAttr + ' data-opt-idx="' + oi + '" />' +
-          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">✕</button>' +
+          '<div class="option-soldout-toggle">' +
+            '<span class="option-soldout-toggle-label">' + (isSoldOut ? '품절' : '판매중') + '</span>' +
+            '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
+          '</div>' +
+          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">🗑️</button>' +
         '</div>'
       );
     }).join('');
@@ -106,21 +106,28 @@
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
           '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
-          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">✕</button>') +
+          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">🗑️</button>') +
         '</div>' +
         (showUsage ? '<div class="option-group-usage">' + (usageNames.length ? esc(usageNames.join(', ')) + '에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
-        '<div class="option-group-controls">' +
-          '<div class="option-select-mode">' +
-            '<button type="button" class="segment-tab-sm' + (!g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-single" ' + identifierAttr + '>1개만 선택</button>' +
-            '<button type="button" class="segment-tab-sm' + (g.multiSelect ? ' active' : '') + '" data-action="' + actionPrefix + 'set-select-multi" ' + identifierAttr + '>여러개 선택</button>' +
-          '</div>' +
-          '<div class="option-required-row option-select-mode">' +
-            '<button type="button" class="segment-tab-sm' + (g.required ? ' active' : '') + '" data-action="' + actionPrefix + 'set-required" data-value="true" ' + identifierAttr + '>필수형</button>' +
-            '<button type="button" class="segment-tab-sm' + (!g.required ? ' active' : '') + '" data-action="' + actionPrefix + 'set-required" data-value="false" ' + identifierAttr + '>선택형</button>' +
-          '</div>' +
-        '</div>' +
         optionsHtml +
         '<button type="button" class="btn btn-secondary btn-sm" data-action="' + actionPrefix + 'add-option" ' + identifierAttr + '>+ 옵션 추가</button>' +
+      '</div>' +
+      '<div class="option-group-card">' +
+        '<div class="option-groups-subtitle" style="margin-top:0;">손님 선택 방식 설정</div>' +
+        '<div class="option-select-settings">' +
+          '<div class="option-setting-row">' +
+            '<span class="option-setting-label">이 옵션은 필수 선택이에요</span>' +
+            '<button type="button" class="toggle' + (g.required ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-required" ' + identifierAttr + '><span class="toggle-knob"></span></button>' +
+          '</div>' +
+          '<div class="option-setting-row">' +
+            '<span class="option-setting-label">주문할 때 최대 몇개를 선택할까요?</span>' +
+            '<div class="option-maxselect-stepper">' +
+              '<button type="button" class="stepper-btn" data-action="' + actionPrefix + 'maxselect-minus" ' + identifierAttr + (maxSelect <= 1 ? ' disabled' : '') + ' aria-label="감소">−</button>' +
+              '<div class="stepper-value"><span>' + maxSelect + '</span><span class="unit">개</span></div>' +
+              '<button type="button" class="stepper-btn" data-action="' + actionPrefix + 'maxselect-plus" ' + identifierAttr + (maxSelect >= 20 ? ' disabled' : '') + ' aria-label="증가">+</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -129,43 +136,40 @@
   // (편집은 그 화면에서만 이루어지고, 목록에는 더 이상 입력창/토글이 노출되지 않는다).
   function optionGroupRowHtml(g) {
     var usage = window.MockApi.getOptionGroupUsageCount(g.id);
-    var modeLabel = g.multiSelect ? '여러개 선택' : '1개만 선택';
+    var modeLabel = (g.maxSelect > 1) ? ('최대 ' + g.maxSelect + '개 선택') : '1개만 선택';
     return (
       '<div class="menu-row option-group-row" data-group-id="' + g.id + '">' +
-        '<div class="menu-row-thumb">🧩</div>' +
         '<div class="menu-row-body">' +
           '<div class="menu-row-name">' + esc(g.name || '(이름 없음)') + (g.required ? ' <span class="badge badge-neutral">필수</span>' : '') + '</div>' +
           '<div class="menu-row-sub">옵션 ' + (g.options || []).length + '개 · ' + modeLabel + '</div>' +
         '</div>' +
         '<div class="menu-row-side">' +
           '<div class="option-group-usage-inline">' + (usage > 0 ? usage + '개 메뉴 사용' : '미사용') + '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">✕</button>' +
+          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">🗑️</button>' +
         '</div>' +
       '</div>'
     );
   }
 
-  // 사용 중인 메뉴가 있으면 확인 팝업(삭제/취소)을 띄우고, 없으면 바로 삭제한다.
-  // 목록 행의 삭제 버튼과 수정 화면의 ✕ 버튼이 이 로직을 그대로 공유한다.
+  // 사용 중이든 아니든 항상 확인 팝업(삭제/취소)을 띄운 뒤에만 삭제한다.
+  // 목록 행의 삭제 버튼과 수정 화면의 🗑️ 버튼이 이 로직을 그대로 공유한다.
   function deleteOptionGroupWithConfirm(groupId, onDeleted) {
     var usageNames = window.MockApi.getOptionGroupUsageNames(groupId);
-    if (usageNames.length) {
-      window.UI.confirmModal(
-        '이 옵션을 사용하고 있는 메뉴가 있어요',
-        esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?',
-        '삭제',
-        function () {
-          window.MockApi.deleteOptionGroup(groupId, true);
-          window.UI.toast('옵션 그룹을 삭제했어요');
-          onDeleted();
-        },
-        { danger: true }
-      );
-    } else {
-      window.MockApi.deleteOptionGroup(groupId);
-      window.UI.toast('옵션 그룹을 삭제했어요');
-      onDeleted();
-    }
+    var title = usageNames.length ? '이 옵션을 사용하고 있는 메뉴가 있어요' : '옵션 그룹을 삭제할까요?';
+    var body = usageNames.length
+      ? esc(usageNames.join(', ')) + '에서 사용하고 있는 옵션이에요. 정말 삭제하시나요?'
+      : '삭제하면 되돌릴 수 없어요. 정말 삭제하시나요?';
+    window.UI.confirmModal(
+      title,
+      body,
+      '삭제',
+      function () {
+        window.MockApi.deleteOptionGroup(groupId, true);
+        window.UI.toast('옵션 그룹을 삭제했어요');
+        onDeleted();
+      },
+      { danger: true }
+    );
   }
 
   // 옵션 그룹을 저장하기 직전에 이름/가격을 다듬고 빈 옵션을 걸러낸다 — 메뉴 폼에서 그룹을 새로
@@ -174,10 +178,10 @@
     return {
       name: (g.name || '').trim(),
       required: !!g.required,
-      multiSelect: !!g.multiSelect,
+      maxSelect: Math.max(1, Number(g.maxSelect) || 1),
       options: (g.options || [])
         .filter(function (o) { return o.name && o.name.trim(); })
-        .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0, soldOut: !!o.soldOut, exposed: o.exposed !== false }; }),
+        .map(function (o) { return { name: o.name.trim(), price: Number(o.price) || 0, soldOut: !!o.soldOut }; }),
     };
   }
 
@@ -193,7 +197,7 @@
       ? '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>'
       : '<div class="menu-list">' + groups.map(optionGroupRowHtml).join('') + '</div>';
     return '<div class="option-library-list">' + listHtml +
-      '<button type="button" class="btn btn-secondary" id="add-option-group-btn">+ 옵션 목록 추가</button>' +
+      '<button type="button" class="menu-add-btn" id="add-option-group-btn">+ 옵션 목록 추가</button>' +
       '</div>';
   }
 
@@ -212,7 +216,7 @@
         '.main-tab-menu{flex:2;font-size:var(--font-size-body);}' +
         '.main-tab-option{flex:1;font-size:var(--font-size-caption);}' +
         '.option-library-list{padding-bottom:24px;}' +
-        '.option-library-list #add-option-group-btn{display:flex;margin:4px var(--space-5) 0;}' +
+        '.option-library-list #add-option-group-btn{margin:8px var(--space-5) 0;}' +
         '.option-group-usage-inline{font-size:var(--font-size-caption);font-weight:700;color:var(--color-text-secondary);white-space:nowrap;}' +
       '</style>' +
       '<div class="topbar">' +
@@ -422,14 +426,14 @@
     // 편집 모드의 draft에만 id를 넣어 사용 현황 조회(g.id)가 되게 한다 — cleanOptionGroupPayload는
     // id를 복사하지 않으므로 저장 시 addOptionGroup의 기본 id 생성 로직과는 무관하게 안전하다.
     var draft = isNew
-      ? { name: '', required: false, multiSelect: false, options: [] }
+      ? { name: '', required: false, maxSelect: 1, options: [] }
       : (function () {
           var g = window.MockApi.getOptionGroup(groupId);
           return {
             id: g.id,
             name: g.name,
             required: g.required,
-            multiSelect: g.multiSelect,
+            maxSelect: Math.max(1, Number(g.maxSelect) || 1),
             options: (g.options || []).map(function (o) { return Object.assign({}, o); }),
           };
         })();
@@ -531,32 +535,30 @@
         openMenuLinkSheet();
         return;
       }
-      var reqBtn = e.target.closest('[data-action="set-required"]');
-      if (reqBtn) {
-        draft.required = reqBtn.getAttribute('data-value') === 'true';
+      if (e.target.closest('[data-action="toggle-required"]')) {
+        draft.required = !draft.required;
         refresh();
         return;
       }
-      if (e.target.closest('[data-action="set-select-single"]')) {
-        draft.multiSelect = false;
+      if (e.target.closest('[data-action="maxselect-minus"]')) {
+        draft.maxSelect = Math.max(1, (Number(draft.maxSelect) || 1) - 1);
         refresh();
         return;
       }
-      if (e.target.closest('[data-action="set-select-multi"]')) {
-        draft.multiSelect = true;
+      if (e.target.closest('[data-action="maxselect-plus"]')) {
+        draft.maxSelect = Math.min(20, (Number(draft.maxSelect) || 1) + 1);
         refresh();
         return;
       }
       if (e.target.closest('[data-action="add-option"]')) {
-        draft.options.push({ name: '', price: 0, soldOut: false, exposed: true });
+        draft.options.push({ name: '', price: 0, soldOut: false });
         refresh();
         return;
       }
-      var triBtn = e.target.closest('[data-action="set-option-tri"]');
-      if (triBtn) {
-        var triVal = triBtn.getAttribute('data-value');
-        var triPayload = triVal === 'available' ? { soldOut: false, exposed: true } : triVal === 'soldout' ? { soldOut: true, exposed: true } : { exposed: false };
-        Object.assign(draft.options[Number(triBtn.getAttribute('data-opt-idx'))], triPayload);
+      var soldoutBtn = e.target.closest('[data-action="toggle-option-soldout"]');
+      if (soldoutBtn) {
+        var soldoutOpt = draft.options[Number(soldoutBtn.getAttribute('data-opt-idx'))];
+        soldoutOpt.soldOut = !soldoutOpt.soldOut;
         refresh();
         return;
       }
@@ -669,7 +671,7 @@
     }
     return '<div class="existing-group-chip-row">' + groups.map(function (g) {
       var on = state.selectedGroupIds.indexOf(g.id) !== -1;
-      var modeLabel = g.multiSelect ? '여러개 선택' : '1개만 선택';
+      var modeLabel = (g.maxSelect > 1) ? ('최대 ' + g.maxSelect + '개 선택') : '1개만 선택';
       return (
         '<button type="button" class="existing-group-chip' + (on ? ' on' : '') + '" data-action="toggle-existing-group" data-group-id="' + g.id + '">' +
           '<span class="name">' + esc(g.name || '(이름 없음)') + '</span>' +
@@ -1229,7 +1231,7 @@
       }
       var addGroupBtn = e.target.closest('[data-action="add-group"]');
       if (addGroupBtn) {
-        state.optionGroups.push({ id: 'og-' + Date.now() + Math.random().toString(36).slice(2, 6), name: '', required: false, multiSelect: false, options: [] });
+        state.optionGroups.push({ id: 'og-' + Date.now() + Math.random().toString(36).slice(2, 6), name: '', required: false, maxSelect: 1, options: [] });
         renderGroupsList();
         return;
       }
@@ -1237,8 +1239,8 @@
       if (presetBtn) {
         // 자주 쓰는 옵션은 이름/선택방식/필수여부가 채워진 채로 바로 만들어, 손님이 빈 칸부터 채우지 않아도 되게 한다
         var presetDefs = {
-          size: { name: '사이즈', required: true, multiSelect: false },
-          topping: { name: '토핑', required: false, multiSelect: true },
+          size: { name: '사이즈', required: true, maxSelect: 1 },
+          topping: { name: '토핑', required: false, maxSelect: 3 },
         };
         var preset = presetDefs[presetBtn.getAttribute('data-preset')];
         state.optionGroups.push(Object.assign({ id: 'og-' + Date.now() + Math.random().toString(36).slice(2, 6), options: [] }, preset));
@@ -1266,34 +1268,35 @@
         renderGroupsList();
         return;
       }
-      var reqBtn = e.target.closest('[data-action="set-required"]');
-      if (reqBtn) {
-        var giReq = Number(reqBtn.getAttribute('data-group-idx'));
-        state.optionGroups[giReq].required = reqBtn.getAttribute('data-value') === 'true';
+      var reqToggleBtn = e.target.closest('[data-action="toggle-required"]');
+      if (reqToggleBtn) {
+        var giReq = Number(reqToggleBtn.getAttribute('data-group-idx'));
+        state.optionGroups[giReq].required = !state.optionGroups[giReq].required;
         renderGroupsList();
         return;
       }
-      var singleBtn = e.target.closest('[data-action="set-select-single"]');
-      if (singleBtn) {
-        state.optionGroups[Number(singleBtn.getAttribute('data-group-idx'))].multiSelect = false;
+      var maxMinusBtn = e.target.closest('[data-action="maxselect-minus"]');
+      if (maxMinusBtn) {
+        var giMinus = Number(maxMinusBtn.getAttribute('data-group-idx'));
+        var groupMinus = state.optionGroups[giMinus];
+        groupMinus.maxSelect = Math.max(1, (Number(groupMinus.maxSelect) || 1) - 1);
         renderGroupsList();
         return;
       }
-      var multiBtn = e.target.closest('[data-action="set-select-multi"]');
-      if (multiBtn) {
-        state.optionGroups[Number(multiBtn.getAttribute('data-group-idx'))].multiSelect = true;
+      var maxPlusBtn = e.target.closest('[data-action="maxselect-plus"]');
+      if (maxPlusBtn) {
+        var giPlus = Number(maxPlusBtn.getAttribute('data-group-idx'));
+        var groupPlus = state.optionGroups[giPlus];
+        groupPlus.maxSelect = Math.min(20, (Number(groupPlus.maxSelect) || 1) + 1);
         renderGroupsList();
         return;
       }
-      var triBtn = e.target.closest('[data-action="set-option-tri"]');
-      if (triBtn) {
-        var giTri = Number(triBtn.getAttribute('data-group-idx'));
-        var oiTri = Number(triBtn.getAttribute('data-opt-idx'));
-        var triVal = triBtn.getAttribute('data-value');
-        var triOpt = state.optionGroups[giTri].options[oiTri];
-        if (triVal === 'available') { triOpt.soldOut = false; triOpt.exposed = true; }
-        else if (triVal === 'soldout') { triOpt.soldOut = true; triOpt.exposed = true; }
-        else { triOpt.exposed = false; }
+      var optSoldoutBtn = e.target.closest('[data-action="toggle-option-soldout"]');
+      if (optSoldoutBtn) {
+        var giSoldout = Number(optSoldoutBtn.getAttribute('data-group-idx'));
+        var oiSoldout = Number(optSoldoutBtn.getAttribute('data-opt-idx'));
+        var soldoutTarget = state.optionGroups[giSoldout].options[oiSoldout];
+        soldoutTarget.soldOut = !soldoutTarget.soldOut;
         renderGroupsList();
         return;
       }

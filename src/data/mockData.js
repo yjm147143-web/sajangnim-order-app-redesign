@@ -147,8 +147,8 @@
 
     // 옵션 그룹은 매장 단위로 공유되는 자원이라, 메뉴가 optionGroupIds로 참조한다 (완전 연동 — 한 곳에서 수정하면 이 그룹을 쓰는 모든 메뉴에 반영됨)
     const optionGroups = [
-      { id: 'og-1', storeId: 'store-1', name: '샷 추가', required: false, multiSelect: false, options: [{ name: '1샷 추가', price: 500, soldOut: false, exposed: true }, { name: '2샷 추가', price: 1000, soldOut: false, exposed: true }] },
-      { id: 'og-2', storeId: 'store-1', name: '얼음량', required: true, multiSelect: false, options: [{ name: '적게', price: 0, soldOut: false, exposed: true }, { name: '보통', price: 0, soldOut: false, exposed: true }, { name: '많이', price: 0, soldOut: false, exposed: true }] },
+      { id: 'og-1', storeId: 'store-1', name: '샷 추가', required: false, maxSelect: 1, options: [{ name: '1샷 추가', price: 500, soldOut: false }, { name: '2샷 추가', price: 1000, soldOut: false }] },
+      { id: 'og-2', storeId: 'store-1', name: '얼음량', required: true, maxSelect: 1, options: [{ name: '적게', price: 0, soldOut: false }, { name: '보통', price: 0, soldOut: false }, { name: '많이', price: 0, soldOut: false }] },
     ];
 
     function items(list) { return list; }

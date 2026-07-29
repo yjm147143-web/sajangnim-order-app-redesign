@@ -581,19 +581,22 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .existing-group-chip.on { border-color: var(--color-accent-blue); background: var(--color-accent-blue-bg); }
 .existing-group-chip .name { font-size: var(--font-size-caption); font-weight: 800; color: var(--color-text-primary); }
 .existing-group-chip .meta { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
-.option-group-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: var(--space-3); }
-.option-select-mode { display: flex; border: 1px solid var(--color-disabled); border-radius: var(--radius-pill); padding: 2px; }
-.segment-tab-sm { border: none; background: transparent; padding: 6px 12px; font-size: var(--font-size-micro); font-weight: 700; color: var(--color-text-secondary); border-radius: var(--radius-pill); cursor: pointer; }
-.segment-tab-sm.active { background: var(--color-text-primary); color: var(--color-white); }
-.option-required-row { display: flex; align-items: center; gap: var(--space-2); }
-.option-row { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; margin-bottom: var(--space-2); }
-.option-seg-pair { display: flex; border: 1px solid var(--color-disabled); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-.option-seg-btn { border: none; background: var(--color-white); color: var(--color-text-secondary); font-size: 10px; font-weight: 700; padding: 0 6px; height: 36px; cursor: pointer; white-space: nowrap; }
-.option-seg-btn.active { background: var(--color-text-primary); color: var(--color-white); }
-.option-seg-btn.tone-red.active { background: var(--color-accent-red); color: var(--color-white); }
-.option-seg-btn.tone-gray.active { background: var(--color-text-secondary); color: var(--color-white); }
+.option-row { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; margin-bottom: var(--space-2); }
 .option-name-input.input-field { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 6px; font-size: 12px; }
 .option-price-input.input-field { flex: 0 1 56px; min-width: 0; height: 36px; padding: 0 4px; font-size: 12px; text-align: right; }
+/* 옵션별 판매중/품절 — 메뉴 목록 행의 품절 토글과 같은 형태(작은 라벨 + 스위치)를 그대로 재사용 */
+.option-soldout-toggle { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+.option-soldout-toggle-label { font-size: 9px; font-weight: 700; color: var(--color-text-secondary); white-space: nowrap; }
+/* 손님 선택 방식 설정 — 필수 여부 토글 + 최대 선택 개수 스테퍼 */
+.option-select-settings { border-top: 1px solid var(--color-divider); padding-top: var(--space-2); margin-bottom: var(--space-3); }
+.option-setting-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 10px 0; }
+.option-setting-label { font-size: var(--font-size-caption); font-weight: 600; color: var(--color-text-primary); }
+.option-maxselect-stepper { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.option-maxselect-stepper .stepper-btn { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--color-disabled); background: var(--color-white); font-size: 15px; font-weight: 800; color: var(--color-text-primary); cursor: pointer; }
+.option-maxselect-stepper .stepper-btn:active { background: var(--color-divider); }
+.option-maxselect-stepper .stepper-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.option-maxselect-stepper .stepper-value { min-width: 32px; text-align: center; font-size: 14px; font-weight: 800; }
+.option-maxselect-stepper .stepper-value .unit { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin-left: 2px; }
 /* 자주 쓰는 옵션을 이름/선택방식/필수여부가 채워진 채로 바로 만들어주는 프리셋 칩 */
 .option-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: var(--space-3); }
 .option-preset-chip { border: none; border-radius: var(--radius-pill); padding: 9px 14px; font-size: var(--font-size-caption); font-weight: 700; cursor: pointer; background: var(--color-accent-purple-bg); color: var(--color-accent-purple); }

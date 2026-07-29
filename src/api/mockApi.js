@@ -310,7 +310,7 @@
   }
 
   function addOptionGroup(storeId, payload) {
-    const group = Object.assign({ id: uid('og'), storeId: storeId, name: '', required: false, multiSelect: false, options: [] }, payload);
+    const group = Object.assign({ id: uid('og'), storeId: storeId, name: '', required: false, maxSelect: 1, options: [] }, payload);
     DB.optionGroups.push(group);
     persist();
     return group;
