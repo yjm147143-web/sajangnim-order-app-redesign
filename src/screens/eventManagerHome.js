@@ -38,11 +38,6 @@
     return '<span class="store-network-warning">⚠️ 네트워크 상태가 원활하지 않아요</span>';
   }
 
-  // 누적 주문건수는 mockApi에 필드가 없어, 오늘 매출 대비 누적 매출 비율로 근사치를 계산한다.
-  function estimateTotalOrderCount(summary) {
-    if (!summary.todayAmount || !summary.todayOrderCount) return summary.todayOrderCount || 0;
-    return Math.max(summary.todayOrderCount, Math.round(summary.todayOrderCount * (summary.totalAmount / summary.todayAmount)));
-  }
 
   function storeRowHtml(s) {
     const timeLabel = statusTimeLabel(s);
@@ -85,7 +80,6 @@
     const event = window.MockApi.getEvent(eventId);
     const summary = window.MockApi.getEventDashboardSummary(eventId);
     const stores = window.MockApi.getStoresByEvent(eventId);
-    const estTotalOrders = estimateTotalOrderCount(summary);
     selectedIds = new Set();
 
     const storeRowsHtml = stores.length
@@ -108,6 +102,7 @@
         '.store-network-warning{font-size:var(--font-size-micro);font-weight:800;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-accent-red-bg);color:#b02850;white-space:nowrap;}' +
         '.card-flat{padding:0;overflow:hidden;}' +
         '.store-settings-btn{background:none;border:none;font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;}' +
+        '.store-ctrl-fixed{flex-shrink:0;background:var(--color-white);border-top:1px solid var(--color-divider);box-shadow:0 -4px 16px rgba(0,0,0,0.06);}' +
       '</style>' +
       '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">' + esc(event.name) + '</div><div class="topbar-side"></div></div>' +
       '<div class="section-caption">' + formatDateRange(event.startDate, event.endDate) + ' · ' + esc(event.managerName || '') + ' 담당</div>' +
@@ -127,7 +122,7 @@
           '<div class="summary-card"><span class="summary-label">오늘 매출</span><span class="summary-value">' + window.UI.formatMoney(summary.todayAmount) + '</span></div>' +
           '<div class="summary-card"><span class="summary-label">누적 매출</span><span class="summary-value">' + window.UI.formatMoney(summary.totalAmount) + '</span></div>' +
           '<div class="summary-card"><span class="summary-label">오늘 주문건수</span><span class="summary-value">' + summary.todayOrderCount.toLocaleString('ko-KR') + '건</span></div>' +
-          '<div class="summary-card"><span class="summary-label">누적 주문건수</span><span class="summary-value">' + estTotalOrders.toLocaleString('ko-KR') + '건</span></div>' +
+          '<div class="summary-card"><span class="summary-label">누적 주문건수</span><span class="summary-value">' + summary.totalOrderCount.toLocaleString('ko-KR') + '건</span></div>' +
         '</div>' +
 
         '<div class="section-title">매장 운영 현황</div>' +
@@ -136,12 +131,16 @@
           '<div class="card card-flat">' + storeRowsHtml + '</div>' +
         '</div>' +
 
-        (stores.length ? (
-          '<div class="section-title">매장 통제</div>' +
-          '<div id="store-ctrl-panel" style="padding:8px 20px 28px;">' + ctrlPanelHtml() + '</div>'
-        ) : '') +
-
       '</div>' +
+
+      // 스크롤 영역 밖(탭바 바로 위)에 고정해, 목록을 아무리 내려도 항상 눌러 통제할 수 있게 한다
+      (stores.length ? (
+        '<div class="store-ctrl-fixed">' +
+          '<div class="section-title" style="padding:12px 20px 0;">매장 통제</div>' +
+          '<div id="store-ctrl-panel" style="padding:8px 20px 12px;">' + ctrlPanelHtml() + '</div>' +
+        '</div>'
+      ) : '') +
+
       window.EventManagerShell.tabbarHtml('eventManagerHome')
     );
   }

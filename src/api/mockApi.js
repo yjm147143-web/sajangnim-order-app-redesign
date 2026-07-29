@@ -822,9 +822,10 @@
     const todayAmount = stores.reduce(function (s, st) { return s + (st.todaySalesAmount || 0); }, 0);
     const totalAmount = stores.reduce(function (s, st) { return s + (st.totalSalesAmount || 0); }, 0);
     const todayOrderCount = stores.reduce(function (s, st) { return s + (st.todayOrderCount || 0); }, 0);
+    const totalOrderCount = stores.reduce(function (s, st) { return s + (st.totalOrderCount || 0); }, 0);
     return {
       storeCount: stores.length, open: open, paused: paused, closed: closed,
-      todayAmount: todayAmount, totalAmount: totalAmount, todayOrderCount: todayOrderCount,
+      todayAmount: todayAmount, totalAmount: totalAmount, todayOrderCount: todayOrderCount, totalOrderCount: totalOrderCount,
       avgPerStoreToday: stores.length ? Math.round(todayAmount / stores.length) : 0,
       avgPerStoreTotal: stores.length ? Math.round(totalAmount / stores.length) : 0,
     };
