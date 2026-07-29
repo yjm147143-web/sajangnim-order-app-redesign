@@ -1,6 +1,6 @@
 /*
- * 현금 주문 생성 화면 (설정 > 주문 관리 > 현금 주문 생성)
- * - 사장님이 카운터에서 손님 대신 메뉴를 골라 현금 주문을 등록하는 화면.
+ * 임의 주문 생성 화면 (설정 > 주문 관리 > 임의 주문 생성)
+ * - 사장님이 카운터에서 손님 대신 메뉴를 골라 주문을 대신 등록하는 화면.
  * - 첨부된 기능명세서(현금주문생성_기능명세서.xlsx)의 5단계 중 '카테고리 선택' depth는
  *   사용자 요청으로 생략하고, 진입하면 바로 메뉴 선택 화면(카테고리 탭 포함)으로 시작한다.
  * - 흐름: 메뉴 선택 → 주문 확인(총액, 손님 연락처 필수 입력 — 기본은 010-1234-5678 형식 자동 포맷,
@@ -140,7 +140,7 @@
     return (
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" data-action="coc-exit" aria-label="뒤로가기">←</button></div>' +
-        '<div class="topbar-title"><span class="order-title-text">현금 주문 생성</span></div>' +
+        '<div class="topbar-title"><span class="order-title-text">임의 주문 생성</span></div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="segment-tabs" id="coc-category-tabs">' + categoryTabsHtml() + '</div>' +
@@ -354,7 +354,7 @@
       const isEmail = contactMode === 'EMAIL';
       const contactValue = isEmail ? customerEmail.trim() : customerPhone;
       window.MockApi.createCashOrder(storeId, menuLineFromCart(), receivedAmount, contactValue, isEmail);
-      window.UI.toast('현금 주문이 접수되었어요');
+      window.UI.toast('임의 주문이 접수되었어요');
       cart = {};
       receivedAmount = 0;
       amountError = '';

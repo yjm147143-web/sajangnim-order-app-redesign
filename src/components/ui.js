@@ -69,16 +69,17 @@
   }
 
   // ---------------- Channel / status badges ----------------
-  // 카운터에서 접수한 현금 주문은 카드 헤더에서도 바로 구분돼야 하는 예외적인 유형이라 배지를 유지한다.
-  // 키오스크/QR오더는 흔한 기본 유형이라 헤더 배지 대신 상세보기의 '주문 유형' 행으로만 노출한다.
+  // 사장님이 카운터에서 대신 접수한 임의 생성 주문은 카드 헤더에서도 바로 구분돼야 하는 예외적인
+  // 유형이라 배지를 유지한다. 키오스크/QR오더는 흔한 기본 유형이라 헤더 배지 대신 상세보기의
+  // '주문 유형' 행으로만 노출한다.
   function channelBadgeHtml(channel) {
-    if (channel === 'MANUAL') return '<span class="channel-badge channel-manual">💵 현금 주문</span>';
+    if (channel === 'MANUAL') return '<span class="channel-badge channel-manual">🧾 임의 생성 주문</span>';
     return '';
   }
 
   function channelTypeLabel(channel) {
     if (channel === 'QR') return '🔳 QR오더';
-    if (channel === 'MANUAL') return '💵 현금 주문';
+    if (channel === 'MANUAL') return '🧾 임의 생성 주문';
     return '🖥️ 키오스크';
   }
 

@@ -481,7 +481,7 @@
     return order;
   }
 
-  // 주문 관리 > 현금 주문 생성 — 사장님이 카운터에서 손님 대신 메뉴를 골라 현금 주문을 등록한다.
+  // 주문 관리 > 임의 주문 생성 — 사장님이 카운터에서 손님 대신 메뉴를 골라 주문을 등록한다.
   // 이미 현장에서 결제까지 끝난 뒤 접수하는 것이라 미수락 단계 없이 바로 '처리중'으로 들어간다.
   // 손님 연락처는 화면에서 필수 입력(핸드폰 번호 또는 이메일 선택). 호출번호 = 핸드폰 번호 뒷자리 4자리
   // (이메일 케이스는 뒷자리가 없으니 기존 QR/태블릿 흐름과 동일하게 랜덤 4자리로 대체).
@@ -745,7 +745,7 @@
     return [
       { name: 'QR오더', amount: sums.QR, count: counts.QR },
       { name: '키오스크', amount: sums.TABLET, count: counts.TABLET },
-      { name: '현금', amount: sums.CASH, count: counts.CASH },
+      { name: '현금성', amount: sums.CASH, count: counts.CASH },
     ];
   }
 
@@ -1057,7 +1057,7 @@
       tablet += Math.round(rangeAmount * 0.30);
       cash += Math.round(rangeAmount * 0.15);
     });
-    return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }, { name: '현금', amount: cash }];
+    return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }, { name: '현금성', amount: cash }];
   }
 
   // 메뉴별 매출은 사장님 보드와 동일하게 전체 랭킹으로 반환한다(상위 N개로 자르지 않음).
