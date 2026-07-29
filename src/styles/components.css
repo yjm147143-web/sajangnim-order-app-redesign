@@ -208,7 +208,11 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   color: var(--color-text-primary); font-size: 20px;
 }
 .icon-btn:active { background: var(--color-divider); }
-.icon-btn-sm { width: 26px; height: 22px; font-size: 13px; border-radius: 6px; }
+.icon-btn-sm {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 22px; font-size: 13px; border-radius: 6px;
+  background: var(--color-card-bg); border: none; color: var(--color-text-secondary); cursor: pointer;
+}
 
 /* ---------- Segmented Tabs ---------- */
 .segment-tabs {

@@ -12,6 +12,11 @@
   function esc(s) { return window.UI.escapeHtml(s); }
   function money(n) { return window.UI.formatMoney(n); }
 
+  // 삭제류 버튼에 공통으로 쓰는 휴지통 아이콘 — 이모지(🗑️)는 기기별 렌더링 편차가 커서 대신 라인 SVG를 쓴다.
+  var TRASH_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>' +
+    '<line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
   function currentStoreId() {
     return window.MockApi.getContextStoreId();
   }
@@ -98,7 +103,7 @@
             '<span class="option-soldout-toggle-label">' + (isSoldOut ? '품절' : '판매중') + '</span>' +
             '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
           '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">🗑️</button>' +
+          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">' + TRASH_ICON + '</button>' +
         '</div>'
       );
     }).join('');
@@ -106,7 +111,7 @@
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
           '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
-          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">🗑️</button>') +
+          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">' + TRASH_ICON + '</button>') +
         '</div>' +
         (showUsage ? '<div class="option-group-usage">' + (usageNames.length ? esc(usageNames.join(', ')) + '에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
         optionsHtml +
@@ -145,7 +150,7 @@
         '</div>' +
         '<div class="menu-row-side">' +
           '<div class="option-group-usage-inline">' + (usage > 0 ? usage + '개 메뉴 사용' : '미사용') + '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">🗑️</button>' +
+          '<button type="button" class="icon-btn-sm" data-action="delete-option-group" data-group-id="' + g.id + '" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>' +
         '</div>' +
       '</div>'
     );
@@ -408,9 +413,13 @@
     var linkedNames = allMenuItems.filter(function (m) { return linkedMenuIds.indexOf(m.id) !== -1; }).map(function (m) { return m.name; });
     return (
       '<div class="option-group-card">' +
-        '<div class="option-groups-subtitle" style="margin-top:0;">연결된 메뉴 ' + linkedNames.length + '개</div>' +
-        '<div class="option-group-usage oge-menu-link-summary">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
-        '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 연결하기</button>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+          '<div>' +
+            '<div class="option-groups-subtitle" style="margin:0;">연결된 메뉴 ' + linkedNames.length + '개</div>' +
+            '<div class="option-group-usage oge-menu-link-summary" style="margin:2px 0 0;">' + (linkedNames.length ? esc(linkedNames.join(', ')) + ' 연결됨' : '연결된 메뉴가 없어요') + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn btn-secondary btn-sm" id="oge-menu-link-btn">메뉴 연결하기</button>' +
+        '</div>' +
       '</div>'
     );
   }
