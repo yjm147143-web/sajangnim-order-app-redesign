@@ -166,7 +166,7 @@
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
       const menu = menuItems.find(function (m) { return m.name === it.menuName; });
-      const firstComeHtml = (menu && menu.firstComeEnabled) ? ' <span class="badge badge-warning-soft">선착순</span>' : '';
+      const firstComeHtml = (menu && menu.firstComeEnabled) ? '<span class="line-promo">선착순</span>' : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
         '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ♻️' : '') + '</span>' +
