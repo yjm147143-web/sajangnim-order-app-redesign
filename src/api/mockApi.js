@@ -133,7 +133,7 @@
     return getMinOrderSettings(storeId);
   }
 
-  // 주문 방식 관리: 예약 주문 / 배달(자리번호) 주문 / 손님 요청사항 수신 여부를 매장이 직접 켜고 끈다.
+  // 주문 방식 관리: 예약 주문 / 배달(자리번호) 주문 / 손님 요청 수신 여부를 매장이 직접 켜고 끈다.
   function getOrderChannelSettings(storeId) {
     const store = findStore(storeId);
     return {
