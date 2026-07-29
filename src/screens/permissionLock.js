@@ -38,7 +38,7 @@
       return (
         '<div class="pl-scope-row">' +
           '<span class="pl-scope-label">' + s.label + '</span>' +
-          '<button type="button" class="toggle' + (on ? ' on' : '') + '" data-scope="' + s.key + '"><span class="toggle-knob"></span></button>' +
+          '<button type="button" class="toggle' + (on ? ' on' : '') + '" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" data-scope="' + s.key + '"><span class="toggle-knob"></span></button>' +
         '</div>'
       );
     }).join('');

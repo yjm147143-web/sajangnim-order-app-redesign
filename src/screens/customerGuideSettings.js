@@ -106,7 +106,7 @@
             '<div class="label">손님 대기 관리 사용</div>' +
             '<div class="label-sub" id="cg-enabled-sub">-</div>' +
           '</div>' +
-          '<button type="button" class="toggle" id="cg-enabled-toggle"><span class="toggle-knob"></span></button>' +
+          '<button type="button" class="toggle" role="switch" aria-checked="false" id="cg-enabled-toggle"><span class="toggle-knob"></span></button>' +
         '</div>' +
 
         '<div class="divider-line"></div>' +
@@ -262,6 +262,7 @@
     // ---------- 사용 여부 ----------
     function renderEnabled() {
       root.querySelector('#cg-enabled-toggle').classList.toggle('on', state.enabled);
+      root.querySelector('#cg-enabled-toggle').setAttribute('aria-checked', state.enabled ? 'true' : 'false');
       root.querySelector('#cg-enabled-sub').textContent = state.enabled
         ? '손님 화면에 대기 안내를 보여줘요'
         : '손님 화면에 대기 안내를 보여주지 않아요';

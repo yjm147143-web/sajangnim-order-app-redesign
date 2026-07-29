@@ -1,6 +1,6 @@
 /*
  * 주문 방식 관리 화면 (설정 > 주문 관리 > 주문 방식 관리)
- * - 예약 주문 / 배달(자리번호) 주문 / 손님 요청사항 수신 여부를 매장이 직접 켜고 끈다.
+ * - 예약 주문 / 배달(자리번호) 주문 / 손님 요청 수신 여부를 매장이 직접 켜고 끈다.
  * - 꺼진 항목은 개발자 테스트 패널에서도 해당 옵션이 비활성화되어, 실제로 그 유형의
  *   주문이 인입되지 않는 것처럼 시뮬레이션된다.
  * - 예약 주문 ON일 때는 예약 접수 시간(운영 시간과 동일 / 직접 설정)도 함께 관리한다.
@@ -21,7 +21,7 @@
           '<div class="label">' + label + '</div>' +
           '<div class="label-sub">' + sub + '</div>' +
         '</div>' +
-        '<button type="button" class="toggle' + (on ? ' on' : '') + '" id="' + id + '"><span class="toggle-knob"></span></button>' +
+        '<button type="button" class="toggle' + (on ? ' on' : '') + '" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" id="' + id + '"><span class="toggle-knob"></span></button>' +
       '</div>'
     );
   }
@@ -84,8 +84,8 @@
         settings.acceptSeatOrders) +
       seatInputHtml(settings) +
       '<div class="divider-line"></div>' +
-      rowHtml('💬', 'ocs-note-toggle', '손님 요청사항',
-        settings.acceptCustomerNotes ? '주문 시 손님 요청사항을 받을게요' : '손님 요청사항을 받지 않아요',
+      rowHtml('💬', 'ocs-note-toggle', '손님 요청',
+        settings.acceptCustomerNotes ? '주문 시 손님 요청을 받을게요' : '손님 요청을 받지 않아요',
         settings.acceptCustomerNotes)
     );
   }
@@ -146,7 +146,7 @@
       root.querySelector('#ocs-note-toggle').addEventListener('click', function () {
         var next = !settings.acceptCustomerNotes;
         window.MockApi.updateOrderChannelSettings(storeId, { acceptCustomerNotes: next });
-        window.UI.toast(next ? '손님 요청사항을 받기 시작해요' : '손님 요청사항을 받지 않아요');
+        window.UI.toast(next ? '손님 요청을 받기 시작해요' : '손님 요청을 받지 않아요');
         refresh();
       });
 

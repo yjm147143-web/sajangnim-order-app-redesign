@@ -16,7 +16,7 @@
           '<div class="label">최소 주문 금액 사용</div>' +
           '<div class="label-sub">' + (enabled ? '설정한 금액 미만은 주문할 수 없어요' : '금액 제한 없이 주문할 수 있어요') + '</div>' +
         '</div>' +
-        '<button type="button" class="toggle' + (enabled ? ' on' : '') + '" id="moa-toggle"><span class="toggle-knob"></span></button>' +
+        '<button type="button" class="toggle' + (enabled ? ' on' : '') + '" role="switch" aria-checked="' + (enabled ? 'true' : 'false') + '" id="moa-toggle"><span class="toggle-knob"></span></button>' +
       '</div>' +
 
       (enabled ?

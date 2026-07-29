@@ -67,7 +67,7 @@
           '<div class="label">자동 수락</div>' +
           '<div class="label-sub">' + (autoAcceptOn ? '신규 주문이 대기 없이 바로 접수돼요' : '신규 주문은 미수락 목록에서 확인 후 접수해요') + '</div>' +
         '</div>' +
-        '<button type="button" class="toggle' + (autoAcceptOn ? ' on' : '') + '" id="auto-accept-toggle"><span class="toggle-knob"></span></button>' +
+        '<button type="button" class="toggle' + (autoAcceptOn ? ' on' : '') + '" role="switch" aria-checked="' + (autoAcceptOn ? 'true' : 'false') + '" id="auto-accept-toggle"><span class="toggle-knob"></span></button>' +
       '</div>' +
 
       '<div class="divider-line"></div>' +

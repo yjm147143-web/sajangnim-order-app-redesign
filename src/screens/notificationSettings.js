@@ -26,7 +26,7 @@
           '<div class="label">알림 설정</div>' +
           '<div class="label-sub">' + (notificationOn ? '소리 · 푸시 · 진동으로 새 주문을 알려드려요' : '소리 · 푸시 알림이 꺼져 있어요') + '</div>' +
         '</div>' +
-        '<button type="button" class="toggle' + (notificationOn ? ' on' : '') + '" id="notification-toggle"><span class="toggle-knob"></span></button>' +
+        '<button type="button" class="toggle' + (notificationOn ? ' on' : '') + '" role="switch" aria-checked="' + (notificationOn ? 'true' : 'false') + '" id="notification-toggle"><span class="toggle-knob"></span></button>' +
       '</div>' +
       '<div class="notification-volume-row' + (notificationOn ? '' : ' disabled') + '">' +
         '<span class="notification-volume-label">알림음 크기</span>' +
