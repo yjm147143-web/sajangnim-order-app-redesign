@@ -678,14 +678,17 @@
       if (selected === '직접 입력') {
         bodyHtml += '<textarea class="input-field reason-textarea" id="reason-textarea" placeholder="사유를 입력해 주세요">' + esc(customText) + '</textarea>';
       }
-      const reasonValue = computeReason();
-      const confirmDisabled = !reasonValue;
+      const confirmDisabled = !computeReason();
 
       window.UI.showModal({
         title: '취소 사유를 입력해 주세요.',
         bodyHtml: bodyHtml,
+        // '직접 입력'을 고르고 텍스트를 타이핑하는 동안에는 renderModal()이 다시 불리지 않고
+        // 아래 textarea 리스너가 버튼의 disabled 속성만 직접 지워준다 — 그래서 여기서 값을
+        // 미리 계산해 캡처해두면(reasonValue) 클릭 시점엔 여전히 빈 문자열이라 취소가 씹힌다.
+        // 클릭하는 순간 computeReason()을 다시 호출해 항상 최신 입력값을 읽는다.
         buttons: [
-          { label: '취소하기', variant: 'btn-primary', onClick: function () { if (!confirmDisabled) onConfirm(reasonValue); } },
+          { label: '취소하기', variant: 'btn-primary', onClick: function () { const v = computeReason(); if (v) onConfirm(v); } },
           { label: '닫기', variant: 'btn-secondary' },
         ],
       });
