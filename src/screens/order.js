@@ -43,10 +43,18 @@
   let root = null;
 
   const SCOPED_STYLE = '' +
-    // 영업상태 배지-매장명-설정 버튼을 화면 좌우로 흩어놓지 않고, 하나의 그룹으로 묶어 가운데 정렬한다
-    '.order-topbar-centered { justify-content: center; gap: var(--space-3); }' +
-    '.order-topbar-centered .status-pill-btn, .order-topbar-centered .icon-btn { flex-shrink: 0; }' +
-    '.topbar-title { position: static; transform: none; max-width: 45vw; display: flex; align-items: center; gap: 6px; overflow: visible; }' +
+    // 상단바는 좌:영업상태 배지 / 중앙:매장명+네트워크 아이콘 / 우:설정 버튼으로 고정한다.
+    // 배지는 아래 검색창과, 설정 버튼은 아래 새로고침 버튼과 같은 열(좌우 여백 20px)에 맞춰
+    // 정렬된다. 매장명은 화면 정중앙에 두기 위해 절대 위치(기본 .topbar-title)를 그대로 쓴다 —
+    // 세 요소를 한 flex 그룹으로 묶어 가운데 정렬하면 매장명 길이에 따라 좌우 배지가 밀려난다.
+    '.order-topbar-centered { justify-content: space-between; }' +
+    '.order-topbar-centered .status-pill-btn { flex-shrink: 0; }' +
+    // 설정 아이콘은 기본 20px보다 키워 매장명과 함께 상단바의 시각적 무게를 맞춘다(터치 영역 44px은 유지)
+    '.order-topbar-centered .icon-btn { font-size: 26px; }' +
+    // 상단바 패딩이 위아래로 다르므로(32px/8px) 기본 top:50%를 그대로 쓰면 매장명이 좌우 배지보다
+    // 12px 위로 뜬다. 패딩 안쪽 영역에 맞춰 위아래를 물려 배지·설정 버튼과 같은 행에 오게 한다.
+    '.topbar-title { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 45vw;' +
+      ' top: var(--space-8); bottom: var(--space-2); transform: translateX(-50%); }' +
     '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
@@ -108,7 +116,9 @@
     '.cancel-done-badge { width: 100%; justify-content: center; padding: 12px; font-size: var(--font-size-caption); font-weight: 700; }' +
     '.line-name.reusable { color: var(--color-accent-green); font-weight: 700; }' +
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
-    '.refresh-btn { background: none; border: none; padding: 4px; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; margin-left: auto; }' +
+    // 상단바 설정 버튼(.icon-btn, 44px)과 같은 폭으로 맞춰 두 버튼의 중심이 정확히 같은 열에 오게 한다
+    '.refresh-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;' +
+      ' background: none; border: none; padding: 0; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; margin-left: auto; }' +
     '.order-title-text { font-size: 18px; }' +
     '.refresh-btn.spinning { animation: order-refresh-spin 0.6s linear; }' +
     '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
