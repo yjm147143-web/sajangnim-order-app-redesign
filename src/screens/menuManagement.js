@@ -103,7 +103,7 @@
             '<span class="option-soldout-toggle-label">' + (isSoldOut ? '품절' : '판매중') + '</span>' +
             '<button type="button" class="toggle' + (isSoldOut ? ' on' : '') + '" data-action="' + actionPrefix + 'toggle-option-soldout" ' + identifierAttr + ' data-opt-idx="' + oi + '"><span class="toggle-knob"></span></button>' +
           '</div>' +
-          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '">' + TRASH_ICON + '</button>' +
+          '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-option" ' + identifierAttr + ' data-opt-idx="' + oi + '" aria-label="옵션 삭제">' + TRASH_ICON + '</button>' +
         '</div>'
       );
     }).join('');
@@ -111,7 +111,7 @@
       '<div class="option-group-card">' +
         '<div class="option-group-head">' +
           '<input class="input-field" type="text" style="flex:1;height:44px;" placeholder="옵션 그룹명 (예: 사이즈)" value="' + esc(g.name) + '" data-field="' + actionPrefix + 'group-name" ' + identifierAttr + ' />' +
-          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;">' + TRASH_ICON + '</button>') +
+          (hideRemoveGroupBtn ? '' : '<button type="button" class="icon-btn-sm" data-action="' + actionPrefix + 'remove-group" ' + identifierAttr + ' style="margin-left:8px;" aria-label="옵션 그룹 삭제">' + TRASH_ICON + '</button>') +
         '</div>' +
         (showUsage ? '<div class="option-group-usage">' + (usageNames.length ? esc(usageNames.join(', ')) + '에서 사용 중' : '사용 중인 메뉴 없음') + '</div>' : '') +
         optionsHtml +

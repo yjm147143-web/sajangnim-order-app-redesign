@@ -140,7 +140,7 @@
         '.settings-footer-sep{font-size:11px;color:var(--color-text-secondary);opacity:0.4;}' +
       '</style>' +
       '<div class="topbar">' +
-        '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back">←</button></div>' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="settings-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">' + window.UI.escapeHtml(titleText) + '</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +

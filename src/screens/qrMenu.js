@@ -19,7 +19,7 @@
         '.link-row-text a{color:var(--color-accent-blue);text-decoration:underline;}' +
       '</style>' +
       '<div class="topbar">' +
-        '<div class="topbar-side"><button type="button" class="icon-btn" id="qr-back">←</button></div>' +
+        '<div class="topbar-side"><button type="button" class="icon-btn" id="qr-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">QR 메뉴판 보기</div>' +
         '<div class="topbar-side"></div>' +
       '</div>' +

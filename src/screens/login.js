@@ -26,11 +26,11 @@
         '</div>' +
         '<div class="login-form">' +
           '<div class="input-group">' +
-            '<input class="input-field" type="text" id="login-id" placeholder="아이디" autocomplete="username" />' +
+            '<input class="input-field" type="text" id="login-id" placeholder="아이디" aria-label="아이디" autocomplete="username" />' +
             '<div class="input-error" id="login-id-error" style="display:none;"></div>' +
           '</div>' +
           '<div class="input-group">' +
-            '<input class="input-field" type="password" id="login-pw" placeholder="비밀번호" autocomplete="current-password" />' +
+            '<input class="input-field" type="password" id="login-pw" placeholder="비밀번호" aria-label="비밀번호" autocomplete="current-password" />' +
             '<div class="input-error" id="login-pw-error" style="display:none;"></div>' +
           '</div>' +
           '<div class="input-checkbox-row">' +
