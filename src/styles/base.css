@@ -48,7 +48,7 @@ body {
   height: 874px;
   max-height: calc(100vh - 20px);
   margin: 0 auto;
-  background: var(--color-bg);
+  background: var(--color-white);
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(30,29,43,0.05), 0 30px 70px -12px rgba(124,47,240,0.28), 0 18px 40px -10px rgba(92,130,232,0.18);
   transition: box-shadow .2s ease;
@@ -76,7 +76,7 @@ body {
   }
   .device-frame {
     border-radius: 44px;
-    border: 8px solid var(--color-wordmark);
+    border: 8px solid var(--color-text-primary);
   }
   .device-frame.network-offline {
     border-color: var(--color-accent-red);
@@ -88,7 +88,7 @@ body {
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
+  background: var(--color-white);
 }
 
 .screen {

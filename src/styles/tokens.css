@@ -7,8 +7,6 @@
 :root {
   /* Color */
   --color-text-primary: #1E1D2B;
-  --color-wordmark: #1E1D2B;
-  --color-bg: #ffffff;
   --color-divider: #EEF7F5;
   --color-disabled: #DCEAE7;
   --color-text-secondary: #6E7488;
@@ -26,6 +24,10 @@
   --color-accent-purple: #7C2FF0;
   --color-accent-purple-bg: #F3E9FE;
   --color-white: #ffffff;
+  /* 텍스트로 쓸 때 명도 대비(WCAG AA)를 맞추기 위한 진한 버전 — 배경/보더에는 위 기본 accent를,
+     작은 텍스트·솔리드 배경 위 텍스트에는 이 진한 버전을 쓴다. */
+  --color-accent-blue-strong: #3355B8;
+  --color-accent-green-strong: #0B6B5C;
 
   /* Gradients */
   --gradient-brand: linear-gradient(135deg, var(--color-accent-purple) 0%, var(--color-accent-blue) 65%, var(--color-accent-green) 100%);
