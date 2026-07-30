@@ -102,6 +102,10 @@
     '.btn.op-pastel-amber { background: var(--color-accent-amber-bg); color: #a15c00; width: 100%; }' +
     '.btn.op-pastel-red { background: var(--color-accent-red-bg); color: var(--color-accent-red); width: 100%; }' +
     '.order-network-caption { flex-shrink: 0; display: inline-flex; align-items: center; }' +
+    '.reopen-sheet-desc { font-size: var(--font-size-caption); font-weight: 600; color: var(--color-text-secondary);' +
+      ' line-height: 1.6; word-break: keep-all; margin-bottom: var(--space-5); }' +
+    '.reopen-sheet-actions { display: flex; flex-direction: column; gap: 8px; }' +
+    '.reopen-sheet-actions .btn { width: 100%; }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
@@ -752,7 +756,8 @@
         // 미리 계산해 캡처해두면(reasonValue) 클릭 시점엔 여전히 빈 문자열이라 취소가 씹힌다.
         // 클릭하는 순간 computeReason()을 다시 호출해 항상 최신 입력값을 읽는다.
         buttons: [
-          { label: '취소하기', variant: 'btn-primary', onClick: function () { const v = computeReason(); if (v) onConfirm(v); } },
+          // 주문·결제를 되돌리는 파괴적 동작이라 확정 버튼은 빨간색(btn-danger-solid)으로 둔다.
+          { label: '취소하기', variant: 'btn-danger-solid', onClick: function () { const v = computeReason(); if (v) onConfirm(v); } },
           { label: '닫기', variant: 'btn-secondary' },
         ],
       });
@@ -956,9 +961,10 @@
   // ---------------- 영업 상태 변경 ----------------
   // 마감 시 실제로 완료 처리되는 대상과 같은 조건으로 센다(처리중·취소 아님) — 안내 문구의 건수가
   // closeStoreAndCompleteProcessing이 실제로 완료시키는 건수와 어긋나지 않게 한다.
-  function processingOrderCount() {
-    return window.MockApi.getOrders(storeId, { status: 'PROCESSING' })
-      .filter(function (o) { return !o.canceled; }).length;
+  // 마감 시 완료 처리될 건수. mockApi가 실제로 완료시키는 조건(미수락+처리중, 취소 제외)을
+  // 그대로 쓰는 함수를 호출해, 팝업의 'n건'과 실제 처리 건수가 어긋날 수 없게 한다.
+  function closingOrderCount() {
+    return window.MockApi.ordersClosedOnCloseCount(storeId);
   }
 
   function refreshStatusButton() {
@@ -971,7 +977,7 @@
       const res = window.MockApi.closeStoreAndCompleteProcessing(storeId);
       store = window.MockApi.getStore(storeId);
       window.UI.toast(res.completedCount > 0
-        ? ('영업을 마감했어요 · 진행 중이던 주문 ' + res.completedCount + '건이 완료 처리됐어요')
+        ? ('영업을 마감했어요 · 남아있던 주문 ' + res.completedCount + '건이 완료 처리됐어요')
         : '영업을 마감했어요');
     } else {
       store = window.MockApi.updateOperatingStatus(storeId, next);
@@ -979,12 +985,62 @@
       else window.UI.toast(before === 'PAUSED' ? '일시중지를 해제했어요' : '영업을 시작했어요');
     }
     refreshStatusButton();
+    // 영업중이 되면 타이머가 꺼지고, 마감·일시중지가 되면 그 시점부터 20분을 새로 센다.
+    scheduleIdleReopenPrompt();
     updateList();
   }
 
   // 설정 화면과 같은 잠금 정책을 적용한다 — 개점(마감→영업)과 마감만 비밀번호로 보호하고,
   // 일시중지/일시중지 해제는 계속 영업 중인 상태라 보호 대상이 아니다. 이 화면에서만 잠금을 빼면
   // 설정 화면의 잠금을 우회하는 구멍이 된다.
+  // ---- 무동작 개점 요청 바텀시트 ----
+  // 마감·일시중지 상태로 주문 화면을 열어둔 채 아무 조작이 없으면, 사장님이 개점을 잊은
+  // 것일 수 있다(손님은 주문이 안 되는데 화면은 켜져 있는 상황). 20분마다 한 번 확인한다.
+  // 영업중일 때는 띄우지 않고, 조작이 있으면 타이머를 처음부터 다시 센다.
+  const IDLE_REOPEN_MS = 20 * 60 * 1000;
+  let idleTimerId = null;
+
+  function clearIdleTimer() {
+    if (idleTimerId) { clearTimeout(idleTimerId); idleTimerId = null; }
+  }
+
+  function scheduleIdleReopenPrompt() {
+    clearIdleTimer();
+    if (!store || store.operatingStatus === 'OPEN') return;
+    idleTimerId = setTimeout(function () {
+      idleTimerId = null;
+      // 타이머가 걸린 뒤 상태가 바뀌었을 수 있으므로 띄우는 순간 다시 확인한다.
+      store = window.MockApi.getStore(storeId);
+      if (!store || store.operatingStatus === 'OPEN') return;
+      showReopenSheet();
+    }, IDLE_REOPEN_MS);
+  }
+
+  function showReopenSheet() {
+    const label = store.operatingStatus === 'PAUSED' ? '일시중지' : '마감';
+    window.UI.showBottomSheet(
+      '<div class="sheet-title">지금 영업을 시작할까요?</div>' +
+      '<div class="reopen-sheet-desc">' + label + ' 상태로 20분 넘게 머물러 있어요.<br/>' +
+      '개점해야 손님이 주문할 수 있어요.</div>' +
+      '<div class="reopen-sheet-actions">' +
+      '<button type="button" class="btn op-pastel-green" id="reopen-sheet-ok">개점</button>' +
+      '<button type="button" class="btn btn-secondary" id="reopen-sheet-close">닫기</button>' +
+      '</div>',
+      // 바텀시트는 #modal-host 안에 그려져 root의 클릭 위임을 타지 않으므로 여기서 직접 묶는다.
+      function (host) {
+        host.querySelector('#reopen-sheet-ok').addEventListener('click', function () {
+          window.UI.closeModal();
+          requestOperatingStatus('OPEN');
+        });
+        host.querySelector('#reopen-sheet-close').addEventListener('click', function () {
+          window.UI.closeModal();
+          // 닫기만 눌러도 여전히 마감 상태이므로, 20분 뒤 다시 물어보도록 타이머를 재설정한다.
+          scheduleIdleReopenPrompt();
+        });
+      }
+    );
+  }
+
   function requestOperatingStatus(next) {
     const before = store.operatingStatus;
     function run() { applyOperatingStatus(next, before); }
@@ -1000,7 +1056,7 @@
   function openCloseConfirmModal() {
     window.UI.showModal({
       title: '영업을 마감할까요?',
-      message: '진행 중인 주문 ' + processingOrderCount() + '건이 모두 완료 처리돼요.<br/>정말 마감하시나요?',
+      message: '미수락·처리중 주문 ' + closingOrderCount() + '건이 모두 완료 처리돼요.<br/>정말 마감하시나요?',
       buttons: [
         { label: '마감', variant: 'op-pastel-red', onClick: function () { requestOperatingStatus('CLOSED'); } },
         { label: '닫기', variant: 'btn-secondary' },
@@ -1084,6 +1140,17 @@
     refreshHappyHourBanner();
   }
 
+  // 개발자 도구의 '개점 요청 알림' 버튼 — 20분을 기다리지 않고 바텀시트를 바로 확인한다.
+  function onDevShowReopenSheet() {
+    store = window.MockApi.getStore(storeId);
+    if (!store || store.operatingStatus === 'OPEN') {
+      window.UI.toast('마감 또는 일시중지 상태에서만 노출돼요');
+      return;
+    }
+    clearIdleTimer();
+    showReopenSheet();
+  }
+
   // 주문 수락으로 준비량이 소진되어 자동 품절되면 하단 배너로 알린다
   function onAutoSoldout(e) {
     const names = (e.detail && e.detail.names) || [];
@@ -1099,6 +1166,8 @@
 
   // ---------------- 이벤트 위임 ----------------
   function onRootClick(e) {
+    // 어떤 조작이든 있었다면 '무동작'이 아니므로 개점 요청 타이머를 처음부터 다시 센다.
+    scheduleIdleReopenPrompt();
     const target = e.target.closest('[data-action]');
     if (!target) return;
     const action = target.getAttribute('data-action');
@@ -1238,6 +1307,8 @@
     window.addEventListener('mock:auto-soldout', onAutoSoldout);
     window.addEventListener('mock:network-quality', onNetworkQuality);
     window.addEventListener('mock:happy-hour-started', onHappyHourStarted);
+    window.addEventListener('dev:show-reopen-sheet', onDevShowReopenSheet);
+    scheduleIdleReopenPrompt();
   }
 
   function unmount() {
@@ -1247,6 +1318,8 @@
     window.removeEventListener('mock:auto-soldout', onAutoSoldout);
     window.removeEventListener('mock:network-quality', onNetworkQuality);
     window.removeEventListener('mock:happy-hour-started', onHappyHourStarted);
+    window.removeEventListener('dev:show-reopen-sheet', onDevShowReopenSheet);
+    clearIdleTimer();
     root = null;
   }
 
