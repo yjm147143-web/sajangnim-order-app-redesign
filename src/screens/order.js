@@ -36,6 +36,21 @@
       '</svg>';
   }
 
+  // 새로고침·검색 아이콘은 이모지(🔄/🔍)를 쓰면 컬러 글리프라 회색으로 만들 수 없고,
+  // 글리프 자체가 테두리를 가진 것처럼 보인다. currentColor를 쓰는 선 아이콘으로 바꿔
+  // CSS에서 색을 통제한다.
+  const ICON_REFRESH = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+    ' stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path>' +
+    '<polyline points="20.5 4 20.5 9.4 15.1 9.4"></polyline>' +
+    '</svg>';
+
+  const ICON_SEARCH = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+    ' stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="10.5" cy="10.5" r="6.5"></circle>' +
+    '<line x1="15.4" y1="15.4" x2="20.5" y2="20.5"></line>' +
+    '</svg>';
+
   // ---- 화면 상태 (mount 될 때마다 render()에서 초기화) ----
   let user = null;
   let storeId = null;
@@ -152,7 +167,11 @@
     '.order-card.selected { background: var(--color-accent-blue-bg); box-shadow: inset 0 0 0 1.5px var(--color-accent-blue); }' +
     // 상단바 설정 버튼(.icon-btn, 44px)과 같은 폭으로 맞춰 두 버튼의 중심이 정확히 같은 열에 오게 한다
     '.refresh-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;' +
-      ' background: none; border: none; padding: 0; cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0; margin-left: auto; }' +
+      ' background: none; border: none; padding: 0; cursor: pointer; line-height: 1; flex-shrink: 0; margin-left: auto;' +
+      ' color: var(--color-text-secondary); }' +
+    '.refresh-btn:active { color: var(--color-text-primary); }' +
+    // 검색 아이콘도 같은 회색 계열로 — 입력 전 placeholder와 같은 무게로 읽혀야 한다.
+    '.search-box .search-icon { display: inline-flex; align-items: center; color: var(--color-text-secondary); flex-shrink: 0; }' +
     '.order-title-text { font-size: 18px; }' +
     '.refresh-btn.spinning { animation: order-refresh-spin 0.6s linear; }' +
     '@keyframes order-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
@@ -1273,10 +1292,10 @@
       '<div id="happy-hour-banner-slot">' + happyHourBannerHtml() + '</div>' +
       '<div class="search-row">' +
       '<div class="search-box">' +
-      '<span>🔍</span>' +
+      '<span class="search-icon">' + ICON_SEARCH + '</span>' +
       '<input type="text" inputmode="numeric" id="search-input" placeholder="호출번호로 검색" value="' + esc(searchQuery) + '" />' +
       '</div>' +
-      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">🔄</button>' +
+      '<button type="button" class="refresh-btn" id="refresh-btn" data-action="refresh-orders" aria-label="주문 새로고침">' + ICON_REFRESH + '</button>' +
       '</div>' +
       '<div class="segment-tabs" id="segment-tabs">' + renderSegmentTabsHtml() + '</div>' +
       '<div class="order-toolbar-divider"></div>' +
