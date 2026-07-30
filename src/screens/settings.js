@@ -61,7 +61,7 @@
       // 영업 상태는 설정 화면에서 가장 자주 쓰는 조작이라 목록 행이 아니라 카드로 띄워 둔다.
       // 좌측은 아이콘 칩 + (라벨 / 상태 / 개점 시각), 우측은 상태 변경 버튼을 위아래 같은 열로 세운다.
       '<div class="status-card">' +
-        '<div class="status-card-icon">🏪</div>' +
+        '<div class="status-card-icon">' + window.Icons3D.icon3d('store', 24) + '</div>' +
         '<div class="status-card-body">' +
           '<div class="status-card-label">영업 상태</div>' +
           statusPlainHtml(store.operatingStatus) +
@@ -71,7 +71,7 @@
       '</div>' +
 
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">⚡</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('bolt', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">자동 수락</div>' +
           '<div class="label-sub">' + (autoAcceptOn ? '신규 주문이 대기 없이 바로 접수돼요' : '신규 주문은 미수락 목록에서 확인 후 접수해요') + '</div>' +
@@ -83,7 +83,7 @@
 
       '<div class="settings-group-title">바로가기</div>' +
       '<div class="settings-list-item settings-shortcut-item" data-nav="kitchenBoard">' +
-        '<div class="icon">🍳</div><div class="label">KDS 보기</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('dome', 24) + '</div><div class="label">KDS 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
       // 카테고리 사이를 회색 선으로 끊는다. 그룹 제목만으로는 어디서 묶음이 바뀌는지 약해서,
@@ -92,42 +92,42 @@
 
       '<div class="settings-group-title">매장 관리</div>' +
       '<div class="settings-list-item" data-nav="menuManagement">' +
-        '<div class="icon">🍽️</div><div class="label">메뉴 관리</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('plate', 24) + '</div><div class="label">메뉴 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="customerGuideSettings">' +
-        '<div class="icon">📢</div><div class="label">손님 대기 관리</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('megaphone', 24) + '</div><div class="label">손님 대기 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="orderManagement">' +
-        '<div class="icon">📦</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('box', 24) + '</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="qrMenu">' +
-        '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('phone', 24) + '</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
       '<div class="divider-line"></div>' +
 
       '<div class="settings-group-title">매출</div>' +
       '<div class="settings-list-item" data-nav="sales">' +
-        '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('coins', 24) + '</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
       '</div>' +
 
       '<div class="divider-line"></div>' +
 
       '<div class="settings-group-title">환경설정</div>' +
       '<div class="settings-list-item" data-nav="notificationSettings">' +
-        '<div class="icon">🔔</div><div class="label">알림 설정</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('bell', 24) + '</div><div class="label">알림 설정</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="permissionLock">' +
-        '<div class="icon">🔐</div><div class="label">권한 잠금 설정</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('lock', 24) + '</div><div class="label">권한 잠금 설정</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" id="notice-link-btn">' +
-        '<div class="icon">📣</div><div class="label">공지사항</div><div class="chevron">›</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('notice', 24) + '</div><div class="label">공지사항</div><div class="chevron">›</div>' +
       '</div>' +
 
       '<div class="divider-line"></div>' +
 
       '<div class="settings-list-item settings-logout" id="logout-btn">' +
-        '<div class="icon">🚪</div><div class="label">로그아웃</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('door', 24) + '</div><div class="label">로그아웃</div>' +
       '</div>' +
 
       '<div class="settings-footer-row">' +
