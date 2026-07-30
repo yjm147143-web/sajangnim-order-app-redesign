@@ -176,6 +176,14 @@
               '<button type="button" class="dp-pill" data-action="dp-trigger-happy-hour">🔥 해피아워 시작</button>' +
             '</div>' +
           '</div>' +
+          // 무동작 20분을 실제로 기다릴 수 없으니 바텀시트를 즉시 띄워 확인할 수 있게 한다.
+          '<div class="dp-group">' +
+            '<span class="dp-group-label">영업 상태</span>' +
+            '<div class="dp-pill-row">' +
+              '<button type="button" class="dp-pill" data-action="dp-trigger-reopen-sheet">🔔 개점 요청 알림 (무동작 20분)</button>' +
+              '<button type="button" class="dp-pill" data-action="dp-trigger-close-push">📩 마감 요청 푸시 (앱 종료)</button>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         (devSimOffline ? '<div class="dp-offline-hint">오프라인 상태에서는 신규 주문이 들어올 수 없어요</div>' : '') +
         (devSimFlaky ? '<div class="dp-offline-hint">완전 단절은 아니고, 신호가 희미해졌다 괜찮아졌다를 반복해요. 주문 접수는 그대로 되고, 캡션만 "⚠️ 주의"로 바뀌어요</div>' : '') +
@@ -324,6 +332,8 @@
     else if (action === 'dp-toggle-flaky') { toggleFlaky(); return; }
     else if (action === 'dp-trigger-soldout') { triggerAutoSoldout(); return; }
     else if (action === 'dp-trigger-happy-hour') { triggerHappyHour(); return; }
+    else if (action === 'dp-trigger-reopen-sheet') { window.dispatchEvent(new Event('dev:show-reopen-sheet')); return; }
+    else if (action === 'dp-trigger-close-push') { window.dispatchEvent(new Event('dev:show-close-push')); return; }
     else if (action === 'dp-toggle-panel') { panelOpen = !panelOpen; render(); return; }
     else return;
     render();
