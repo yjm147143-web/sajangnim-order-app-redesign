@@ -38,7 +38,6 @@
     '.dp-add-btn:active{opacity:0.85;}' +
     '.dp-add-btn:disabled{background:#3a3a52;color:#8b8bab;cursor:not-allowed;}' +
     '.dp-offline-hint{font-size:11px;color:#ff9a9a;margin-top:8px;line-height:1.4;}' +
-    '.dp-preview-note{font-size:11px;color:#a9a9c8;margin:-2px 0 8px;line-height:1.4;}' +
     '.dp-tab{width:min(880px, 96vw);height:44px;border-radius:14px;background:#15152b;' +
     'border:2px dashed #7C2FF0;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;' +
     'justify-content:center;gap:8px;cursor:pointer;box-sizing:border-box;}' +
@@ -62,43 +61,6 @@
   var devPaymentMethod = 'PG';
   var panelOpen = false;
   var lastVisible = null;
-
-  // ---- 반영 전 시연(QA) 플래그 ----
-  // 목업에 아직 반영하지 않은 기능을 팀 시연용으로만 켜볼 수 있게 한다.
-  // 기본값은 항상 OFF이고, 여기서 켜지 않으면 목업 동작은 그대로다.
-  // localStorage에 남겨 새로고침해도 유지된다 — 시연 중 실수로 새로고침해도 다시 켜지 않게.
-  var PREVIEW_FLAGS = [
-    {
-      key: 'closedBlockVeil',
-      label: '마감 시 주문화면 차단',
-      hint: '마감 상태에서 주문 화면 전체를 회색 처리하고, 개점하기 · 설정으로 진입하기 · 로그아웃만 남겨요.',
-    },
-  ];
-  var PREVIEW_STORAGE_KEY = 'devPreviewFlags';
-  var devPreview = {};
-
-  function loadPreviewFlags() {
-    try {
-      var raw = localStorage.getItem(PREVIEW_STORAGE_KEY);
-      devPreview = raw ? JSON.parse(raw) : {};
-    } catch (e) { devPreview = {}; }
-  }
-
-  function savePreviewFlags() {
-    try { localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(devPreview)); } catch (e) { /* 저장 실패는 무시 */ }
-  }
-
-  function isPreviewOn(key) { return !!devPreview[key]; }
-
-  function togglePreview(key) {
-    devPreview[key] = !devPreview[key];
-    savePreviewFlags();
-    render();
-    // 화면들이 즉시 반영할 수 있게 알린다 — 새로고침 없이 켜고 끄며 시연할 수 있어야 한다.
-    window.dispatchEvent(new CustomEvent('dev:preview-changed', { detail: { key: key, on: devPreview[key] } }));
-    var meta = PREVIEW_FLAGS.filter(function (f) { return f.key === key; })[0];
-    window.UI.toast('[시연] ' + (meta ? meta.label : key) + (devPreview[key] ? ' 켰어요' : ' 껐어요'));
-  }
 
   function isOffline() { return devSimOffline; }
 
@@ -221,29 +183,6 @@
     );
   }
 
-  function previewSectionHtml() {
-    var onFlags = PREVIEW_FLAGS.filter(function (f) { return isPreviewOn(f.key); });
-    return (
-      '<div class="dp-section">' +
-        '<div class="dp-section-title">3. 반영 전 시연 (QA)</div>' +
-        '<div class="dp-preview-note">목업에 아직 반영하지 않은 기능이에요. 켜야만 동작하고, 이 브라우저에만 저장돼요.</div>' +
-        '<div class="dp-sim-row">' +
-        PREVIEW_FLAGS.map(function (f) {
-          return '<div class="dp-group">' +
-            '<span class="dp-group-label">' + f.label + '</span>' +
-            '<div class="dp-pill-row">' +
-            '<button type="button" class="dp-pill' + (isPreviewOn(f.key) ? ' active' : '') + '"' +
-              ' data-action="dp-toggle-preview" data-key="' + f.key + '">' +
-              (isPreviewOn(f.key) ? '🟢 시연 중' : '⚪ 꺼짐') +
-            '</button>' +
-            '</div></div>';
-        }).join('') +
-        '</div>' +
-        onFlags.map(function (f) { return '<div class="dp-offline-hint">' + f.hint + '</div>'; }).join('') +
-      '</div>'
-    );
-  }
-
   function panelHtml(user) {
     var channelSettings = window.MockApi.getOrderChannelSettings(user.storeId);
     clampDevState(channelSettings);
@@ -265,7 +204,6 @@
           '</div>' +
         '</div>' +
         simSectionHtml() +
-        previewSectionHtml() +
       '</div>' +
       '</div>';
   }
@@ -386,7 +324,6 @@
     else if (action === 'dp-toggle-flaky') { toggleFlaky(); return; }
     else if (action === 'dp-trigger-soldout') { triggerAutoSoldout(); return; }
     else if (action === 'dp-trigger-happy-hour') { triggerHappyHour(); return; }
-    else if (action === 'dp-toggle-preview') { togglePreview(target.getAttribute('data-key')); return; }
     else if (action === 'dp-toggle-panel') { panelOpen = !panelOpen; render(); return; }
     else return;
     render();
@@ -418,7 +355,6 @@
   }
 
   function init() {
-    loadPreviewFlags();
     var style = document.createElement('style');
     style.textContent = STYLE;
     document.head.appendChild(style);
@@ -428,9 +364,7 @@
     setInterval(checkVisibility, 800);
   }
 
-  // 화면 모듈이 '반영 전 시연' 플래그를 물어볼 수 있게 노출한다.
-  // 플래그가 없거나 개발자 도구가 안 떠 있으면 항상 false → 목업 기본 동작.
-  window.DevTools = { isOffline: isOffline, isPreviewOn: isPreviewOn };
+  window.DevTools = { isOffline: isOffline };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
