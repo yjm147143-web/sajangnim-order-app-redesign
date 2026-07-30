@@ -134,6 +134,11 @@
     '@media (prefers-reduced-motion: reduce) { .net-icon.bad { animation: none; opacity: 1; } }' +
     '.reopen-sheet-desc { font-size: var(--font-size-caption); font-weight: 600; color: var(--color-text-secondary);' +
       ' line-height: 1.6; word-break: keep-all; margin-bottom: var(--space-5); }' +
+    // 첫 문장은 '지금 어떤 상태인지'라 두 번째 문장(할 일 안내)보다 앞서 읽혀야 한다.
+    // 굵게 + 본문 색으로 올리고, 상태명만 상태색으로 뽑아 한 번 더 눌러준다.
+    '.reopen-sheet-desc strong { font-weight: 800; color: var(--color-text-primary); }' +
+    '.reopen-status.closed { color: var(--color-accent-red); }' +
+    '.reopen-status.paused { color: #a15c00; }' +
     '.reopen-sheet-actions { display: flex; flex-direction: column; gap: 8px; }' +
     '.reopen-sheet-actions .btn { width: 100%; }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
@@ -1098,10 +1103,14 @@
   }
 
   function showReopenSheet() {
-    const label = store.operatingStatus === 'PAUSED' ? '일시중지' : '마감';
+    // 이 시트는 마감과 일시중지 양쪽에서 뜨므로 상태명을 고정하지 않는다 — 일시중지인데
+    // '마감 상태에요'라고 하면 문구가 사실과 어긋난다.
+    const isPaused = store.operatingStatus === 'PAUSED';
+    const label = isPaused ? '일시중지' : '마감';
     window.UI.showBottomSheet(
       '<div class="sheet-title">지금 영업을 시작할까요?</div>' +
-      '<div class="reopen-sheet-desc">' + label + ' 상태로 20분 넘게 머물러 있어요.<br/>' +
+      '<div class="reopen-sheet-desc">' +
+      '<strong>지금은 <span class="reopen-status ' + (isPaused ? 'paused' : 'closed') + '">' + label + '</span> 상태에요.</strong><br/>' +
       '개점해야 손님이 주문할 수 있어요.</div>' +
       '<div class="reopen-sheet-actions">' +
       '<button type="button" class="btn op-pastel-green" id="reopen-sheet-ok">개점</button>' +
