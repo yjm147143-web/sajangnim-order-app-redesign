@@ -1015,7 +1015,7 @@
         title: '지금 영업을 시작할까요?',
         message: '개점하면 손님이 주문할 수 있어요.',
         buttons: [
-          { label: '개점하기', variant: 'op-pastel-green', onClick: function () { requestOperatingStatus('OPEN'); } },
+          { label: '개점', variant: 'op-pastel-green', onClick: function () { requestOperatingStatus('OPEN'); } },
           { label: '닫기', variant: 'btn-secondary' },
         ],
       });
