@@ -84,7 +84,7 @@
   }
 
   function operatingStatusMeta(status) {
-    if (status === 'OPEN') return { label: '영업 중', cls: 'open', dot: '🟢' };
+    if (status === 'OPEN') return { label: '영업중', cls: 'open', dot: '🟢' };
     if (status === 'PAUSED') return { label: '일시중지', cls: 'paused', dot: '🟠' };
     return { label: '마감', cls: 'closed', dot: '🔴' };
   }

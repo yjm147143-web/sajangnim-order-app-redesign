@@ -34,7 +34,7 @@
   }
 
   // 온라인일 땐 아무 표시도 하지 않고, 네트워크 상태가 안 좋을 때만 빨간 경고 문구를 보여준다 —
-  // 영업상태 배지(🟢영업 중)와 겹쳐 보여 헷갈리던 '🟢 온라인' 배지를 없앤 것.
+  // 영업상태 배지(🟢영업중)와 겹쳐 보여 헷갈리던 '🟢 온라인' 배지를 없앤 것.
   function networkWarningHtml(store) {
     if (store.networkStatus !== 'OFFLINE') return '';
     return '<span class="store-network-warning">⚠️ 네트워크 끊김</span>';
@@ -134,7 +134,7 @@
           '<div class="section-title" style="padding:0;">매장 운영 현황</div>' +
           (stores.length ? '<button type="button" class="select-all-btn" id="select-all-btn">전체 선택</button>' : '') +
         '</div>' +
-        '<div class="section-caption">영업 중 ' + summary.open + '개소 · 일시중지 ' + summary.paused + '개소 · 마감 ' + summary.closed + '개소 (총 ' + summary.storeCount + '개)</div>' +
+        '<div class="section-caption">영업중 ' + summary.open + '개소 · 일시중지 ' + summary.paused + '개소 · 마감 ' + summary.closed + '개소 (총 ' + summary.storeCount + '개)</div>' +
         '<div style="padding:8px 20px 20px;">' +
           '<div class="card card-flat">' + storeRowsHtml + '</div>' +
         '</div>' +
