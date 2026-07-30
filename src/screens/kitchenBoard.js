@@ -57,9 +57,9 @@
         '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
         '<div class="kb-card-total-label">남은 주문' + (manual > 0 ? '<span class="kb-manual-note"> (조리완료 -' + manual + ')</span>' : '') + '</div>' +
-        '<div class="kb-card-tags">' +
-          '<span class="kb-tag kb-tag-total">합계 ' + total + '</span>' +
-        '</div>' +
+        // 합계는 참고용 수치라 캡션으로 둔다. 배지로 두면 색 덩어리가 되어 큰 숫자(남은 주문)와
+        // 시선을 나눠 갖고, 조리 담당자가 먼저 봐야 할 값이 뭔지 흐려진다.
+        '<div class="kb-card-sum">합계 ' + total + '개</div>' +
         // 차감량은 배지 없이 평문으로 둔다. 배지(흰 배경 + 파란 글자)는 진한 파랑 버튼 안에서
         // 대비를 두 번 꺾어 오히려 안 읽혔다 — 흰 글자를 그대로 쓰면 라벨과 같은 대비를 얻는다.
         '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>' +
@@ -158,10 +158,10 @@
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
         '.kb-card-total .unit{font-size:11px;font-weight:600;color:var(--color-text-secondary);margin-left:2px;}' +
         '.kb-card-total-label{font-size:10px;font-weight:700;color:var(--color-text-secondary);margin-top:-7px;}' +
-        '.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}' +
-        '.kb-tag{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-pill);font-size:var(--font-size-caption);font-weight:700;white-space:nowrap;}' +
-        '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
-        '.kb-tag-total{background:var(--color-accent-amber-bg);color:#a15c00;}' +
+        // 합계 캡션. 배경 없이 문구로만 두고, 위 '남은 주문' 라벨과 같은 계층으로 읽히게
+        // 크기·색을 맞춘다. 숫자만 굵게 올려 값이 먼저 눈에 걸리게 했다.
+        '.kb-card-sum{font-size:var(--font-size-micro);font-weight:600;color:var(--color-text-secondary);' +
+          'font-variant-numeric:tabular-nums;}' +
         '.kb-manual-note{font-size:10px;font-weight:700;color:var(--color-accent-purple);margin-left:2px;}' +
         // 파란 음영(솔리드 파랑) — 카드 안에서 유일하게 누르는 요소라, 테두리만 있는 고스트
         // 버튼보다 채워진 버튼이 '여기를 누른다'를 먼저 알린다.
