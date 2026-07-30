@@ -1,7 +1,12 @@
 param(
-  [int]$Port = 8934,
+  # 0이면 '지정 안 됨'으로 보고 PORT 환경변수를 따른다. 실행 환경이 포트를 배정해 주므로
+  # 특정 포트를 하드코딩하면 다른 세션이 그 포트를 쓰고 있을 때 기동에 실패한다.
+  [int]$Port = 0,
   [string]$Root = $PSScriptRoot
 )
+if ($Port -eq 0) {
+  if ($env:PORT) { $Port = [int]$env:PORT } else { $Port = 8936 }
+}
 Add-Type -AssemblyName System.Net.HttpListener -ErrorAction SilentlyContinue
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$Port/")
