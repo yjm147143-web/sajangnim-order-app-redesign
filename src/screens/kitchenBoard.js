@@ -111,6 +111,26 @@
       '</div>';
   }
 
+  // 사용법 말풍선. 조리 담당자는 주문이 밀리는 중에 이걸 여는 것이라, 읽는 데 시간이 드는
+  // 문서는 아무도 안 읽는다. 꼭 필요한 5줄만 남긴다 — 두 화면의 차이 1줄, 숫자 2줄, 버튼 2줄.
+  // 집계 세부 규칙(개점 기준 시각, 주문 단위 호출 차감 등)은 여기 넣지 않는다.
+  function tipHtml() {
+    const items = [
+      { term: '남은 주문', desc: '<b>조리가 필요한 메뉴</b>의 개수에요. 손님을 호출하면 자동으로 차감돼요.' },
+      { term: '합계', desc: '오늘 손님이 주문한 메뉴의 <b>총 수량</b>이에요.' },
+      { term: '조리완료 버튼', chip: '<span class="kb-tip-chip blue">조리완료 ▼1</span>', desc: '남은 주문이 수동으로 차감돼요.' },
+      { term: '고정', chip: '<span class="kb-tip-chip star">☆</span>', desc: '메뉴 카드를 맨 위에 고정해요.' },
+    ];
+    return '<div class="kb-tip" id="kb-tip" role="tooltip">' +
+      items.map(function (it) {
+        return '<div class="kb-tip-line">' +
+          '<div class="kb-tip-head">' + it.term + (it.chip ? it.chip : '') + '</div>' +
+          '<div class="kb-tip-desc">' + it.desc + '</div>' +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }
+
   function render() {
     return (
       '<style>' +
@@ -157,17 +177,62 @@
         '.kb-deduct-num{font-variant-numeric:tabular-nums;}' +
         '@media (prefers-reduced-motion: reduce){.kb-deduct-btn{transition:none;}.kb-deduct-btn:active{transform:none;}}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
+        // ---- 사용법 배지 + 말풍선 ----
+        '.kb-help-wrap{position:relative;}' +
+        '.kb-help-badge{flex-shrink:0;height:30px;padding:0 12px 0 8px;gap:5px;border-radius:var(--radius-pill);cursor:pointer;' +
+          'border:1.5px solid var(--color-accent-blue);background:var(--color-accent-blue-bg);' +
+          'color:var(--color-accent-blue-strong);font-size:var(--font-size-caption);font-weight:800;line-height:1;' +
+          'display:flex;align-items:center;justify-content:center;white-space:nowrap;}' +
+        '.kb-help-badge[aria-expanded="true"]{background:var(--color-accent-blue);color:var(--color-white);}' +
+        // 물음표는 원형 안에 넣어 아이콘으로 읽히게 한다. 배지가 반전되면 원도 함께 반전된다.
+        '.kb-help-q{display:flex;align-items:center;justify-content:center;flex-shrink:0;' +
+          'width:18px;height:18px;border-radius:50%;background:var(--color-accent-blue);' +
+          'color:var(--color-white);font-size:12px;font-weight:800;line-height:1;padding-bottom:1px;}' +
+        '.kb-help-badge[aria-expanded="true"] .kb-help-q{background:var(--color-white);color:var(--color-accent-blue-strong);}' +
+        // 말풍선은 배지 바로 아래에 붙는다. 우측 정렬이라 폰 오른쪽 밖으로 새지 않는다.
+        // 폰 폭(402px)에서 좌우 여백 16px씩만 남기고 최대로 넓힌다 — 한 줄에 담기는 글자가
+        // 늘어나 줄바꿈이 줄고, 글꼴을 키워도 문장이 토막나지 않는다.
+        '.kb-tip{position:absolute;top:calc(100% + 10px);right:-4px;z-index:40;width:340px;max-width:calc(100vw - 32px);' +
+          'padding:12px 15px;border-radius:16px;background:#232232;color:#fff;text-align:left;' +
+          'box-shadow:0 8px 22px rgba(30,29,43,0.28);}' +
+        // 꼬리 — 배지를 가리키도록 우측 상단에 삼각형을 붙인다.
+        '.kb-tip::after{content:"";position:absolute;top:-6px;right:16px;width:12px;height:12px;' +
+          'background:#232232;transform:rotate(45deg);border-radius:2px;}' +
+        // 용어와 설명을 위아래로 나눈다 — 한 줄에 이어 붙이면 어디까지가 용어인지 안 보인다.
+        '.kb-tip-line{padding:8px 0;}' +
+        '.kb-tip-line + .kb-tip-line{border-top:1px solid rgba(255,255,255,0.10);}' +
+        '.kb-tip-head{display:flex;align-items:center;gap:6px;margin-bottom:3px;' +
+          'font-size:var(--font-size-caption);font-weight:800;color:#fff;}' +
+        '.kb-tip-desc{font-size:var(--font-size-caption);font-weight:500;color:rgba(255,255,255,0.75);' +
+          'line-height:1.5;word-break:keep-all;}' +
+        // 강조 단어만 흰색으로 올려, 설명 안에서 핵심이 먼저 걸리게 한다.
+        '.kb-tip-desc b{font-weight:800;color:#fff;}' +
+        // 실제 버튼 모양을 그대로 넣어, 화면에서 찾을 때 바로 알아보게 한다.
+        '.kb-tip-chip{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;' +
+          'padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:800;white-space:nowrap;}' +
+        '.kb-tip-chip.blue{background:var(--color-accent-blue);color:var(--color-white);}' +
+        '.kb-tip-chip.star{width:19px;height:19px;padding:0;border-radius:50%;' +
+          'background:var(--color-accent-amber-bg);color:#a15c00;font-size:12px;}' +
       '</style>' +
       '<div class="topbar">' +
         '<div class="topbar-side"><button type="button" class="icon-btn" id="kb-back" aria-label="뒤로가기">←</button></div>' +
         '<div class="topbar-title">KDS</div>' +
-        '<div class="topbar-side"></div>' +
+        '<div class="topbar-side kb-help-wrap" style="justify-content:flex-end;">' +
+          // '?'는 이모지가 아닌 일반 문자라 OS 폰트에 의존하지 않는다. 원형 배경을 CSS로 그려
+          // 아이콘처럼 보이게 하고, 라벨을 함께 둬서 무엇을 여는 버튼인지 글자로도 알린다.
+          '<button type="button" class="kb-help-badge" id="kb-help" aria-expanded="false">' +
+            '<span class="kb-help-q" aria-hidden="true">?</span>사용법' +
+          '</button>' +
+          '<div id="kb-tip-slot"></div>' +
+        '</div>' +
       '</div>' +
       '<div class="screen-scroll"><div id="kb-content"></div></div>'
     );
   }
 
   var onOrdersChanged = null;
+  // 말풍선이 document에 등록한 리스너를 화면을 떠날 때 반드시 걷어내야 한다.
+  var closeTipOnUnmount = null;
 
   function mount(root) {
     var storeId = currentStoreId();
@@ -179,6 +244,38 @@
     root.querySelector('#kb-back').addEventListener('click', function () {
       window.Router.back();
     });
+
+    // 말풍선은 모달이 아니라 화면에 얹히는 힌트다. 오버레이를 깔지 않으므로 바깥을 누르거나
+    // Esc를 누르면 닫히게 직접 처리한다.
+    var helpBadge = root.querySelector('#kb-help');
+    var tipSlot = root.querySelector('#kb-tip-slot');
+
+    function closeTip() {
+      tipSlot.innerHTML = '';
+      helpBadge.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', onDocClickForTip, true);
+      document.removeEventListener('keydown', onKeyForTip);
+    }
+
+    function onDocClickForTip(e) {
+      if (helpBadge.contains(e.target) || tipSlot.contains(e.target)) return;
+      closeTip();
+    }
+
+    function onKeyForTip(e) {
+      if (e.key === 'Escape') closeTip();
+    }
+
+    helpBadge.addEventListener('click', function () {
+      if (helpBadge.getAttribute('aria-expanded') === 'true') { closeTip(); return; }
+      tipSlot.innerHTML = tipHtml();
+      helpBadge.setAttribute('aria-expanded', 'true');
+      // 이 클릭이 그대로 document까지 올라가 바로 닫히지 않도록 캡처 단계 등록을 다음 틱으로 미룬다.
+      setTimeout(function () { document.addEventListener('click', onDocClickForTip, true); }, 0);
+      document.addEventListener('keydown', onKeyForTip);
+    });
+
+    closeTipOnUnmount = closeTip;
 
     root.addEventListener('click', function (e) {
       var deductBtn = e.target.closest('[data-action="kb-manual-deduct"]');
@@ -206,6 +303,10 @@
     if (onOrdersChanged) {
       window.removeEventListener('mock:orders-changed', onOrdersChanged);
       onOrdersChanged = null;
+    }
+    if (closeTipOnUnmount) {
+      closeTipOnUnmount();
+      closeTipOnUnmount = null;
     }
   }
 
