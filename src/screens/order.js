@@ -6,6 +6,20 @@
 (function () {
   const esc = window.UI.escapeHtml;
 
+  // 영업 상태 버튼의 상태별 표기 — 재생/일시정지/정지 기호가 영업중/일시중지/마감에 그대로 대응한다.
+  // 색은 앱의 솔리드 버튼 토큰(btn-success/btn-warning/btn-danger-solid)과 동일하게 맞춘다.
+  const OP_ICON_PLAY = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M7 4.5v15a1 1 0 0 0 1.53.85l11-7.5a1 1 0 0 0 0-1.7l-11-7.5A1 1 0 0 0 7 4.5z"/></svg>';
+  const OP_ICON_PAUSE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<rect x="6.5" y="4.5" width="4" height="15" rx="1.2"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.2"/></svg>';
+  const OP_ICON_STOP = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<rect x="5.5" y="5.5" width="13" height="13" rx="2"/></svg>';
+  const OP_STATUS_VIEW = {
+    OPEN: { cls: 'open', label: '영업중', icon: OP_ICON_PLAY },
+    PAUSED: { cls: 'paused', label: '일시중지', icon: OP_ICON_PAUSE },
+    CLOSED: { cls: 'closed', label: '마감', icon: OP_ICON_STOP },
+  };
+
   // 네트워크 상태 아이콘 — 원활(초록)/간헐적 희미함(빨강)/완전 단절(빨강 + X)을 와이파이 아이콘
   // 하나로 표현한다. 색만으로는 '희미함'과 '단절'이 구분 안 되니, 단절일 때만 X를 겹쳐 그린다.
   function networkIconHtml(state) {
@@ -48,7 +62,7 @@
     // 정렬된다. 매장명은 화면 정중앙에 두기 위해 절대 위치(기본 .topbar-title)를 그대로 쓴다 —
     // 세 요소를 한 flex 그룹으로 묶어 가운데 정렬하면 매장명 길이에 따라 좌우 배지가 밀려난다.
     '.order-topbar-centered { justify-content: space-between; }' +
-    '.order-topbar-centered .status-pill-btn { flex-shrink: 0; }' +
+    '.order-topbar-centered #status-btn-slot { display: inline-flex; flex-shrink: 0; }' +
     // 설정 아이콘은 기본 20px보다 키워 매장명과 함께 상단바의 시각적 무게를 맞춘다(터치 영역 44px은 유지)
     '.order-topbar-centered .icon-btn { font-size: 26px; }' +
     // 상단바 패딩이 위아래로 다르므로(32px/8px) 기본 top:50%를 그대로 쓰면 매장명이 좌우 배지보다
@@ -70,7 +84,23 @@
     '.filter-sheet-actions .btn { height: 48px; }' +
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
     '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
-    '.status-pill-btn { display: inline-flex; }' +
+    // 영업 상태는 파스텔 배지가 아니라 앱의 솔리드 버튼 언어로 그린다 — 배지는 아무리 꾸며도 '읽는 것'으로
+    // 읽히지만, 솔리드 버튼은 사장님이 설정 화면에서 이미 개점·일시중지·마감에 쓰고 있는 형태라 '누르는 것'으로
+    // 바로 읽힌다. 색·글자색은 btn-success/btn-warning/btn-danger-solid와 동일하게 맞춘다.
+    '.op-status-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0;' +
+      ' height: 34px; padding: 0 13px; border: none; border-radius: 11px; cursor: pointer;' +
+      ' font-size: var(--font-size-caption); font-weight: 800; letter-spacing: -0.2px; white-space: nowrap;' +
+      ' transition: transform .1s ease, filter .1s ease; }' +
+    '.op-status-btn.open { background: var(--color-accent-green-bg); color: #0b6b5c; }' +
+    '.op-status-btn.paused { background: var(--color-accent-amber-bg); color: #a15c00; }' +
+    '.op-status-btn.closed { background: var(--color-accent-red-bg); color: var(--color-accent-red); }' +
+    '.op-status-btn:active { transform: scale(0.96); filter: brightness(0.95); }' +
+    '@media (prefers-reduced-motion: reduce) { .op-status-btn { transition: none; } .op-status-btn:active { transform: none; } }' +
+    // 영업 상태 모달의 액션 버튼도 설정 화면의 파스텔 버튼과 같은 톤으로 맞춘다.
+    // showModal의 variant가 그대로 class로 붙으므로, 기존 .btn-* 변형과 섞이지 않게 op- 접두어를 쓴다.
+    '.btn.op-pastel-green { background: var(--color-accent-green-bg); color: #0b6b5c; width: 100%; }' +
+    '.btn.op-pastel-amber { background: var(--color-accent-amber-bg); color: #a15c00; width: 100%; }' +
+    '.btn.op-pastel-red { background: var(--color-accent-red-bg); color: var(--color-accent-red); width: 100%; }' +
     '.order-network-caption { flex-shrink: 0; display: inline-flex; align-items: center; }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
@@ -199,6 +229,16 @@
   }
 
   // ---------------- 렌더 조각들 ----------------
+  // 영업 상태 버튼 — 공용 statusPillHtml(파스텔 span)을 쓰지 않고 솔리드 버튼으로 직접 그린다.
+  // 용어는 상태명(영업중/일시중지/마감)을 그대로 쓰고, 아이콘이 상태와 1:1로 대응한다.
+  function renderStatusButtonHtml() {
+    const v = OP_STATUS_VIEW[store.operatingStatus] || OP_STATUS_VIEW.CLOSED;
+    return '<button type="button" class="op-status-btn ' + v.cls + '"' +
+      ' data-action="open-operating-status" aria-label="영업 상태 ' + v.label + ' · 눌러서 변경">' +
+      v.icon + v.label +
+      '</button>';
+  }
+
   function renderSegmentTabsHtml() {
     const tabBtns = tabs.map(function (t, i) {
       return '<button type="button" class="segment-tab' + (i === currentIndex ? ' active' : '') + '" data-action="switch-tab" data-tab-idx="' + i + '">' +
@@ -913,6 +953,97 @@
     window.UI.toast('주문 목록을 새로고침했어요');
   }
 
+  // ---------------- 영업 상태 변경 ----------------
+  // 마감 시 실제로 완료 처리되는 대상과 같은 조건으로 센다(처리중·취소 아님) — 안내 문구의 건수가
+  // closeStoreAndCompleteProcessing이 실제로 완료시키는 건수와 어긋나지 않게 한다.
+  function processingOrderCount() {
+    return window.MockApi.getOrders(storeId, { status: 'PROCESSING' })
+      .filter(function (o) { return !o.canceled; }).length;
+  }
+
+  function refreshStatusButton() {
+    const slot = root.querySelector('#status-btn-slot');
+    if (slot) slot.innerHTML = renderStatusButtonHtml();
+  }
+
+  function applyOperatingStatus(next, before) {
+    if (next === 'CLOSED') {
+      const res = window.MockApi.closeStoreAndCompleteProcessing(storeId);
+      store = window.MockApi.getStore(storeId);
+      window.UI.toast(res.completedCount > 0
+        ? ('영업을 마감했어요 · 진행 중이던 주문 ' + res.completedCount + '건이 완료 처리됐어요')
+        : '영업을 마감했어요');
+    } else {
+      store = window.MockApi.updateOperatingStatus(storeId, next);
+      if (next === 'PAUSED') window.UI.toast('일시중지로 변경했어요');
+      else window.UI.toast(before === 'PAUSED' ? '일시중지를 해제했어요' : '영업을 시작했어요');
+    }
+    refreshStatusButton();
+    updateList();
+  }
+
+  // 설정 화면과 같은 잠금 정책을 적용한다 — 개점(마감→영업)과 마감만 비밀번호로 보호하고,
+  // 일시중지/일시중지 해제는 계속 영업 중인 상태라 보호 대상이 아니다. 이 화면에서만 잠금을 빼면
+  // 설정 화면의 잠금을 우회하는 구멍이 된다.
+  function requestOperatingStatus(next) {
+    const before = store.operatingStatus;
+    function run() { applyOperatingStatus(next, before); }
+    const isRealOpen = next === 'OPEN' && before === 'CLOSED';
+    if (isRealOpen || next === 'CLOSED') {
+      window.UI.requirePasswordGate(storeId, 'statusChange', '영업상태 변경(개점·마감)', run);
+    } else {
+      run();
+    }
+  }
+
+  // 마감은 진행 중인 주문까지 완료 처리되는 되돌릴 수 없는 동작이라, 어느 경로로 들어와도 한 번 더 묻는다.
+  function openCloseConfirmModal() {
+    window.UI.showModal({
+      title: '영업을 마감할까요?',
+      message: '진행 중인 주문 ' + processingOrderCount() + '건이 모두 완료 처리돼요.<br/>정말 마감하시나요?',
+      buttons: [
+        { label: '마감하기', variant: 'op-pastel-red', onClick: function () { requestOperatingStatus('CLOSED'); } },
+        { label: '닫기', variant: 'btn-secondary' },
+      ],
+    });
+  }
+
+  function handleOperatingStatusClick() {
+    const st = store.operatingStatus;
+    if (st === 'CLOSED') {
+      window.UI.showModal({
+        title: '지금 영업을 시작할까요?',
+        message: '개점하면 손님이 주문할 수 있어요.',
+        buttons: [
+          { label: '개점하기', variant: 'op-pastel-green', onClick: function () { requestOperatingStatus('OPEN'); } },
+          { label: '닫기', variant: 'btn-secondary' },
+        ],
+      });
+      return;
+    }
+    if (st === 'OPEN') {
+      window.UI.showModal({
+        title: '영업 상태를 변경해주세요.',
+        message: '현재 영업중이에요.',
+        buttons: [
+          { label: '일시중지', variant: 'op-pastel-amber', onClick: function () { requestOperatingStatus('PAUSED'); } },
+          { label: '마감', variant: 'op-pastel-red', onClick: openCloseConfirmModal },
+          { label: '닫기', variant: 'btn-secondary' },
+        ],
+      });
+      return;
+    }
+    window.UI.showModal({
+      title: '영업 상태를 변경해주세요.',
+      message: '현재 일시중지 상태에요.',
+      buttons: [
+        { label: '일시중지 해제', variant: 'op-pastel-green', onClick: function () { requestOperatingStatus('OPEN'); } },
+        { label: '마감', variant: 'op-pastel-red', onClick: openCloseConfirmModal },
+        { label: '닫기', variant: 'btn-secondary' },
+      ],
+    });
+  }
+
   function refreshOfflineBanner() {
     const slot = root.querySelector('#offline-banner-slot');
     if (slot) slot.innerHTML = isOnline ? '' : offlineBannerHtml();
@@ -973,6 +1104,7 @@
     const action = target.getAttribute('data-action');
     const id = target.getAttribute('data-id');
     if (action === 'open-settings') onSettingsClick();
+    else if (action === 'open-operating-status') handleOperatingStatusClick();
     else if (action === 'refresh-orders') handleRefresh(target);
     else if (action === 'dismiss-auto-soldout') {
       const dismissName = target.getAttribute('data-name');
@@ -1060,7 +1192,7 @@
     return '' +
       '<style>' + SCOPED_STYLE + '</style>' +
       '<div class="topbar order-topbar-centered">' +
-      '<span class="status-pill-btn">' + window.UI.statusPillHtml(store.operatingStatus) + '</span>' +
+      '<span id="status-btn-slot">' + renderStatusButtonHtml() + '</span>' +
       '<div class="topbar-title">' +
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
       '<span class="order-network-caption" id="order-network-caption">' + networkIconHtml(networkState()) + '</span>' +
