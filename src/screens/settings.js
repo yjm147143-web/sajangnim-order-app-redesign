@@ -10,6 +10,13 @@
     return window.MockApi.getContextStoreId();
   }
 
+  // 영업 상태는 파스텔 배지(statusPillHtml) 대신 아이콘 + 평문으로 보여준다 — 바로 옆에 실제
+  // 조작 버튼이 붙으면서, 배지까지 색 덩어리로 두면 무엇이 눌리는 건지 헷갈린다.
+  function statusPlainHtml(status) {
+    var meta = window.UI.operatingStatusMeta(status);
+    return '<div class="status-plain ' + meta.cls + '">' + meta.dot + ' ' + meta.label + '</div>';
+  }
+
   function actionButtonsHtml(status) {
     if (status === 'CLOSED') {
       return '<button type="button" class="status-action-btn pastel-green" data-status-action="OPEN">개점</button>';
@@ -51,15 +58,17 @@
   function contentHtml(store) {
     var autoAcceptOn = !!store.autoAcceptOrders;
     return (
-      '<div class="settings-list-item no-toggle-click status-list-item">' +
-        '<div class="icon">🏪</div>' +
-        '<div class="label-group">' +
-          '<div class="label">영업 상태</div>' +
-          '<div class="status-subtitle-row">' + window.UI.statusPillHtml(store.operatingStatus) +
-            '<span class="status-time-sub">' + statusTimeSubtitle(store) + '</span></div>' +
+      // 영업 상태는 설정 화면에서 가장 자주 쓰는 조작이라 목록 행이 아니라 카드로 띄워 둔다.
+      // 좌측은 아이콘 칩 + (라벨 / 상태 / 개점 시각), 우측은 상태 변경 버튼을 위아래 같은 열로 세운다.
+      '<div class="status-card">' +
+        '<div class="status-card-icon">🏪</div>' +
+        '<div class="status-card-body">' +
+          '<div class="status-card-label">영업 상태</div>' +
+          statusPlainHtml(store.operatingStatus) +
+          '<div class="status-time-sub">' + statusTimeSubtitle(store) + '</div>' +
         '</div>' +
+        '<div class="status-action-col">' + actionButtonsHtml(store.operatingStatus) + '</div>' +
       '</div>' +
-      '<div class="status-action-row">' + actionButtonsHtml(store.operatingStatus) + '</div>' +
 
       '<div class="settings-list-item no-toggle-click">' +
         '<div class="icon">⚡</div>' +
@@ -130,12 +139,31 @@
         '.settings-list-item .chevron{color:var(--color-text-secondary);flex-shrink:0;font-size:20px;margin-left:auto;}' +
         '.settings-logout .label{color:var(--color-accent-red);}' +
         '.settings-logout .icon{filter:none;}' +
-        '.status-list-item{padding-bottom:var(--space-2);}' +
-        '.status-subtitle-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}' +
-        '.status-time-sub{font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
-        '.status-action-row{display:flex;gap:var(--space-2);padding:0 var(--space-5) var(--space-4);}' +
-        '.status-action-btn{flex:1;height:48px;border:none;border-radius:var(--radius-button);' +
-          'font-size:var(--font-size-body);font-weight:800;cursor:pointer;}' +
+        // 카드 좌우 여백은 화면 기본 거터(20px)와 맞추고, 아래 목록과 붙지 않게 아래 여백을 둔다.
+        // 높이가 다른 두 열(좌측 3줄 텍스트 / 우측 버튼 2단)은 center로 맞춰야 균형이 잡힌다.
+        '.status-card{display:flex;align-items:center;gap:var(--space-3);' +
+          'margin:var(--space-3) var(--space-5) var(--space-4);padding:var(--space-4);' +
+          'background:var(--color-white);border-radius:var(--radius-card);box-shadow:var(--shadow-card);}' +
+        // 이모지를 그냥 두면 좌측 정렬선이 흐트러지므로 고정 크기 칩에 담아 기준선을 만든다
+        '.status-card-icon{width:38px;height:38px;border-radius:12px;background:var(--color-card-bg);' +
+          'display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}' +
+        '.status-card-body{flex:1;min-width:0;display:flex;flex-direction:column;}' +
+        '.status-card-label{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);}' +
+        // 배지가 아니라 평문 — 색으로 상태만 구분하고 배경은 두지 않는다
+        '.status-plain{display:flex;align-items:center;gap:5px;margin-top:4px;' +
+          'font-size:var(--font-size-subtitle);font-weight:800;line-height:1.25;}' +
+        '.status-plain.open{color:#0b6b5c;}' +
+        '.status-plain.paused{color:#a15c00;}' +
+        '.status-plain.closed{color:var(--color-accent-red);}' +
+        '.status-time-sub{margin-top:3px;font-size:var(--font-size-micro);color:var(--color-text-secondary);font-weight:600;}' +
+        // 버튼은 같은 행 우측에서 위아래 같은 열로 세운다
+        '.status-action-col{display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-left:auto;}' +
+        '.status-action-btn{width:92px;height:36px;border:none;border-radius:12px;' +
+          'font-size:var(--font-size-caption);font-weight:800;cursor:pointer;white-space:nowrap;' +
+          'transition:filter .1s ease,transform .1s ease;}' +
+        '.status-action-btn:active{transform:scale(.96);filter:brightness(.95);}' +
+        '@media (prefers-reduced-motion: reduce){.status-action-btn{transition:none;}' +
+          '.status-action-btn:active{transform:none;}}' +
         '.status-action-btn.pastel-green{background:var(--color-accent-green-bg);color:var(--color-accent-green);}' +
         '.status-action-btn.pastel-amber{background:var(--color-accent-amber-bg);color:#a15c00;}' +
         '.status-action-btn.pastel-red{background:var(--color-accent-red-bg);color:var(--color-accent-red);}' +
@@ -143,7 +171,8 @@
         '.settings-footer-link{background:none;border:none;padding:2px;font-size:11px;color:var(--color-text-secondary);opacity:0.6;cursor:pointer;}' +
         '.settings-footer-sep{font-size:11px;color:var(--color-text-secondary);opacity:0.4;}' +
         '.settings-group-title{font-size:var(--font-size-micro);font-weight:700;color:var(--color-text-secondary);padding:var(--space-4) var(--space-5) var(--space-2);}' +
-        '.settings-shortcut-item{margin:0 var(--space-4);border:1.5px solid var(--color-accent-blue);border-radius:var(--radius-button);}' +
+        // 좌우 여백은 화면 거터(20px)로 맞춘다 — 영업 상태 카드·섹션 제목·목록 행과 같은 정렬선을 쓴다
+        '.settings-shortcut-item{margin:0 var(--space-5);border:1.5px solid var(--color-accent-blue);border-radius:var(--radius-button);}' +
         '.settings-shortcut-item .label{color:var(--color-accent-blue);font-weight:800;}' +
         '.settings-shortcut-item .chevron{color:var(--color-accent-blue);}' +
       '</style>' +
