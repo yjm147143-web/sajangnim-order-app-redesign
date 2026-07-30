@@ -91,6 +91,10 @@
     '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
+    '.reason-counter { margin-top: 5px; text-align: right; font-size: var(--font-size-micro);' +
+      ' font-weight: 700; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }' +
+    // 상한에 닿으면 '더 안 써지는' 이유를 색으로 알린다 — 안 그러면 입력이 씹히는 것처럼 느껴진다.
+    '.reason-counter.full { color: var(--color-accent-red); }' +
     // 아래쪽 margin이 없으면 비밀번호 입력란이 '취소하기' 버튼에 붙어, 입력란을 누르려다
     // 취소를 눌러버릴 수 있다. 입력 영역과 확정 버튼 사이를 확실히 띄운다.
     '.reason-pw-block { margin: 14px 0 20px; padding-top: 14px; border-top: 1px solid var(--color-divider); text-align: left; }' +
@@ -767,6 +771,8 @@
   }
 
   // ---------------- 취소/반품 사유 모달 ----------------
+  const REASON_MAX_LEN = 20;
+
   // 취소 사유 팝업. needPassword가 true면 비밀번호 입력란을 같은 팝업에 함께 둔다 —
   // 사유 선택 → 확인 → 비밀번호 팝업으로 2단계를 밟게 하면, 사장님은 이미 '취소한다'고
   // 마음먹은 상태에서 창을 두 번 넘겨야 한다. 확인해야 할 것(사유·권한)을 한 화면에 모은다.
@@ -777,7 +783,9 @@
     let pwError = '';
 
     function computeReason() {
-      if (selected === '직접 입력') return customText.trim();
+      // 취소 사유는 손님에게 그대로 알림톡으로 나가고 주문 이력에 남는 문구라, 한 줄로 읽히는
+      // 길이로 묶는다. 화면(maxlength)뿐 아니라 여기서도 잘라 저장값의 상한을 보장한다.
+      if (selected === '직접 입력') return customText.trim().slice(0, REASON_MAX_LEN);
       return selected;
     }
 
@@ -793,7 +801,9 @@
         return '<button type="button" class="pill-btn reason-pill' + (selected === opt ? ' active' : '') + '" data-reason="' + opt + '">' + opt + '</button>';
       }).join('') + '</div>';
       if (selected === '직접 입력') {
-        bodyHtml += '<textarea class="input-field reason-textarea" id="reason-textarea" placeholder="사유를 입력해 주세요">' + esc(customText) + '</textarea>';
+        bodyHtml += '<textarea class="input-field reason-textarea" id="reason-textarea" maxlength="' + REASON_MAX_LEN + '"' +
+          ' placeholder="사유를 입력해 주세요 (최대 ' + REASON_MAX_LEN + '자)">' + esc(customText) + '</textarea>' +
+          '<div class="reason-counter" id="reason-counter">' + customText.length + ' / ' + REASON_MAX_LEN + '</div>';
       }
       if (needPassword) {
         bodyHtml += '<div class="reason-pw-block">' +
@@ -855,8 +865,16 @@
 
       const ta = document.getElementById('reason-textarea');
       if (ta) {
+        const counter = document.getElementById('reason-counter');
         ta.addEventListener('input', function () {
+          // maxlength는 붙여넣기까지 막아주지만 한글 조합 중에는 순간적으로 넘길 수 있어
+          // 값을 직접 잘라 상한을 보장한다.
+          if (ta.value.length > REASON_MAX_LEN) ta.value = ta.value.slice(0, REASON_MAX_LEN);
           customText = ta.value;
+          if (counter) {
+            counter.textContent = customText.length + ' / ' + REASON_MAX_LEN;
+            counter.classList.toggle('full', customText.length >= REASON_MAX_LEN);
+          }
           syncConfirmEnabled();
         });
         ta.focus();
