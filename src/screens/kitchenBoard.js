@@ -60,10 +60,10 @@
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-total">합계 ' + total + '</span>' +
         '</div>' +
-        // 차감량(−1)을 라벨에 섞어 쓰면 '조리완료 −1'이 한 덩어리 문구로 읽혀 무엇이 줄어드는지
-        // 모호했다. 동작(조리완료)과 결과(1 감소)를 분리해, 결과를 네모 배지로 붙인다.
+        // 차감량은 배지 없이 평문으로 둔다. 배지(흰 배경 + 파란 글자)는 진한 파랑 버튼 안에서
+        // 대비를 두 번 꺾어 오히려 안 읽혔다 — 흰 글자를 그대로 쓰면 라벨과 같은 대비를 얻는다.
         '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>' +
-          '조리완료<span class="kb-deduct-badge">▼1</span>' +
+          '조리완료<span class="kb-deduct-num">▼1</span>' +
         '</button>' +
       '</div>'
     );
@@ -145,19 +145,16 @@
         '.kb-manual-note{font-size:10px;font-weight:700;color:var(--color-accent-purple);margin-left:2px;}' +
         // 파란 음영(솔리드 파랑) — 카드 안에서 유일하게 누르는 요소라, 테두리만 있는 고스트
         // 버튼보다 채워진 버튼이 '여기를 누른다'를 먼저 알린다.
-        '.kb-deduct-btn{display:flex;align-items:center;justify-content:center;gap:6px;' +
+        '.kb-deduct-btn{display:flex;align-items:center;justify-content:center;gap:7px;' +
           'border:none;background:var(--color-accent-blue);color:var(--color-white);' +
           'font-size:12px;font-weight:800;height:34px;border-radius:10px;cursor:pointer;' +
           'box-shadow:0 2px 6px rgba(51,85,184,0.28);transition:filter .1s ease,transform .1s ease;}' +
         '.kb-deduct-btn:active{transform:scale(.97);filter:brightness(.94);}' +
         '.kb-deduct-btn:disabled{background:var(--color-disabled);color:var(--color-text-secondary);' +
           'box-shadow:none;cursor:not-allowed;}' +
-        // 네모 배지 — 반투명 흰색(rgba .24)은 진한 파랑 위에서 경계가 거의 안 보였다.
-        // 불투명 흰 배경 + 파란 글자로 반전시키면 버튼 색과 확실히 갈린다.
-        '.kb-deduct-badge{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:16px;' +
-          'padding:0 4px;border-radius:4px;background:var(--color-white);color:var(--color-accent-blue-strong);' +
-          'font-size:10px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
-        '.kb-deduct-btn:disabled .kb-deduct-badge{background:rgba(255,255,255,0.75);color:var(--color-text-secondary);}' +
+        // 차감량은 라벨과 같은 크기·굵기의 흰 글자다. 별도 색이나 배경을 주지 않으므로
+        // 비활성 상태에서도 버튼 색을 그대로 따라간다. 숫자만 폭이 흔들리지 않게 tabular-nums.
+        '.kb-deduct-num{font-variant-numeric:tabular-nums;}' +
         '@media (prefers-reduced-motion: reduce){.kb-deduct-btn{transition:none;}.kb-deduct-btn:active{transform:none;}}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +
