@@ -200,7 +200,7 @@
               window.UI.confirmModal(
                 '지금 영업을 마감할까요?',
                 '영업을 마감하면, 대기 중이거나 처리하고 있던 주문도 모두 완료돼요.',
-                '마감하기',
+                '마감',
                 function () {
                   var result = window.MockApi.closeStoreAndCompleteProcessing(storeId);
                   window.UI.toast(result.completedCount > 0

@@ -1002,7 +1002,7 @@
       title: '영업을 마감할까요?',
       message: '진행 중인 주문 ' + processingOrderCount() + '건이 모두 완료 처리돼요.<br/>정말 마감하시나요?',
       buttons: [
-        { label: '마감하기', variant: 'op-pastel-red', onClick: function () { requestOperatingStatus('CLOSED'); } },
+        { label: '마감', variant: 'op-pastel-red', onClick: function () { requestOperatingStatus('CLOSED'); } },
         { label: '닫기', variant: 'btn-secondary' },
       ],
     });
