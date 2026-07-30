@@ -86,6 +86,10 @@
         '<div class="icon">🍳</div><div class="label">KDS 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
+      // 카테고리 사이를 회색 선으로 끊는다. 그룹 제목만으로는 어디서 묶음이 바뀌는지 약해서,
+      // 로그아웃 위에 쓰던 것과 같은 .divider-line을 매장 관리 / 매출 / 환경설정 앞에 둔다.
+      '<div class="divider-line"></div>' +
+
       '<div class="settings-group-title">매장 관리</div>' +
       '<div class="settings-list-item" data-nav="menuManagement">' +
         '<div class="icon">🍽️</div><div class="label">메뉴 관리</div><div class="chevron">›</div>' +
@@ -100,10 +104,14 @@
         '<div class="icon">📱</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
+      '<div class="divider-line"></div>' +
+
       '<div class="settings-group-title">매출</div>' +
       '<div class="settings-list-item" data-nav="sales">' +
         '<div class="icon">💰</div><div class="label">매출 조회</div><div class="chevron">›</div>' +
       '</div>' +
+
+      '<div class="divider-line"></div>' +
 
       '<div class="settings-group-title">환경설정</div>' +
       '<div class="settings-list-item" data-nav="notificationSettings">' +
