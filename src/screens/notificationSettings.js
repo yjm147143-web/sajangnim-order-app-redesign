@@ -8,6 +8,13 @@
     return window.MockApi.getContextStoreId();
   }
 
+  // 반복 횟수 기본값. 현장이 시끄러워 한 번만 울리면 놓치기 쉬워 3회를 기본으로 둔다.
+  var DEFAULT_REPEAT_COUNT = 3;
+
+  function repeatCountOf(store) {
+    return store.notificationRepeatCount != null ? store.notificationRepeatCount : DEFAULT_REPEAT_COUNT;
+  }
+
   var SOUND_TYPES = [
     { v: 'default', label: '기본음' },
     { v: 'bell', label: '청량한 벨' },
@@ -18,7 +25,7 @@
     var notificationOn = store.notificationEnabled !== false;
     var volume = store.notificationVolume != null ? store.notificationVolume : 70;
     var soundType = store.notificationSoundType || 'default';
-    var repeatCount = store.notificationRepeatCount != null ? store.notificationRepeatCount : 1;
+    var repeatCount = repeatCountOf(store);
     return (
       '<div class="settings-list-item no-toggle-click">' +
         '<div class="icon">🔔</div>' +
@@ -140,7 +147,7 @@
       if (minusBtn) {
         minusBtn.addEventListener('click', function () {
           var store = window.MockApi.getStore(storeId);
-          var current = store.notificationRepeatCount != null ? store.notificationRepeatCount : 1;
+          var current = repeatCountOf(store);
           var next = Math.max(1, current - 1);
           window.MockApi.updateNotificationSettings(storeId, { repeatCount: next });
           refresh();
@@ -149,7 +156,7 @@
       if (plusBtn) {
         plusBtn.addEventListener('click', function () {
           var store = window.MockApi.getStore(storeId);
-          var current = store.notificationRepeatCount != null ? store.notificationRepeatCount : 1;
+          var current = repeatCountOf(store);
           var next = Math.min(10, current + 1);
           window.MockApi.updateNotificationSettings(storeId, { repeatCount: next });
           refresh();

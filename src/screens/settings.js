@@ -199,12 +199,12 @@
             if (newStatus === 'CLOSED') {
               window.UI.confirmModal(
                 '지금 영업을 마감할까요?',
-                '영업을 마감하면, 대기 중이거나 처리하고 있던 주문도 모두 완료돼요.',
+                '미수락·처리중 주문 ' + window.MockApi.ordersClosedOnCloseCount(storeId) + '건이 모두 완료 처리돼요.',
                 '마감',
                 function () {
                   var result = window.MockApi.closeStoreAndCompleteProcessing(storeId);
                   window.UI.toast(result.completedCount > 0
-                    ? ('영업 상태가 변경되었어요 · 처리중 주문 ' + result.completedCount + '건이 완료 처리됐어요')
+                    ? ('영업 상태가 변경되었어요 · 남아있던 주문 ' + result.completedCount + '건이 완료 처리됐어요')
                     : '영업 상태가 변경되었어요');
                   refresh();
                 },
@@ -277,7 +277,12 @@
       var noticeBtn = wrap.querySelector('#notice-link-btn');
       if (noticeBtn) noticeBtn.addEventListener('click', function () { window.open(NOTICE_URL, '_blank', 'noopener'); });
       var logSendBtn = wrap.querySelector('#log-send-btn');
-      if (logSendBtn) logSendBtn.addEventListener('click', function () { window.UI.toast('로그를 전송했어요'); });
+      if (logSendBtn) {
+        logSendBtn.addEventListener('click', function () {
+          window.MockApi.sendDiagnosticLog(storeId, 'MANUAL');
+          window.UI.toast('로그를 전송했어요');
+        });
+      }
 
       var GATED_NAV = { sales: { scopeKey: 'sales', label: '매출 조회' } };
       wrap.querySelectorAll('[data-nav]').forEach(function (row) {
