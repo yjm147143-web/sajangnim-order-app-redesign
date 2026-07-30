@@ -165,9 +165,61 @@
   }
 
   // 마감 시 '처리중' 주문 전체를 완료 처리하고 매장을 마감 상태로 전환한다.
+  // ---- KDS 메뉴 고정 ----
+  // 조리 담당자가 계속 지켜봐야 하는 메뉴(주력 메뉴, 조리가 오래 걸리는 메뉴)를 목록 맨 앞에
+  // 붙여둔다. 남은 수량이 0이 되어 뒤로 밀려도 고정한 메뉴는 자리를 지킨다.
+  function getKdsPinnedMenus(storeId) {
+    const store = findStore(storeId);
+    return (store && store.kdsPinnedMenus) ? store.kdsPinnedMenus.slice() : [];
+  }
+
+  function toggleKdsPinnedMenu(storeId, menuName) {
+    const store = findStore(storeId);
+    if (!store) return [];
+    if (!store.kdsPinnedMenus) store.kdsPinnedMenus = [];
+    const i = store.kdsPinnedMenus.indexOf(menuName);
+    if (i === -1) store.kdsPinnedMenus.push(menuName);
+    else store.kdsPinnedMenus.splice(i, 1);
+    persist();
+    return store.kdsPinnedMenus.slice();
+  }
+
+  // ---- 진단 로그 ----
+  // 설정 화면의 '로그 전송'과 마감 시 자동 전송이 같은 함수를 쓴다. 목업이라 실제 전송은
+  // 없고 최근 50건만 보관한다. 사장님 화면에는 노출하지 않는다(QA에서 확인용).
+  function sendDiagnosticLog(storeId, reason, detail) {
+    if (!DB.diagnosticLogs) DB.diagnosticLogs = [];
+    DB.diagnosticLogs.push({
+      storeId: storeId,
+      reason: reason,
+      detail: detail || {},
+      sentAt: new Date().toISOString(),
+    });
+    if (DB.diagnosticLogs.length > 50) DB.diagnosticLogs = DB.diagnosticLogs.slice(-50);
+    persist();
+    return DB.diagnosticLogs[DB.diagnosticLogs.length - 1];
+  }
+
+  function getDiagnosticLogs(storeId) {
+    return (DB.diagnosticLogs || []).filter(function (l) { return !storeId || l.storeId === storeId; });
+  }
+
+  // 마감하면 미수락(WAITING)과 처리중(PROCESSING) 주문을 모두 완료 처리한다.
+  // 미수락을 남겨두면 영업이 끝났는데도 완료탭으로 넘어가지 못한 주문이 미수락탭에 계속
+  // 쌓여, 다음 영업일에 지난 주문이 섞여 보인다.
+  const CLOSE_COMPLETE_STATUSES = ['WAITING', 'PROCESSING'];
+
+  function ordersClosedOnCloseCount(storeId) {
+    return DB.orders.filter(function (o) {
+      return o.storeId === storeId && CLOSE_COMPLETE_STATUSES.indexOf(o.status) !== -1 && !o.canceled;
+    }).length;
+  }
+
   function closeStoreAndCompleteProcessing(storeId) {
     const store = findStore(storeId);
-    const affected = DB.orders.filter(function (o) { return o.storeId === storeId && o.status === 'PROCESSING' && !o.canceled; });
+    const affected = DB.orders.filter(function (o) {
+      return o.storeId === storeId && CLOSE_COMPLETE_STATUSES.indexOf(o.status) !== -1 && !o.canceled;
+    });
     affected.forEach(function (o) {
       o.status = 'DONE';
       o.completeCount = (o.completeCount || 0) + 1;
@@ -176,6 +228,9 @@
     store.operatingStatus = 'CLOSED';
     store.statusChangedAt = new Date().toISOString();
     persist();
+    // 마감은 그날 영업의 종료 시점이라 진단 로그를 남길 최적의 타이밍이다. 사장님이 따로
+    // '로그 전송'을 누르지 않아도 자동으로 모아 보낸다(화면에는 노출하지 않는다).
+    sendDiagnosticLog(storeId, 'STORE_CLOSED', { completedCount: affected.length });
     return { completedCount: affected.length };
   }
 
@@ -500,6 +555,39 @@
   // 이미 현장에서 결제까지 끝난 뒤 접수하는 것이라 미수락 단계 없이 바로 '처리중'으로 들어간다.
   // 손님 연락처는 화면에서 필수 입력(핸드폰 번호 또는 이메일 선택). 호출번호 = 핸드폰 번호 뒷자리 4자리
   // (이메일 케이스는 뒷자리가 없으니 기존 QR/태블릿 흐름과 동일하게 랜덤 4자리로 대체).
+  // 임의 주문으로 발생한 매출을 그날 집계에 반영한다.
+  // 주문방식별(byChannel.CASH → '임의 주문')과 결제수단별(byPayment.기타) 두 곳에 모두 넣어야
+  // 두 탭의 합계가 서로 어긋나지 않는다. 임의 주문은 카드·간편결제·쿠폰 어디에도 속하지
+  // 않으므로 결제수단은 '기타'로 잡는다.
+  function addManualOrderToDailySales(storeId, amount) {
+    const store = findStore(storeId);
+    if (!store) return;
+    if (!store.dailySales) store.dailySales = [];
+    const today = new Date().toISOString().slice(0, 10);
+    let rec = store.dailySales.find(function (d) { return d.date === today; });
+    if (!rec) {
+      rec = {
+        date: today, total: 0, orderCount: 0,
+        byChannel: { QR: 0, TABLET: 0, CASH: 0 },
+        byChannelCount: { QR: 0, TABLET: 0, CASH: 0 },
+        byPayment: { 카드: 0, 간편결제: 0, 쿠폰: 0, 기타: 0 },
+        byPaymentCount: { 카드: 0, 간편결제: 0, 쿠폰: 0, 기타: 0 },
+        byHour: [], byMenu: [],
+      };
+      store.dailySales.push(rec);
+    }
+    rec.total = (rec.total || 0) + amount;
+    rec.orderCount = (rec.orderCount || 0) + 1;
+    rec.byChannel = rec.byChannel || {};
+    rec.byChannelCount = rec.byChannelCount || {};
+    rec.byChannel.CASH = (rec.byChannel.CASH || 0) + amount;
+    rec.byChannelCount.CASH = (rec.byChannelCount.CASH || 0) + 1;
+    rec.byPayment = rec.byPayment || {};
+    rec.byPaymentCount = rec.byPaymentCount || {};
+    rec.byPayment.기타 = (rec.byPayment.기타 || 0) + amount;
+    rec.byPaymentCount.기타 = (rec.byPaymentCount.기타 || 0) + 1;
+  }
+
   function createCashOrder(storeId, cartItems, cashReceived, customerContact, isEmailContact) {
     const amount = cartItems.reduce(function (sum, it) { return sum + it.price * it.quantity; }, 0);
     const lines = cartItems.map(function (it) { return { menuName: it.menuName, optionNames: [], quantity: it.quantity }; });
@@ -510,7 +598,8 @@
       pickupNo: (contact && !isEmailContact) ? contact.slice(-4) : randomPickupNo(storeId),
       identifierType: 'PICKUP',
       channel: 'MANUAL',
-      paymentMethod: '현금',
+      // 임의 주문은 카드·간편결제·쿠폰 어디에도 해당하지 않아 결제수단을 '기타'로 잡는다.
+      paymentMethod: '기타',
       amount: amount,
       items: lines,
       customerContact: contact,
@@ -526,6 +615,7 @@
       cashChange: cashReceived - amount,
     };
     DB.orders.unshift(order);
+    addManualOrderToDailySales(storeId, amount);
     persist();
     return order;
   }
@@ -760,21 +850,23 @@
     return [
       { name: 'QR오더', amount: sums.QR, count: counts.QR },
       { name: '키오스크', amount: sums.TABLET, count: counts.TABLET },
-      { name: '현금성', amount: sums.CASH, count: counts.CASH },
+      { name: '임의 주문', amount: sums.CASH, count: counts.CASH },
     ];
   }
 
   function getSalesByPayment(storeId, range) {
     const store = findStore(storeId);
     const days = filterDailyRange(store.dailySales || [], range);
-    const sums = { 카드: 0, 간편결제: 0, 쿠폰: 0 };
-    const counts = { 카드: 0, 간편결제: 0, 쿠폰: 0 };
+    // '기타'는 임의 주문 몫이다. 시드 데이터에는 임의 주문이 없어 과거 날짜는 0원으로 나오고,
+    // 앱에서 임의 주문을 접수한 당일부터 값이 쌓인다.
+    const KEYS = ['카드', '간편결제', '쿠폰', '기타'];
+    const sums = {}; const counts = {};
+    KEYS.forEach(function (k) { sums[k] = 0; counts[k] = 0; });
     days.forEach(function (d) {
-      sums.카드 += d.byPayment.카드; sums.간편결제 += d.byPayment.간편결제; sums.쿠폰 += d.byPayment.쿠폰;
-      const c = d.byPaymentCount || {};
-      counts.카드 += c.카드 || 0; counts.간편결제 += c.간편결제 || 0; counts.쿠폰 += c.쿠폰 || 0;
+      const p = d.byPayment || {}; const c = d.byPaymentCount || {};
+      KEYS.forEach(function (k) { sums[k] += p[k] || 0; counts[k] += c[k] || 0; });
     });
-    return Object.keys(sums).map(function (k) { return { name: k, amount: sums[k], count: counts[k] }; });
+    return KEYS.map(function (k) { return { name: k, amount: sums[k], count: counts[k] }; });
   }
 
   function getSalesByHour(storeId, range) {
@@ -994,12 +1086,16 @@
     const todayStr = new Date().toISOString().slice(0, 10);
     const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const eventDayCount = eventTotalDayCount(event);
-    const agg = { 카드: 0, 간편결제: 0, 쿠폰: 0 };
+    // 사장님 화면과 같은 4분류(카드/간편결제/쿠폰/기타)를 쓴다. '기타'는 임의 주문 몫이라
+    // 추정치로 배분하지 않고 store-1의 실측 dailySales에서만 더한다.
+    const agg = { 카드: 0, 간편결제: 0, 쿠폰: 0, 기타: 0 };
     stores.forEach(function (s) {
       if (s.id === 'store-1' && s.dailySales) {
         dates.forEach(function (dateStr) {
           const rec = s.dailySales.find(function (d) { return d.date === dateStr; });
-          if (rec && rec.byPayment) { agg.카드 += rec.byPayment.카드 || 0; agg.간편결제 += rec.byPayment.간편결제 || 0; agg.쿠폰 += rec.byPayment.쿠폰 || 0; }
+          if (rec && rec.byPayment) {
+            Object.keys(agg).forEach(function (k) { agg[k] += rec.byPayment[k] || 0; });
+          }
         });
         return;
       }
@@ -1073,7 +1169,7 @@
       tablet += Math.round(rangeAmount * 0.30);
       cash += Math.round(rangeAmount * 0.15);
     });
-    return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }, { name: '현금성', amount: cash }];
+    return [{ name: 'QR오더', amount: qr }, { name: '키오스크', amount: tablet }, { name: '임의 주문', amount: cash }];
   }
 
   // 메뉴별 매출은 사장님 보드와 동일하게 전체 랭킹으로 반환한다(상위 N개로 자르지 않음).
@@ -1109,6 +1205,9 @@
     getMinOrderSettings: getMinOrderSettings, updateMinOrderSettings: updateMinOrderSettings,
     getOrderChannelSettings: getOrderChannelSettings, updateOrderChannelSettings: updateOrderChannelSettings,
     closeStoreAndCompleteProcessing: closeStoreAndCompleteProcessing,
+    ordersClosedOnCloseCount: ordersClosedOnCloseCount,
+    getKdsPinnedMenus: getKdsPinnedMenus, toggleKdsPinnedMenu: toggleKdsPinnedMenu,
+    sendDiagnosticLog: sendDiagnosticLog, getDiagnosticLogs: getDiagnosticLogs,
     getCustomerGuideSettings: getCustomerGuideSettings, updateCustomerGuideSettings: updateCustomerGuideSettings, getQrMenuInfo: getQrMenuInfo,
     getPermissionLockStatus: getPermissionLockStatus, setPermissionLockPassword: setPermissionLockPassword,
     updatePermissionLockScopes: updatePermissionLockScopes,
