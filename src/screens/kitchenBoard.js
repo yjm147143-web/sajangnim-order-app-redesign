@@ -51,14 +51,20 @@
     return (
       '<div class="kb-card' + (hasRemaining ? ' active' : '') + (isPinned ? ' pinned' : '') + '" style="--i:' + idx + '">' +
         '<button type="button" class="kb-pin-btn' + (isPinned ? ' on' : '') + '" data-action="kb-toggle-pin" data-name="' + esc(name) + '"' +
-          ' aria-pressed="' + (isPinned ? 'true' : 'false') + '" aria-label="' + esc(name) + (isPinned ? ' 고정 해제' : ' 맨 앞에 고정') + '">📌</button>' +
+          ' aria-pressed="' + (isPinned ? 'true' : 'false') + '" aria-label="' + esc(name) + (isPinned ? ' 고정 해제' : ' 맨 앞에 고정') + '">' +
+          (isPinned ? '★' : '☆') +
+        '</button>' +
         '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
         '<div class="kb-card-total-label">남은 주문' + (manual > 0 ? '<span class="kb-manual-note"> (조리완료 -' + manual + ')</span>' : '') + '</div>' +
         '<div class="kb-card-tags">' +
           '<span class="kb-tag kb-tag-total">합계 ' + total + '</span>' +
         '</div>' +
-        '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>조리완료 −1</button>' +
+        // 차감량(−1)을 라벨에 섞어 쓰면 '조리완료 −1'이 한 덩어리 문구로 읽혀 무엇이 줄어드는지
+        // 모호했다. 동작(조리완료)과 결과(1 감소)를 분리해, 결과를 네모 배지로 붙인다.
+        '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>' +
+          '조리완료<span class="kb-deduct-badge">▼1</span>' +
+        '</button>' +
       '</div>'
     );
   }
@@ -115,10 +121,18 @@
         '.kb-card.active{background:var(--color-accent-blue-bg);border-color:var(--color-accent-blue);}' +
         // 고정한 카드는 테두리를 굵게 해 스크롤 중에도 '이건 내가 붙여둔 것'이 구분되게 한다.
         '.kb-card.pinned{border-width:2px;border-color:var(--color-accent-purple);}' +
-        '.kb-pin-btn{position:absolute;top:6px;right:6px;width:28px;height:28px;border:none;background:none;cursor:pointer;' +
-          'font-size:13px;line-height:1;border-radius:8px;opacity:0.28;filter:grayscale(1);transition:opacity .12s ease,filter .12s ease;}' +
-        '.kb-pin-btn:hover{opacity:0.6;}' +
-        '.kb-pin-btn.on{opacity:1;filter:none;}' +
+        // 고정 버튼은 동그라미 안의 별. ☆(비고정) → ★(고정)로 형태가 바뀌므로 색만으로
+        // 구분하지 않아도 되고, 원형 배경이 있어 카드 모서리에서 '누를 수 있는 것'으로 읽힌다.
+        '.kb-pin-btn{position:absolute;top:7px;right:7px;width:24px;height:24px;padding:0;cursor:pointer;' +
+          'display:flex;align-items:center;justify-content:center;border-radius:50%;' +
+          // --color-disabled(#DCEAE7)는 파란 음영 카드 위에서 대비 1.08:1로 사실상 안 보였다.
+          // 비고정 상태도 '누를 수 있는 것'으로 읽혀야 하므로 3:1을 넘기는 회색으로 올린다.
+          'border:1.5px solid #7B8298;background:var(--color-white);' +
+          'font-size:13px;line-height:1;color:var(--color-text-secondary);' +
+          'transition:border-color .12s ease,background .12s ease,color .12s ease;}' +
+        '.kb-pin-btn.on{border-color:var(--color-accent-amber);background:var(--color-accent-amber-bg);color:#a15c00;}' +
+        '.kb-pin-btn:active{transform:scale(.92);}' +
+        '@media (prefers-reduced-motion: reduce){.kb-pin-btn{transition:none;}.kb-pin-btn:active{transform:none;}}' +
         // 핀 버튼이 메뉴명 위로 겹치지 않게 이름 쪽에 오른쪽 여백을 준다.
         '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px;}' +
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
@@ -129,10 +143,22 @@
         '.kb-tag-called{background:var(--color-accent-green-bg);color:#0b6b5c;}' +
         '.kb-tag-total{background:var(--color-accent-amber-bg);color:#a15c00;}' +
         '.kb-manual-note{font-size:10px;font-weight:700;color:var(--color-accent-purple);margin-left:2px;}' +
-        '.kb-deduct-btn{border:1.5px solid var(--color-accent-purple);background:var(--color-white);color:var(--color-accent-purple);' +
-          'font-size:12px;font-weight:800;height:34px;border-radius:10px;cursor:pointer;}' +
-        '.kb-deduct-btn:active{background:var(--color-accent-purple-bg);}' +
-        '.kb-deduct-btn:disabled{opacity:0.35;cursor:not-allowed;}' +
+        // 파란 음영(솔리드 파랑) — 카드 안에서 유일하게 누르는 요소라, 테두리만 있는 고스트
+        // 버튼보다 채워진 버튼이 '여기를 누른다'를 먼저 알린다.
+        '.kb-deduct-btn{display:flex;align-items:center;justify-content:center;gap:6px;' +
+          'border:none;background:var(--color-accent-blue);color:var(--color-white);' +
+          'font-size:12px;font-weight:800;height:34px;border-radius:10px;cursor:pointer;' +
+          'box-shadow:0 2px 6px rgba(51,85,184,0.28);transition:filter .1s ease,transform .1s ease;}' +
+        '.kb-deduct-btn:active{transform:scale(.97);filter:brightness(.94);}' +
+        '.kb-deduct-btn:disabled{background:var(--color-disabled);color:var(--color-text-secondary);' +
+          'box-shadow:none;cursor:not-allowed;}' +
+        // 네모 배지 — 반투명 흰색(rgba .24)은 진한 파랑 위에서 경계가 거의 안 보였다.
+        // 불투명 흰 배경 + 파란 글자로 반전시키면 버튼 색과 확실히 갈린다.
+        '.kb-deduct-badge{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:16px;' +
+          'padding:0 4px;border-radius:4px;background:var(--color-white);color:var(--color-accent-blue-strong);' +
+          'font-size:10px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
+        '.kb-deduct-btn:disabled .kb-deduct-badge{background:rgba(255,255,255,0.75);color:var(--color-text-secondary);}' +
+        '@media (prefers-reduced-motion: reduce){.kb-deduct-btn{transition:none;}.kb-deduct-btn:active{transform:none;}}' +
         '@keyframes kbFadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}' +
       '</style>' +
       '<div class="topbar">' +
