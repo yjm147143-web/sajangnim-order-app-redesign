@@ -102,6 +102,45 @@
     '.btn.op-pastel-amber { background: var(--color-accent-amber-bg); color: #a15c00; width: 100%; }' +
     '.btn.op-pastel-red { background: var(--color-accent-red-bg); color: var(--color-accent-red); width: 100%; }' +
     '.order-network-caption { flex-shrink: 0; display: inline-flex; align-items: center; }' +
+    // ---- 마감 차단 오버레이 ----
+    // 마감이면 상단바까지 포함해 화면 전체를 덮는다. 열려 있는 통로는 오버레이 안의
+    // '설정으로 진입하기' 버튼 하나뿐이고, 개점은 설정 화면에서 한다.
+    // root(.screen)가 position:relative이므로 오버레이는 화면 크기에 자동으로 맞는다.
+    // 뒤 내용은 회색조로 돌려 색으로도 '죽은 화면'임을 알린다. 투명도까지 내리면 배경이 흰색
+    // 카드뿐이라 백지처럼 날아가므로, 흐리게 만드는 일은 아래 스크림에만 맡긴다.
+    '.screen.order-blocked > *:not(#block-veil-slot) { filter: grayscale(1); }' +
+    // 스크림 색은 앱 모달 오버레이와 같은 계열(30,29,43)을 쓰되 농도를 낮춘다 — 모달만큼
+    // 어두우면 '팝업이 떴다'로 읽히고, 이건 화면 자체가 잠긴 상태이므로 아래가 보여야 한다.
+    '.order-block-veil { position: absolute; inset: 0; z-index: 20;' +
+      ' display: flex; align-items: center; justify-content: center; padding: var(--space-6);' +
+      ' background: rgba(30, 29, 43, 0.34); backdrop-filter: blur(2px);' +
+      ' -webkit-backdrop-filter: blur(2px); }' +
+    // 안내는 카드에 담는다. 흐린 배경 위에 선명한 흰 카드가 얹히면 위계가 분명해지고,
+    // 앱이 이미 쓰는 카드 언어라 낯설지 않다.
+    '.obv-card { width: 100%; max-width: 300px; padding: var(--space-6) var(--space-5) var(--space-5);' +
+      ' background: var(--color-white); border-radius: 22px; box-shadow: 0 12px 32px rgba(30,29,43,0.18);' +
+      ' display: flex; flex-direction: column; align-items: center; text-align: center; }' +
+    '.obv-icon { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;' +
+      ' background: var(--color-accent-red-bg); color: var(--color-accent-red); margin-bottom: var(--space-4); }' +
+    '.obv-title { font-size: var(--font-size-subtitle); font-weight: 800; letter-spacing: -0.3px; margin-bottom: 7px; }' +
+    '.obv-desc { font-size: var(--font-size-caption); font-weight: 600; color: var(--color-text-secondary);' +
+      ' line-height: 1.6; word-break: keep-all; margin-bottom: var(--space-5); }' +
+    '.obv-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }' +
+    '.obv-cta { width: 100%; height: 48px; border: none; border-radius: 14px; cursor: pointer;' +
+      ' background: var(--color-accent-green-bg); color: #0b6b5c;' +
+      ' font-size: var(--font-size-body); font-weight: 800; letter-spacing: -0.2px;' +
+      ' transition: transform .1s ease, filter .1s ease; }' +
+    // 두 버튼의 무게를 다르게 준다 — 개점이 이 화면을 벗어나는 본래 목적이고,
+    // 설정 진입은 그 밖의 일을 하러 가는 통로다. 둘을 같은 초록으로 두면 우선순위가 사라진다.
+    '.obv-cta.obv-cta-sub { background: var(--color-card-bg); color: var(--color-text-secondary); }' +
+    '.obv-cta:active { transform: scale(0.97); filter: brightness(0.95); }' +
+    // 로그아웃은 세 번째 위계 — 버튼 모양을 주면 개점/설정과 같은 무게로 읽힌다.
+    // 밑줄 텍스트로 낮추되 터치 영역은 여백으로 확보한다.
+    '.obv-logout { margin-top: 6px; padding: 9px 12px; background: none; border: none; cursor: pointer;' +
+      ' font: inherit; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary);' +
+      ' text-decoration: underline; text-underline-offset: 3px; }' +
+    '.obv-logout:active { color: var(--color-text-primary); }' +
+    '@media (prefers-reduced-motion: reduce) { .obv-cta { transition: none; } .obv-cta:active { transform: none; } }' +
     '.search-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); }' +
     '.search-row .search-box { flex: 1; min-width: 0; }' +
     '.sort-pill { flex-shrink: 0; }' +
@@ -536,6 +575,51 @@
   // 하므로 컨트롤을 막지 않는다.
   function controlsDisabled() {
     return !isOnline || (store && store.operatingStatus === 'CLOSED');
+  }
+
+  // 마감이면 주문 화면 자체를 차단한다. 컨트롤을 하나씩 비활성화하는 것(controlsDisabled)만으로는
+  // '지금 이 화면은 쓰는 화면이 아니다'가 읽히지 않고, 비활성 버튼을 계속 눌러보게 된다.
+  //
+  // 아직 목업에 반영하지 않은 기능이라 개발자 도구 > 반영 전 시연(QA)에서 켜야만 동작한다.
+  // 플래그가 꺼져 있거나 개발자 도구가 없으면 기존 동작(컨트롤만 비활성) 그대로다.
+  function isOrderScreenBlocked() {
+    if (!store || store.operatingStatus !== 'CLOSED') return false;
+    return !!(window.DevTools && window.DevTools.isPreviewOn && window.DevTools.isPreviewOn('closedBlockVeil'));
+  }
+
+  function blockVeilHtml() {
+    if (!isOrderScreenBlocked()) return '';
+    return '<div class="order-block-veil">' +
+      '<div class="obv-card" role="status">' +
+      '<div class="obv-icon">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+      '<rect x="5.5" y="5.5" width="13" height="13" rx="2"/></svg>' +
+      '</div>' +
+      '<div class="obv-title">영업을 마감했어요</div>' +
+      '<div class="obv-desc">지금은 새 주문을 받지 않아요.<br/>개점하거나 설정으로 이동할 수 있어요.</div>' +
+      '<div class="obv-actions">' +
+      '<button type="button" class="obv-cta" data-action="reopen-store">개점하기</button>' +
+      '<button type="button" class="obv-cta obv-cta-sub" data-action="open-settings">설정으로 진입하기</button>' +
+      '</div>' +
+      '<button type="button" class="obv-logout" data-action="logout">로그아웃</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // 차단 중에는 가려진 영역을 inert로 묶는다. 오버레이가 포인터는 막아주지만 키보드 Tab은
+  // 그대로 통과해 상단바·검색창·필터에 포커스가 들어가기 때문이다.
+  function refreshBlockVeil() {
+    if (!root) return;
+    const slot = root.querySelector('#block-veil-slot');
+    if (!slot) return;
+    const blocked = isOrderScreenBlocked();
+    root.classList.toggle('order-blocked', blocked);
+    slot.innerHTML = blockVeilHtml();
+    Array.prototype.forEach.call(root.children, function (el) {
+      if (el === slot) return;
+      if (blocked) { el.setAttribute('inert', ''); el.setAttribute('aria-hidden', 'true'); }
+      else { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); }
+    });
   }
 
   // ---------------- 리스트 갱신 (부분 렌더 — 검색창 포커스 유지) ----------------
@@ -979,6 +1063,7 @@
       else window.UI.toast(before === 'PAUSED' ? '일시중지를 해제했어요' : '영업을 시작했어요');
     }
     refreshStatusButton();
+    refreshBlockVeil();
     updateList();
   }
 
@@ -1084,6 +1169,11 @@
     refreshHappyHourBanner();
   }
 
+  // 개발자 도구에서 '반영 전 시연' 플래그를 켜고 끌 때 새로고침 없이 바로 보이게 한다.
+  function onPreviewChanged() {
+    refreshBlockVeil();
+  }
+
   // 주문 수락으로 준비량이 소진되어 자동 품절되면 하단 배너로 알린다
   function onAutoSoldout(e) {
     const names = (e.detail && e.detail.names) || [];
@@ -1105,6 +1195,18 @@
     const id = target.getAttribute('data-id');
     if (action === 'open-settings') onSettingsClick();
     else if (action === 'open-operating-status') handleOperatingStatusClick();
+    // 차단 화면의 '개점하기'는 확인 팝업 없이 바로 개점한다. 화면 전체가 마감 안내로 덮여 있고
+    // 버튼도 큰 CTA라, 여기서 한 번 더 '개점할까요?'를 묻는 건 같은 질문의 반복이다.
+    // 상단바 버튼은 작아서 오작동 여지가 있으므로 그쪽 확인 팝업은 그대로 둔다.
+    // 비밀번호 잠금은 requestOperatingStatus가 처리하므로 어느 경로로도 뚫리지 않는다.
+    else if (action === 'reopen-store') requestOperatingStatus('OPEN');
+    // 설정 화면의 로그아웃과 같은 확인 모달·같은 처리를 쓴다.
+    else if (action === 'logout') {
+      window.UI.confirmModal('로그아웃', '정말 로그아웃 하시겠어요?', '로그아웃하기', function () {
+        window.MockApi.logout();
+        window.Router.resetTo('login');
+      }, { danger: true, cancelLabel: '닫기' });
+    }
     else if (action === 'refresh-orders') handleRefresh(target);
     else if (action === 'dismiss-auto-soldout') {
       const dismissName = target.getAttribute('data-name');
@@ -1224,7 +1326,8 @@
       '<div class="screen-scroll" id="order-scroll">' +
       '<div class="order-list" id="order-list-wrap">' + renderGroupsHtml(groups, orders, disabled) + '</div>' +
       '</div>' +
-      '<div id="bulk-bar-slot">' + renderBulkBarHtml(disabled) + '</div>';
+      '<div id="bulk-bar-slot">' + renderBulkBarHtml(disabled) + '</div>' +
+      '<div id="block-veil-slot">' + blockVeilHtml() + '</div>';
   }
 
   function mount(rootEl) {
@@ -1238,6 +1341,9 @@
     window.addEventListener('mock:auto-soldout', onAutoSoldout);
     window.addEventListener('mock:network-quality', onNetworkQuality);
     window.addEventListener('mock:happy-hour-started', onHappyHourStarted);
+    window.addEventListener('dev:preview-changed', onPreviewChanged);
+    // render()는 문자열이라 inert 속성까지 심을 수 없으므로 마운트 직후 한 번 맞춘다.
+    refreshBlockVeil();
   }
 
   function unmount() {
@@ -1247,6 +1353,7 @@
     window.removeEventListener('mock:auto-soldout', onAutoSoldout);
     window.removeEventListener('mock:network-quality', onNetworkQuality);
     window.removeEventListener('mock:happy-hour-started', onHappyHourStarted);
+    window.removeEventListener('dev:preview-changed', onPreviewChanged);
     root = null;
   }
 
