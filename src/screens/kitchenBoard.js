@@ -45,36 +45,45 @@
   // 강조한다. 기본은 호출 버튼에 따른 자동 차감이고, "조리완료" 버튼은 카운터가 바빠 호출을 늦게
   // 눌러도 조리 담당자가 남은 수량에 미리 반영할 수 있게 하는 수기 차감 옵션이다 — 사용자가 직접
   // 남은 수량을 올릴 수는 없고 줄이기만 한다.
-  function menuCardHtml(name, total, called, manual, idx, isSoldOut) {
+  function menuCardHtml(name, total, called, manual, idx, isSoldOut, isPinned) {
     var remaining = Math.max(0, total - called - manual);
     var hasRemaining = remaining > 0;
     return (
-      '<div class="kb-card' + (hasRemaining ? ' active' : '') + '" style="--i:' + idx + '">' +
+      '<div class="kb-card' + (hasRemaining ? ' active' : '') + (isPinned ? ' pinned' : '') + '" style="--i:' + idx + '">' +
+        '<button type="button" class="kb-pin-btn' + (isPinned ? ' on' : '') + '" data-action="kb-toggle-pin" data-name="' + esc(name) + '"' +
+          ' aria-pressed="' + (isPinned ? 'true' : 'false') + '" aria-label="' + esc(name) + (isPinned ? ' 고정 해제' : ' 맨 앞에 고정') + '">📌</button>' +
         '<div class="kb-card-name">' + esc(name) + (isSoldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') + '</div>' +
         '<div class="kb-card-total">' + remaining + '<span class="unit">개</span></div>' +
         '<div class="kb-card-total-label">남은 주문' + (manual > 0 ? '<span class="kb-manual-note"> (조리완료 -' + manual + ')</span>' : '') + '</div>' +
         '<div class="kb-card-tags">' +
-          '<span class="kb-tag kb-tag-called">호출 ' + called + '</span>' +
-          '<span class="kb-tag kb-tag-total">누적 ' + total + '</span>' +
+          '<span class="kb-tag kb-tag-total">합계 ' + total + '</span>' +
         '</div>' +
         '<button type="button" class="kb-deduct-btn" data-action="kb-manual-deduct" data-name="' + esc(name) + '"' + (remaining <= 0 ? ' disabled' : '') + '>조리완료 −1</button>' +
       '</div>'
     );
   }
 
-  // 남은(누적-호출-수기차감) 수량이 많은 메뉴를 카테고리 내에서 앞쪽으로 정렬한다
-  function sortByActivity(names, stats) {
+  // 고정한 메뉴가 항상 맨 앞이고, 그 안에서는 남은 수량이 많은 순이다. 고정을 정렬보다 위에
+  // 두는 이유는, 고정의 목적이 '수량과 무관하게 자리를 지키는 것'이기 때문이다.
+  function sortForBoard(names, stats, pinned) {
+    function remainingOf(n) {
+      var s = stats[n];
+      return s ? s.total - s.called - s.manual : 0;
+    }
     return names.slice().sort(function (a, b) {
-      var aRemaining = stats[a] ? stats[a].total - stats[a].called - stats[a].manual : 0;
-      var bRemaining = stats[b] ? stats[b].total - stats[b].called - stats[b].manual : 0;
-      return bRemaining - aRemaining;
+      var ap = pinned.indexOf(a) !== -1 ? 1 : 0;
+      var bp = pinned.indexOf(b) !== -1 ? 1 : 0;
+      if (ap !== bp) return bp - ap;
+      return remainingOf(b) - remainingOf(a);
     });
   }
 
+  // 카테고리로 나누지 않고 전체 메뉴를 한 그리드에 2열로 깐다. 조리 담당자는 '지금 뭐가 남았나'를
+  // 보는데, 카테고리로 쪼개면 남은 수량이 많은 메뉴가 여러 섹션에 흩어져 한눈에 안 잡힌다.
   function contentHtml(storeId) {
     var stats = aggregateByMenu(storeId);
-    var categories = window.MockApi.getCategories(storeId);
     var menuItems = window.MockApi.getMenuItems(storeId);
+    var pinned = window.MockApi.getKdsPinnedMenus(storeId);
     // 품절 메뉴도 노출 메뉴판에는 그대로 남아있는 메뉴이므로 카드는 계속 보여주되, 품절 배지로 구분한다.
     var soldOutByName = {};
     menuItems.forEach(function (m) { soldOutByName[m.name] = !!m.soldOut; });
@@ -83,43 +92,35 @@
       return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>판매 중인 메뉴가 없어요</div></div>';
     }
 
+    // 카탈로그 메뉴 + 카탈로그에서 지워졌지만 오늘 주문에 남아있는 메뉴를 함께 보여준다.
+    var names = menuItems.map(function (m) { return m.name; });
+    Object.keys(stats).forEach(function (n) { if (names.indexOf(n) === -1) names.push(n); });
+
     var idx = 0;
-    var html = '';
-    categories.forEach(function (cat) {
-      var itemsInCat = menuItems.filter(function (m) { return m.categoryId === cat.id; });
-      if (!itemsInCat.length) return;
-      var names = sortByActivity(itemsInCat.map(function (m) { return m.name; }), stats);
-      html += '<div class="section-title">' + esc(cat.name) + '</div>';
-      html += '<div class="kb-grid">' +
-        names.map(function (name) {
-          var s = stats[name] || { total: 0, called: 0, manual: 0 };
-          return menuCardHtml(name, s.total, s.called, s.manual, idx++, soldOutByName[name]);
-        }).join('') +
-        '</div>';
-    });
-
-    // '기타'(미분류) 후보는 카탈로그 전체 기준으로 걸러낸다 — 카테고리가 없는 진짜 미분류 메뉴만 남긴다.
-    var knownNames = menuItems.map(function (m) { return m.name; });
-    var uncategorized = sortByActivity(Object.keys(stats).filter(function (name) { return knownNames.indexOf(name) === -1; }), stats);
-    if (uncategorized.length) {
-      html += '<div class="section-title">기타</div>';
-      html += '<div class="kb-grid">' +
-        uncategorized.map(function (name) { return menuCardHtml(name, stats[name].total, stats[name].called, stats[name].manual, idx++, false); }).join('') +
-        '</div>';
-    }
-
-    return html;
+    return '<div class="kb-grid">' +
+      sortForBoard(names, stats, pinned).map(function (name) {
+        var s = stats[name] || { total: 0, called: 0, manual: 0 };
+        return menuCardHtml(name, s.total, s.called, s.manual, idx++, soldOutByName[name], pinned.indexOf(name) !== -1);
+      }).join('') +
+      '</div>';
   }
 
   function render() {
     return (
       '<style>' +
         '.kb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 var(--space-5) var(--space-4);}' +
-        '.kb-card{background:var(--color-white);border:1px solid var(--color-divider);border-radius:16px;padding:13px 14px;' +
+        '.kb-card{position:relative;background:var(--color-white);border:1px solid var(--color-divider);border-radius:16px;padding:13px 14px;' +
           'display:flex;flex-direction:column;gap:9px;' +
           'opacity:0;transform:translateY(8px);animation:kbFadeUp .4s ease forwards;animation-delay:calc(.05s + var(--i,0)*35ms);}' +
         '.kb-card.active{background:var(--color-accent-blue-bg);border-color:var(--color-accent-blue);}' +
-        '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+        // 고정한 카드는 테두리를 굵게 해 스크롤 중에도 '이건 내가 붙여둔 것'이 구분되게 한다.
+        '.kb-card.pinned{border-width:2px;border-color:var(--color-accent-purple);}' +
+        '.kb-pin-btn{position:absolute;top:6px;right:6px;width:28px;height:28px;border:none;background:none;cursor:pointer;' +
+          'font-size:13px;line-height:1;border-radius:8px;opacity:0.28;filter:grayscale(1);transition:opacity .12s ease,filter .12s ease;}' +
+        '.kb-pin-btn:hover{opacity:0.6;}' +
+        '.kb-pin-btn.on{opacity:1;filter:none;}' +
+        // 핀 버튼이 메뉴명 위로 겹치지 않게 이름 쪽에 오른쪽 여백을 준다.
+        '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px;}' +
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
         '.kb-card-total .unit{font-size:11px;font-weight:600;color:var(--color-text-secondary);margin-left:2px;}' +
         '.kb-card-total-label{font-size:10px;font-weight:700;color:var(--color-text-secondary);margin-top:-7px;}' +
@@ -160,6 +161,14 @@
       var deductBtn = e.target.closest('[data-action="kb-manual-deduct"]');
       if (deductBtn) {
         window.MockApi.addKitchenManualDeduction(storeId, deductBtn.getAttribute('data-name'), 1);
+        refresh();
+        return;
+      }
+      var pinBtn = e.target.closest('[data-action="kb-toggle-pin"]');
+      if (pinBtn) {
+        var name = pinBtn.getAttribute('data-name');
+        var next = window.MockApi.toggleKdsPinnedMenu(storeId, name);
+        window.UI.toast(next.indexOf(name) !== -1 ? (name + ' 메뉴를 맨 앞에 고정했어요') : (name + ' 메뉴 고정을 해제했어요'));
         refresh();
       }
     });
