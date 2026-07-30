@@ -498,7 +498,14 @@
       // 최소 1개 메뉴엔 선착순 메뉴가 붙도록 그 다음 줄(줄이 하나뿐이면 그 줄)에서 우선 배정한다.
       const wantFirstComeHere = !!opts.hasFirstCome && (opts.hasOption && lineCount > 1 ? i === 1 : i === 0);
       const line = buildLine(!!opts.hasOption && i === 0, wantFirstComeHere);
-      lines.push({ menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity });
+      // 선착순 여부를 주문 라인에 박아둔다. 화면이 메뉴 카탈로그를 다시 조회해 판단하면,
+      // 선착순으로 주문하지 않은 건에도 배지가 붙고(그 메뉴에 설정만 켜져 있으면) 반대로
+      // 나중에 설정을 끄면 과거 주문의 배지가 사라진다. 주문은 그 시점의 사실이어야 한다.
+      const lineIsFirstCome = !!opts.hasFirstCome && itemsWithFirstCome.some(function (m) { return m.name === line.menuName; });
+      lines.push({
+        menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity,
+        promoType: lineIsFirstCome ? 'FIRST_COME' : null,
+      });
       amount += line.price * line.quantity;
     }
     // 줄이 하나뿐인데 옵션·선착순을 동시에 요청해 위 배정에서 선착순이 밀린 경우를 대비한 안전망 —
@@ -507,7 +514,7 @@
       const oldLine = lines[0];
       const oldMenu = menuItems.find(function (m) { return m.name === oldLine.menuName; });
       const menu = itemsWithFirstCome[Math.floor(Math.random() * itemsWithFirstCome.length)];
-      lines[0] = { menuName: menu.name, optionNames: [], quantity: oldLine.quantity };
+      lines[0] = { menuName: menu.name, optionNames: [], quantity: oldLine.quantity, promoType: 'FIRST_COME' };
       amount += (menu.price - (oldMenu ? oldMenu.price : 0)) * oldLine.quantity;
     }
 

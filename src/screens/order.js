@@ -20,19 +20,20 @@
     CLOSED: { cls: 'closed', label: '마감', icon: OP_ICON_STOP },
   };
 
-  // 네트워크 상태 아이콘 — 원활(초록)/간헐적 희미함(빨강)/완전 단절(빨강 + X)을 와이파이 아이콘
-  // 하나로 표현한다. 색만으로는 '희미함'과 '단절'이 구분 안 되니, 단절일 때만 X를 겹쳐 그린다.
+  // 네트워크는 정상 / 이상 두 상태로만 보여준다. '희미함'과 '완전 단절'을 아이콘으로 나눠도
+  // 사장님이 할 일은 똑같이 '기기 네트워크를 확인한다' 하나였고, 완전 단절은 이미 빨간 배너와
+  // 화면 테두리로 따로 알린다. 이상일 때는 호를 하나 줄이고(3→2) 빨강으로 바꾼 뒤 깜빡여,
+  // 주문을 보고 있는 중에도 시야에 걸리게 한다.
   function networkIconHtml(state) {
-    const color = state === 'ok' ? '#0b6b5c' : '#b02850';
-    const xMark = state === 'off'
-      ? '<line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line>'
-      : '';
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+    const bad = state !== 'ok';
+    const color = bad ? '#b02850' : '#0b6b5c';
+    const outerArc = bad ? '' : '<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>';
+    return '<svg class="net-icon' + (bad ? ' bad' : '') + '" width="16" height="16" viewBox="0 0 24 24"' +
+      ' fill="none" stroke="' + color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path>' +
-      '<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>' +
+      outerArc +
       '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>' +
       '<circle cx="12" cy="20" r="1.4" fill="' + color + '" stroke="none"></circle>' +
-      xMark +
       '</svg>';
   }
 
@@ -44,6 +45,9 @@
     '<path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path>' +
     '<polyline points="20.5 4 20.5 9.4 15.1 9.4"></polyline>' +
     '</svg>';
+
+  // 필터 시트의 '초기화'는 텍스트 옆에 붙는 작은 아이콘이라 별도 크기로 둔다.
+  const ICON_REFRESH_SM = ICON_REFRESH.replace('width="19" height="19"', 'width="14" height="14"');
 
   const ICON_SEARCH = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
     ' stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -87,6 +91,11 @@
     '.order-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }' +
     '.reason-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }' +
     '.reason-textarea { margin-top: 4px; }' +
+    // 아래쪽 margin이 없으면 비밀번호 입력란이 '취소하기' 버튼에 붙어, 입력란을 누르려다
+    // 취소를 눌러버릴 수 있다. 입력 영역과 확정 버튼 사이를 확실히 띄운다.
+    '.reason-pw-block { margin: 14px 0 20px; padding-top: 14px; border-top: 1px solid var(--color-divider); text-align: left; }' +
+    '.reason-pw-label { font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); margin-bottom: 8px; }' +
+    '.reason-pw-error { margin-top: 6px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-accent-red); }' +
     '.order-list.with-bulk-bar { padding-bottom: 88px; }' +
     '#bulk-bar-slot:empty { display: none; }' +
     '.filter-section { margin-bottom: 18px; }' +
@@ -98,7 +107,8 @@
     '.filter-sheet-actions { display: flex; gap: 8px; margin-top: 8px; }' +
     '.filter-sheet-actions .btn { height: 48px; }' +
     '.filter-sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }' +
-    '.filter-reset-link { background: none; border: none; padding: 4px; font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
+    '.filter-reset-link { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; padding: 4px;' +
+      ' font-size: var(--font-size-caption); font-weight: 700; color: var(--color-text-secondary); cursor: pointer; }' +
     // 영업 상태는 파스텔 배지가 아니라 앱의 솔리드 버튼 언어로 그린다 — 배지는 아무리 꾸며도 '읽는 것'으로
     // 읽히지만, 솔리드 버튼은 사장님이 설정 화면에서 이미 개점·일시중지·마감에 쓰고 있는 형태라 '누르는 것'으로
     // 바로 읽힌다. 색·글자색은 btn-success/btn-warning/btn-danger-solid와 동일하게 맞춘다.
@@ -117,6 +127,11 @@
     '.btn.op-pastel-amber { background: var(--color-accent-amber-bg); color: #a15c00; width: 100%; }' +
     '.btn.op-pastel-red { background: var(--color-accent-red-bg); color: var(--color-accent-red); width: 100%; }' +
     '.order-network-caption { flex-shrink: 0; display: inline-flex; align-items: center; }' +
+    // 완전히 사라졌다 나타나면 '아이콘이 없어진' 것처럼 보이므로 0까지 내리지 않는다.
+    // 0.25까지만 떨어뜨려 존재는 유지하면서 움직임으로 눈에 걸리게 한다.
+    '.net-icon.bad { animation: net-bad-blink 1.1s ease-in-out infinite; }' +
+    '@keyframes net-bad-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }' +
+    '@media (prefers-reduced-motion: reduce) { .net-icon.bad { animation: none; opacity: 1; } }' +
     '.reopen-sheet-desc { font-size: var(--font-size-caption); font-weight: 600; color: var(--color-text-secondary);' +
       ' line-height: 1.6; word-break: keep-all; margin-bottom: var(--space-5); }' +
     '.reopen-sheet-actions { display: flex; flex-direction: column; gap: 8px; }' +
@@ -232,17 +247,16 @@
 
   // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
   // 다회용기 주문은 별도 뱃지 대신, 각 메뉴명 앞에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다
-  // 선착순 배지는 주문 시점 값이 아니라 '지금' 그 메뉴에 선착순 가격이 설정돼 있는지를 보고 판단한다
-  // (주문 카드 단위가 아니라 메뉴 줄 단위로 노출).
+  // 선착순 배지는 주문 라인에 기록된 값(it.promoType)으로만 판단한다 — 메뉴 카탈로그를 다시
+  // 조회하면 선착순으로 주문하지 않은 건에도 배지가 붙는다(그 메뉴에 설정만 켜져 있으면).
+  // 주문 카드 단위가 아니라 메뉴 줄 단위로 노출한다.
   function itemListHtml(order) {
     const isReusable = !!order.isReusableContainer;
-    const menuItems = window.MockApi.getMenuItems(storeId);
     return (order.items || []).map(function (it) {
       const optHtml = (it.optionNames && it.optionNames.length)
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
-      const menu = menuItems.find(function (m) { return m.name === it.menuName; });
-      const firstComeHtml = (menu && menu.firstComeEnabled) ? '<span class="line-promo">선착순</span>' : '';
+      const firstComeHtml = it.promoType === 'FIRST_COME' ? '<span class="line-promo">선착순</span>' : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
         '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ♻️' : '') + '</span>' +
@@ -662,7 +676,7 @@
     const bodyHtml =
       '<div class="filter-sheet-header">' +
         '<div class="sheet-title" style="margin:0;">주문 필터</div>' +
-        '<button type="button" class="filter-reset-link" id="filter-reset-btn">🔄 초기화</button>' +
+        '<button type="button" class="filter-reset-link" id="filter-reset-btn">' + ICON_REFRESH_SM + ' 초기화</button>' +
       '</div>' +
       (showCalledSection ?
         '<div class="filter-section">' +
@@ -748,13 +762,24 @@
   }
 
   // ---------------- 취소/반품 사유 모달 ----------------
-  function openReasonModal(onConfirm) {
+  // 취소 사유 팝업. needPassword가 true면 비밀번호 입력란을 같은 팝업에 함께 둔다 —
+  // 사유 선택 → 확인 → 비밀번호 팝업으로 2단계를 밟게 하면, 사장님은 이미 '취소한다'고
+  // 마음먹은 상태에서 창을 두 번 넘겨야 한다. 확인해야 할 것(사유·권한)을 한 화면에 모은다.
+  function openReasonModal(onConfirm, needPassword) {
     let selected = null;
     let customText = '';
+    let password = '';
+    let pwError = '';
 
     function computeReason() {
       if (selected === '직접 입력') return customText.trim();
       return selected;
+    }
+
+    function canConfirm() {
+      if (!computeReason()) return false;
+      if (needPassword && !password) return false;
+      return true;
     }
 
     function renderModal() {
@@ -765,7 +790,15 @@
       if (selected === '직접 입력') {
         bodyHtml += '<textarea class="input-field reason-textarea" id="reason-textarea" placeholder="사유를 입력해 주세요">' + esc(customText) + '</textarea>';
       }
-      const confirmDisabled = !computeReason();
+      if (needPassword) {
+        bodyHtml += '<div class="reason-pw-block">' +
+          '<div class="reason-pw-label">🔐 권한 잠금이 설정된 항목이에요</div>' +
+          '<input type="password" inputmode="numeric" class="input-field" id="reason-password"' +
+            ' placeholder="비밀번호를 입력해 주세요" value="' + esc(password) + '" />' +
+          (pwError ? '<div class="reason-pw-error">' + esc(pwError) + '</div>' : '') +
+          '</div>';
+      }
+      const confirmDisabled = !canConfirm();
 
       window.UI.showModal({
         title: '취소 사유를 입력해 주세요.',
@@ -776,7 +809,23 @@
         // 클릭하는 순간 computeReason()을 다시 호출해 항상 최신 입력값을 읽는다.
         buttons: [
           // 주문·결제를 되돌리는 파괴적 동작이라 확정 버튼은 빨간색(btn-danger-solid)으로 둔다.
-          { label: '취소하기', variant: 'btn-danger-solid', onClick: function () { const v = computeReason(); if (v) onConfirm(v); } },
+          {
+            label: '취소하기', variant: 'btn-danger-solid',
+            onClick: function () {
+              const v = computeReason();
+              if (!v) return;
+              if (!needPassword) { onConfirm(v); return; }
+              // 비밀번호가 틀리면 방금 고른 사유를 그대로 들고 팝업을 다시 그린다.
+              // showModal은 onClick 전에 closeModal을 호출하므로, renderModal()이 곧 '다시 열기'다.
+              if (!window.MockApi.verifyPermissionLockPassword(storeId, password)) {
+                pwError = '비밀번호가 일치하지 않아요';
+                password = '';
+                renderModal();
+                return;
+              }
+              onConfirm(v);
+            },
+          },
           { label: '닫기', variant: 'btn-secondary' },
         ],
       });
@@ -792,16 +841,29 @@
           renderModal();
         });
       });
+      function syncConfirmEnabled() {
+        const confirmBtn = host.querySelectorAll('.btn')[0];
+        if (!confirmBtn) return;
+        if (canConfirm()) confirmBtn.removeAttribute('disabled');
+        else confirmBtn.setAttribute('disabled', 'disabled');
+      }
+
       const ta = document.getElementById('reason-textarea');
       if (ta) {
         ta.addEventListener('input', function () {
           customText = ta.value;
-          const confirmBtn = host.querySelectorAll('.btn')[0];
-          if (!confirmBtn) return;
-          if (customText.trim()) confirmBtn.removeAttribute('disabled');
-          else confirmBtn.setAttribute('disabled', 'disabled');
+          syncConfirmEnabled();
         });
         ta.focus();
+      }
+      const pw = document.getElementById('reason-password');
+      if (pw) {
+        pw.addEventListener('input', function () {
+          password = pw.value;
+          syncConfirmEnabled();
+        });
+        // 사유를 먼저 고르는 흐름이라, 사유가 정해진 뒤에만 비밀번호로 포커스를 옮긴다.
+        if (!ta && computeReason()) pw.focus();
       }
     }
     renderModal();
@@ -877,15 +939,15 @@
 
   function handleCancelPayment(id) {
     const order = window.MockApi.getOrder(id);
-    function proceed() {
+    // 잠금이 걸려 있으면 별도 비밀번호 팝업을 띄우지 않고, 사유 팝업 안에 입력란을 함께 둔다.
+    const lock = window.MockApi.getPermissionLockStatus(storeId);
+    const needPassword = !!(lock.isSet && lock.scopes && lock.scopes.paymentCancel);
+    blockIfVanTabletPayment(order, function () {
       openReasonModal(function (reason) {
         const res = window.MockApi.cancelPayment(id, reason);
         window.UI.toast('카카오 알림톡 발송: ' + res.notification);
         updateList();
-      });
-    }
-    blockIfVanTabletPayment(order, function () {
-      window.UI.requirePasswordGate(storeId, 'paymentCancel', '결제 취소', proceed);
+      }, needPassword);
     });
   }
 
