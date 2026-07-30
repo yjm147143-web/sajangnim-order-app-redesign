@@ -119,6 +119,48 @@
 
   // ---------------- Toast ----------------
   let toastTimer = null;
+  // ---------------- 푸시 알림 (OS 알림 배너 모사) ----------------
+  // 앱을 종료했을 때 오는 알림이라 토스트(앱 안 메시지)와 구분해야 한다. OS 알림처럼
+  // 앱 아이콘·제목·본문을 갖춘 카드를 화면 상단에서 내려 보여준다.
+  // 목업이므로 실제 푸시가 아니라 '이런 알림이 갔다'를 보여주는 재현이다.
+  let pushTimer = null;
+
+  function hidePushNotification() {
+    const el = document.getElementById('active-push');
+    if (!el) return;
+    el.classList.remove('show');
+    setTimeout(function () { if (el.parentElement) el.parentElement.innerHTML = ''; }, 250);
+  }
+
+  function showPushNotification(opts) {
+    const host = document.getElementById('push-host');
+    if (!host) return;
+    host.innerHTML = '<div class="push-card" id="active-push" role="alert">' +
+      '<div class="push-icon">🧾</div>' +
+      '<div class="push-body">' +
+      '<div class="push-app">사장님 주문접수</div>' +
+      '<div class="push-title">' + escapeHtml(opts.title || '') + '</div>' +
+      '<div class="push-text">' + escapeHtml(opts.body || '') + '</div>' +
+      '</div>' +
+      '<button type="button" class="push-close" id="push-close-btn" aria-label="알림 닫기">✕</button>' +
+      '</div>';
+    const el = document.getElementById('active-push');
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    document.getElementById('push-close-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      clearTimeout(pushTimer);
+      hidePushNotification();
+    });
+    el.addEventListener('click', function () {
+      clearTimeout(pushTimer);
+      hidePushNotification();
+      if (opts.onClick) opts.onClick();
+    });
+    clearTimeout(pushTimer);
+    // 실제 OS 알림도 잠시 뒤 배너가 걷히므로 6초 후 자동으로 숨긴다.
+    pushTimer = setTimeout(hidePushNotification, 6000);
+  }
+
   function toast(message, actionLabel, onAction) {
     const host = document.getElementById('toast-host');
     if (!host) return;
@@ -335,6 +377,7 @@
     channelTypeLabel: channelTypeLabel, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
+    showPushNotification: showPushNotification, hidePushNotification: hidePushNotification,
     requirePasswordGate: requirePasswordGate, requireLockReauth: requireLockReauth,
     barChartHtml: barChartHtml, donutChartHtml: donutChartHtml, rankListHtml: rankListHtml, salesChartHtml: salesChartHtml,
     playNotificationPreview: playNotificationPreview,

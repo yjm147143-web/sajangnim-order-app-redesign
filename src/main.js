@@ -25,12 +25,69 @@
     if (frame) frame.classList.toggle('network-offline', !!offline);
   }
 
-  window.App = { boot: boot, routeToBoardFor: routeToBoardFor };
+  // ---- 마감 없이 앱을 종료했을 때 마감 요청 푸시 ----
+  // 사장님이 마감을 누르지 않고 앱을 닫으면 매장은 계속 '영업중'이라, 손님에게는 주문이
+  // 열려 있는데 받아줄 사람이 없는 상태가 된다. 앱을 벗어나는 시점을 잡아 푸시를 예약한다.
+  //
+  // 목업이라 실제 푸시 발송은 없다. 브라우저는 탭이 숨겨진 동안 UI를 그릴 수 없으므로,
+  // 숨겨질 때 '보낼 알림'을 표시해두고 돌아왔을 때 그 알림을 재현해 보여준다.
+  var PENDING_PUSH_KEY = 'pendingClosePush';
+
+  function ownerStoreNeedingClose() {
+    var user = window.MockApi.getCurrentUser();
+    if (!user || user.role !== 'OWNER' || !user.storeId) return null;
+    var store = window.MockApi.getStore(user.storeId);
+    // 마감 상태면 할 일이 없다. 일시중지는 아직 영업일이 끝나지 않은 것이라 대상에 포함한다.
+    if (!store || store.operatingStatus === 'CLOSED') return null;
+    return store;
+  }
+
+  function onAppHidden() {
+    var store = ownerStoreNeedingClose();
+    if (!store) return;
+    try { sessionStorage.setItem(PENDING_PUSH_KEY, store.id); } catch (e) { /* 저장 실패는 무시 */ }
+  }
+
+  function showClosePushIfPending() {
+    var pending = null;
+    try { pending = sessionStorage.getItem(PENDING_PUSH_KEY); } catch (e) { pending = null; }
+    if (!pending) return;
+    try { sessionStorage.removeItem(PENDING_PUSH_KEY); } catch (e) { /* 무시 */ }
+    // 앱을 벗어난 사이 다른 기기에서 마감했을 수도 있으니 띄우는 순간 다시 확인한다.
+    if (!ownerStoreNeedingClose()) return;
+    window.UI.showPushNotification({
+      title: '영업 마감을 잊지 않으셨나요?',
+      body: '아직 마감하지 않아 손님이 주문할 수 있어요. 눌러서 마감해 주세요.',
+      onClick: function () { Router.showScreen('settings', {}); },
+    });
+  }
+
+  function onVisibilityChange() {
+    if (document.visibilityState === 'hidden') onAppHidden();
+    else showClosePushIfPending();
+  }
+
+  window.App = { boot: boot, routeToBoardFor: routeToBoardFor, showClosePushIfPending: showClosePushIfPending };
 
   window.addEventListener('offline', updateNetworkFrame);
   window.addEventListener('online', updateNetworkFrame);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('pagehide', onAppHidden);
+  window.addEventListener('dev:show-close-push', function () {
+    if (!ownerStoreNeedingClose()) {
+      window.UI.toast('영업중 또는 일시중지 상태에서만 발송돼요');
+      return;
+    }
+    window.UI.showPushNotification({
+      title: '영업 마감을 잊지 않으셨나요?',
+      body: '아직 마감하지 않아 손님이 주문할 수 있어요. 눌러서 마감해 주세요.',
+      onClick: function () { Router.showScreen('settings', {}); },
+    });
+  });
   document.addEventListener('DOMContentLoaded', function () {
     boot();
     updateNetworkFrame();
+    // 앱을 닫은 뒤 다시 열었을 때(새로고침 포함) 예약된 알림을 보여준다.
+    showClosePushIfPending();
   });
 })();

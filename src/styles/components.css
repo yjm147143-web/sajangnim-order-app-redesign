@@ -320,6 +320,39 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
    keep-all로 어절(공백) 단위에서만 줄바꿈되게 해, 문장 끝 기준 줄바꿈이 의도대로 보이게 한다. */
 .modal-message { font-size: var(--font-size-body); color: var(--color-text-secondary); text-align: center; margin-bottom: var(--space-5); line-height: 1.5; word-break: keep-all; }
 
+/* ---------- Push Notification (OS 알림 배너 모사) ----------
+   토스트는 앱 안에서 뜨는 메시지, 이건 앱을 벗어난 뒤 OS가 띄우는 알림이다.
+   둘이 같아 보이면 '앱을 껐는데도 알림이 온다'는 점이 전달되지 않으므로,
+   앱 아이콘·앱 이름을 갖춘 카드 형태로 화면 상단에서 내려온다. */
+#push-host { position: absolute; top: 0; left: 0; right: 0; z-index: 90; pointer-events: none; }
+.push-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: var(--space-3) var(--space-3) 0;
+  padding: 12px 12px 13px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 8px 28px rgba(30,29,43,0.20), 0 0 0 0.5px rgba(30,29,43,0.06);
+  cursor: pointer; pointer-events: auto;
+  transform: translateY(-130%); opacity: 0;
+  transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+}
+.push-card.show { transform: translateY(0); opacity: 1; }
+.push-icon {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  background: var(--color-card-bg);
+}
+.push-body { flex: 1; min-width: 0; }
+.push-app { font-size: var(--font-size-micro); font-weight: 700; color: var(--color-text-secondary); letter-spacing: -0.1px; }
+.push-title { font-size: var(--font-size-caption); font-weight: 800; margin-top: 1px; }
+.push-text { font-size: var(--font-size-caption); font-weight: 500; color: var(--color-text-secondary); line-height: 1.45; margin-top: 2px; word-break: keep-all; }
+.push-close { flex-shrink: 0; background: none; border: none; padding: 2px 4px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); }
+@media (prefers-reduced-motion: reduce) {
+  .push-card { transition: opacity .2s ease; transform: none; }
+}
+
 /* ---------- Bottom Sheet ---------- */
 .modal-overlay-bottom {
   position: absolute; inset: 0;
