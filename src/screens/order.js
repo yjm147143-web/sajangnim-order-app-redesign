@@ -26,7 +26,10 @@
   // 주문을 보고 있는 중에도 시야에 걸리게 한다.
   function networkIconHtml(state) {
     const bad = state !== 'ok';
-    const color = bad ? '#b02850' : '#0b6b5c';
+    // 정상은 --color-accent-blue-strong(#3355B8). SVG stroke는 XML 속성이라 var()를 못 받아
+    // 토큰 값을 그대로 적는다. 기본 --color-accent-blue(#5C82E8)는 흰 배경에서 3.61:1이라
+    // 16px·선굵기 2.4인 이 아이콘에는 얇아 보여, 6.70:1인 진한 쪽을 쓴다.
+    const color = bad ? '#b02850' : '#3355B8';
     const outerArc = bad ? '' : '<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>';
     return '<svg class="net-icon' + (bad ? ' bad' : '') + '" width="16" height="16" viewBox="0 0 24 24"' +
       ' fill="none" stroke="' + color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
