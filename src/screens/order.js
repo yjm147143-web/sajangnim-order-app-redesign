@@ -1037,18 +1037,41 @@
   function doBulkAccept() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    window.MockApi.bulkAction(ids, 'accept');
-    window.UI.toast('카카오 알림톡 발송: 주문 완료 (' + ids.length + '건)');
-    selectedIds = new Set();
-    updateList();
+    window.UI.confirmModal(
+      '선택한 ' + ids.length + '건을 수락할까요?',
+      '선택한 주문이 처리중으로 넘어가고, 손님에게 준비중 알림을 보내요.',
+      '수락하기',
+      function () {
+        window.MockApi.bulkAction(ids, 'accept');
+        window.UI.toast('카카오 알림톡 발송: 주문 완료 (' + ids.length + '건)');
+        selectedIds = new Set();
+        updateList();
+      }
+    );
   }
 
   function doBulkComplete() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    window.MockApi.bulkAction(ids, 'complete');
-    selectedIds = new Set();
-    updateList();
+    // 단건 완료는 호출하지 않은 주문에 '호출 없이 완료할까요?'로 경고한다. 일괄에서 그 경고가
+    // 빠지면 손님이 알림을 못 받은 채로 여러 건이 한 번에 완료되므로, 섞여 있는 미호출 건수를 알려준다.
+    const uncalled = ids.filter(function (id) {
+      const o = window.MockApi.getOrder(id);
+      return o && !o.called;
+    }).length;
+    const message = uncalled
+      ? '아직 호출하지 않은 주문 <strong>' + uncalled + '건</strong>이 있어요.<br/>완료하면 선택한 주문이 완료 탭으로 넘어가요.'
+      : '선택한 주문이 완료 탭으로 넘어가요.';
+    window.UI.confirmModal(
+      '선택한 ' + ids.length + '건을 완료할까요?',
+      message,
+      '완료하기',
+      function () {
+        window.MockApi.bulkAction(ids, 'complete');
+        selectedIds = new Set();
+        updateList();
+      }
+    );
   }
 
   function doBulkCall() {
