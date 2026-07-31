@@ -48,6 +48,18 @@
     try { sessionStorage.setItem(PENDING_PUSH_KEY, store.id); } catch (e) { /* 저장 실패는 무시 */ }
   }
 
+  // 실제 발송과 개발자 도구 시연이 같은 알림을 띄우므로 문구·동작을 한 곳에서 만든다.
+  // 버튼은 마감을 바로 실행하지 않고 설정 화면으로 보낸다 — 마감은 진행 중 주문을 모두
+  // 완료 처리하는 되돌릴 수 없는 동작이라, 확인 모달이 있는 설정 화면을 거치게 한다.
+  function showClosePush() {
+    window.UI.showPushNotification({
+      title: '혹시 오늘 영업을 마치셨나요?',
+      body: '아직 ‘영업 중’ 상태라서 주문이 들어올 수 있어요.\n영업이 끝났다면 마감 버튼을 눌러주세요.',
+      actionLabel: '영업 마감하기',
+      onClick: function () { Router.showScreen('settings', {}); },
+    });
+  }
+
   function showClosePushIfPending() {
     var pending = null;
     try { pending = sessionStorage.getItem(PENDING_PUSH_KEY); } catch (e) { pending = null; }
@@ -55,11 +67,7 @@
     try { sessionStorage.removeItem(PENDING_PUSH_KEY); } catch (e) { /* 무시 */ }
     // 앱을 벗어난 사이 다른 기기에서 마감했을 수도 있으니 띄우는 순간 다시 확인한다.
     if (!ownerStoreNeedingClose()) return;
-    window.UI.showPushNotification({
-      title: '영업 마감을 잊지 않으셨나요?',
-      body: '아직 마감하지 않아 손님이 주문할 수 있어요. 눌러서 마감해 주세요.',
-      onClick: function () { Router.showScreen('settings', {}); },
-    });
+    showClosePush();
   }
 
   function onVisibilityChange() {
@@ -78,11 +86,7 @@
       window.UI.toast('영업중 또는 일시중지 상태에서만 발송돼요');
       return;
     }
-    window.UI.showPushNotification({
-      title: '영업 마감을 잊지 않으셨나요?',
-      body: '아직 마감하지 않아 손님이 주문할 수 있어요. 눌러서 마감해 주세요.',
-      onClick: function () { Router.showScreen('settings', {}); },
-    });
+    showClosePush();
   });
   document.addEventListener('DOMContentLoaded', function () {
     boot();

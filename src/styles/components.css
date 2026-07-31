@@ -411,6 +411,16 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
 .push-title { font-size: var(--font-size-caption); font-weight: 800; margin-top: 1px; }
 .push-text { font-size: var(--font-size-caption); font-weight: 500; color: var(--color-text-secondary); line-height: 1.45; margin-top: 2px; word-break: keep-all; }
 .push-close { flex-shrink: 0; background: none; border: none; padding: 2px 4px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); }
+/* 알림 안의 실행 버튼 — OS 알림의 액션 버튼처럼 본문 아래 왼쪽에 붙는다.
+   배너가 작아 전체 폭 CTA는 과하므로 내용 폭에 맞춘 알약으로 둔다. */
+.push-action {
+  margin-top: 8px; padding: 6px 12px;
+  border: none; border-radius: var(--radius-pill);
+  background: var(--gradient-brand); color: var(--color-white);
+  font-family: inherit; font-size: var(--font-size-caption); font-weight: 800;
+  cursor: pointer;
+}
+.push-action:active { opacity: 0.85; }
 @media (prefers-reduced-motion: reduce) {
   .push-card { transition: opacity .2s ease; transform: none; }
 }

@@ -155,12 +155,20 @@
   function showPushNotification(opts) {
     const host = document.getElementById('push-host');
     if (!host) return;
+    // 본문은 escape 해서 넣되, 줄바꿈(\n)만 <br/>로 살린다 — 문장이 두 개인 알림도 있다.
+    const bodyHtml = String(opts.body || '').split('\n').map(escapeHtml).join('<br/>');
+    // actionLabel이 있으면 알림 안에 실행 버튼을 둔다. 배너 전체를 눌러도 같은 동작이지만,
+    // 무엇을 하러 가는 알림인지 버튼 문구로 못 박아준다.
+    const actionHtml = opts.actionLabel
+      ? '<button type="button" class="push-action" id="push-action-btn">' + escapeHtml(opts.actionLabel) + '</button>'
+      : '';
     host.innerHTML = '<div class="push-card" id="active-push" role="alert">' +
       '<div class="push-icon">' + window.Icons3D.iconLine('receipt', 22) + '</div>' +
       '<div class="push-body">' +
       '<div class="push-app">사장님 주문접수</div>' +
       '<div class="push-title">' + escapeHtml(opts.title || '') + '</div>' +
-      '<div class="push-text">' + escapeHtml(opts.body || '') + '</div>' +
+      '<div class="push-text">' + bodyHtml + '</div>' +
+      actionHtml +
       '</div>' +
       '<button type="button" class="push-close" id="push-close-btn" aria-label="알림 닫기">✕</button>' +
       '</div>';
@@ -171,6 +179,16 @@
       clearTimeout(pushTimer);
       hidePushNotification();
     });
+    const actionBtn = document.getElementById('push-action-btn');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', function (e) {
+        // 배너 전체 클릭 핸들러와 겹쳐 두 번 실행되지 않게 막는다.
+        e.stopPropagation();
+        clearTimeout(pushTimer);
+        hidePushNotification();
+        if (opts.onClick) opts.onClick();
+      });
+    }
     el.addEventListener('click', function () {
       clearTimeout(pushTimer);
       hidePushNotification();
