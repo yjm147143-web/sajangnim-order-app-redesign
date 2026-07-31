@@ -973,7 +973,7 @@
       window.UI.confirmModal(
         '호출 없이 완료할까요?',
         '아직 손님을 호출하지 않았어요. 호출 없이 주문을 완료 처리할까요?',
-        '완료 처리하기',
+        '완료하기',
         proceed
       );
       return;
@@ -1060,10 +1060,10 @@
       return o && !o.called;
     }).length;
     const message = uncalled
-      ? '아직 호출하지 않은 주문 <strong>' + uncalled + '건</strong>이 있어요.<br/>완료하면 선택한 주문이 완료 탭으로 넘어가요.'
-      : '선택한 주문이 완료 탭으로 넘어가요.';
+      ? '아직 호출하지 않은 주문 ' + uncalled + '건이 있어요. 완료하면 선택한 주문이 완료 탭으로 이동해요.'
+      : '선택한 주문이 완료 탭으로 이동해요.';
     window.UI.confirmModal(
-      '선택한 ' + ids.length + '건을 완료할까요?',
+      '선택한 ' + ids.length + '건을 완료처리할까요?',
       message,
       '완료하기',
       function () {
