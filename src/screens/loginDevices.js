@@ -75,7 +75,7 @@
         '<div class="ld-row-action">' +
           (device.isCurrent
             ? '<span class="badge badge-success-soft">현재 기기</span>'
-            : '<button type="button" class="btn btn-outline btn-sm" data-action="logout-device">로그아웃시키기</button>') +
+            : '<button type="button" class="btn btn-outline btn-sm" data-action="logout-device">로그아웃</button>') +
         '</div>' +
       '</div>'
     );
@@ -150,7 +150,7 @@
       window.UI.confirmModal(
         '이 기기를 로그아웃시킬까요?',
         '<strong>' + esc(device.name) + '</strong>에서 로그아웃돼요.<br/>다시 쓰려면 그 기기에서 새로 로그인해야 해요.',
-        '로그아웃시키기',
+        '로그아웃',
         function () {
           if (!window.MockApi.logoutLoginDevice(storeId, deviceId)) return;
           window.UI.toast('기기를 로그아웃시켰어요');
