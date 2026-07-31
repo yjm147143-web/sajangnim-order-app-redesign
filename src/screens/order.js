@@ -687,7 +687,8 @@
     menuFilters = [];
     orderTypeFilters = [];
     calledFilter = 'ALL';
-    callStatusPanelOpen = false;
+    // '주문 요약' 펼침 상태는 탭을 넘나들어도 유지한다 — 집계 자체가 특정 탭이 아니라
+    // 오늘 전체를 보는 값이라, 탭을 옮길 때마다 접히면 매번 다시 열어야 한다.
     updateFilterBtnLabel();
     updateList();
   }
