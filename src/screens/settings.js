@@ -124,6 +124,9 @@
       '<div class="settings-list-item" id="notice-link-btn">' +
         '<div class="icon">' + window.Icons3D.iconLine('notice', 24) + '</div><div class="label">공지사항</div><div class="chevron">›</div>' +
       '</div>' +
+      '<div class="settings-list-item" data-nav="loginDevices">' +
+        '<div class="icon">' + window.Icons3D.iconLine('tablet', 24) + '</div><div class="label">로그인 기기 관리</div><div class="chevron">›</div>' +
+      '</div>' +
 
       '<div class="divider-line"></div>' +
 
@@ -293,7 +296,10 @@
         });
       }
 
-      var GATED_NAV = { sales: { scopeKey: 'sales', label: '매출 조회' } };
+      var GATED_NAV = {
+        sales: { scopeKey: 'sales', label: '매출 조회' },
+        loginDevices: { scopeKey: 'loginDevices', label: '로그인 기기 관리' },
+      };
       wrap.querySelectorAll('[data-nav]').forEach(function (row) {
         row.addEventListener('click', function () {
           var target = row.getAttribute('data-nav');

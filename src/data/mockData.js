@@ -166,7 +166,18 @@
 
     const auditLogs = [];
 
-    return { users, events, stores, categories, menuItems, optionGroups, orders, auditLogs };
+    return { users, events, stores, categories, menuItems, optionGroups, orders, auditLogs, loginDevices: seedLoginDevices() };
+  }
+
+  // 로그인 기기 — 계정 하나를 매장 태블릿·사장님 휴대폰 등 여러 기기에서 함께 쓰는 상황을 가정한다.
+  // isCurrent는 지금 이 앱이 돌아가는 기기 한 대만 true다.
+  function seedLoginDevices() {
+    return [
+      { id: 'device-1', storeId: 'store-1', name: '갤럭시 탭 S9', deviceType: 'TABLET', osLabel: 'Android 14', location: '매장 카운터', isCurrent: true, lastLoginAt: minutesAgo(35) },
+      { id: 'device-2', storeId: 'store-1', name: 'iPhone 15', deviceType: 'PHONE', osLabel: 'iOS 17.4', location: '사장님 개인 휴대폰', isCurrent: false, lastLoginAt: minutesAgo(320) },
+      { id: 'device-3', storeId: 'store-1', name: '갤럭시 탭 A9', deviceType: 'TABLET', osLabel: 'Android 13', location: '보조 단말', isCurrent: false, lastLoginAt: daysAgo(2) },
+      { id: 'device-4', storeId: 'store-1', name: 'Windows PC', deviceType: 'PC', osLabel: 'Chrome 124', location: '사무실', isCurrent: false, lastLoginAt: daysAgo(9) },
+    ];
   }
 
   const KEY = window.AppConfig.DB_KEY;
@@ -190,10 +201,17 @@
     return db;
   }
 
+  // 로그인 기기는 나중에 추가된 스키마라, 이전에 방문한 브라우저의 localStorage에는 배열 자체가 없다.
+  // 없으면 시드로 채워야 기기 관리 화면이 빈 목록으로 보이지 않는다.
+  function migrateLoginDevices(db) {
+    if (!db.loginDevices) db.loginDevices = seedLoginDevices();
+    return db;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return migrateOptionGroups(JSON.parse(raw));
+      if (raw) return migrateLoginDevices(migrateOptionGroups(JSON.parse(raw)));
     } catch (e) { /* ignore */ }
     const seed = buildSeed();
     localStorage.setItem(KEY, JSON.stringify(seed));

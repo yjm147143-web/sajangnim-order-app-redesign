@@ -11,6 +11,7 @@
     { key: 'statusChange', label: '영업상태 변경(개점·마감)' },
     { key: 'paymentCancel', label: '결제 취소' },
     { key: 'cashOrderCreate', label: '임의 주문 생성' },
+    { key: 'loginDevices', label: '로그인 기기 관리' },
   ];
 
   var STYLE = '' +
@@ -24,6 +25,17 @@
 
   function currentStoreId() {
     return window.MockApi.getContextStoreId();
+  }
+
+  // 보호 항목 목록은 사장님이 고른 조합에 따라 마지막 단어가 바뀌므로 조사를 고정할 수 없다.
+  // '로그인 기기 관리'로 끝나면 '를', '임의 주문 생성'으로 끝나면 '을'이 맞다.
+  // 라벨이 '변경(개점·마감)'처럼 괄호로 끝나기도 해서, 뒤에서부터 첫 한글 음절을 찾아 종성을 본다.
+  function objectParticle(word) {
+    for (var i = word.length - 1; i >= 0; i--) {
+      var code = word.charCodeAt(i);
+      if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 === 0 ? '를' : '을';
+    }
+    return '을';
   }
 
   function scopesSummary(scopes) {
@@ -95,7 +107,10 @@
 
   // 비밀번호 설정(최초)/변경 공용 모달 — 비밀번호 입력 + 보호 항목 체크리스트를 한 번에 저장한다.
   function openSetupModal(storeId, isChange, currentScopes, onDone) {
-    var scopes = Object.assign({ sales: true, statusChange: true, paymentCancel: true, cashOrderCreate: true }, currentScopes || {});
+    // 최초 설정에서는 모든 항목을 보호로 켜두고 사장님이 필요한 것만 끄게 한다.
+    var allOn = {};
+    SCOPE_DEFS.forEach(function (s) { allOn[s.key] = true; });
+    var scopes = Object.assign(allOn, currentScopes || {});
     var host = document.getElementById('modal-host');
     host.innerHTML =
       '<div class="modal-overlay" id="pl-setup-modal">' +
@@ -222,9 +237,17 @@
       if (unlockBtn) {
         unlockBtn.addEventListener('click', function () {
           window.UI.requireLockReauth(storeId, '잠금 해제', function () {
+            // 보호 항목을 문구에 박아두면 항목이 늘 때마다 문구가 거짓말을 한다.
+            // 지금 실제로 보호 중인 항목만 나열해 안내와 동작이 어긋나지 않게 한다.
+            var protectedLabels = SCOPE_DEFS
+              .filter(function (s) { return status.scopes[s.key]; })
+              .map(function (s) { return s.label; });
             window.UI.confirmModal(
               '잠금을 해제할까요?',
-              '해제하면 이 계정을 쓰는 누구나 비밀번호 없이 매출 조회 · 영업상태 변경(개점·마감) · 결제 취소를 바로 할 수 있어요.',
+              protectedLabels.length
+                ? '해제하면 이 계정을 쓰는 누구나 비밀번호 없이 <strong>' + protectedLabels.join(' · ') + '</strong>' +
+                  objectParticle(protectedLabels[protectedLabels.length - 1]) + ' 바로 할 수 있어요.'
+                : '해제하면 비밀번호가 삭제돼요.',
               '해제하기',
               function () {
                 window.MockApi.clearPermissionLockPassword(storeId);

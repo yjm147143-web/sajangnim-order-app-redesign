@@ -270,7 +270,7 @@
   }
 
   // ---------------- 권한 잠금 (사장님 계정 하나를 여러 사람이 함께 쓸 때, 선택한 민감 기능만 비밀번호로 보호) ----------------
-  const DEFAULT_LOCK_SCOPES = { sales: false, statusChange: false, paymentCancel: false, cashOrderCreate: false };
+  const DEFAULT_LOCK_SCOPES = { sales: false, statusChange: false, paymentCancel: false, cashOrderCreate: false, loginDevices: false };
 
   function getPermissionLockStatus(storeId) {
     const store = findStore(storeId);
@@ -283,7 +283,7 @@
   function setPermissionLockPassword(storeId, password, scopes) {
     const store = findStore(storeId);
     store.permissionLockPassword = password;
-    store.permissionLockScopes = scopes || { sales: true, statusChange: true, paymentCancel: true, cashOrderCreate: true };
+    store.permissionLockScopes = scopes || { sales: true, statusChange: true, paymentCancel: true, cashOrderCreate: true, loginDevices: true };
     persist();
     return getPermissionLockStatus(storeId);
   }
@@ -306,6 +306,28 @@
   function verifyPermissionLockPassword(storeId, password) {
     const store = findStore(storeId);
     return store.permissionLockPassword === password;
+  }
+
+  // ---------------- 로그인 기기 ----------------
+  // 현재 기기를 맨 위에 두고, 나머지는 최근 로그인이 빠른 순으로 내려간다.
+  function getLoginDevices(storeId) {
+    return (DB.loginDevices || [])
+      .filter(function (d) { return d.storeId === storeId; })
+      .slice()
+      .sort(function (a, b) {
+        if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+        return new Date(b.lastLoginAt) - new Date(a.lastLoginAt);
+      });
+  }
+
+  // 현재 기기는 이 화면에서 내보낼 수 없다 — 스스로를 로그아웃시키는 건 설정 > 로그아웃의 일이다.
+  // 화면에서 버튼을 감추는 것과 별개로, 데이터 계층에서도 막아 어느 경로로도 사고가 안 나게 한다.
+  function logoutLoginDevice(storeId, deviceId) {
+    const device = (DB.loginDevices || []).find(function (d) { return d.id === deviceId && d.storeId === storeId; });
+    if (!device || device.isCurrent) return false;
+    DB.loginDevices = DB.loginDevices.filter(function (d) { return d !== device; });
+    persist();
+    return true;
   }
 
   // ---------------- Menu ----------------
@@ -1219,6 +1241,7 @@
     getPermissionLockStatus: getPermissionLockStatus, setPermissionLockPassword: setPermissionLockPassword,
     updatePermissionLockScopes: updatePermissionLockScopes,
     clearPermissionLockPassword: clearPermissionLockPassword, verifyPermissionLockPassword: verifyPermissionLockPassword,
+    getLoginDevices: getLoginDevices, logoutLoginDevice: logoutLoginDevice,
     getCategories: getCategories, getMenuItems: getMenuItems, getMenuItem: getMenuItem,
     addMenuItem: addMenuItem, updateMenuItem: updateMenuItem, toggleSoldOut: toggleSoldOut,
     reorderMenuItems: reorderMenuItems, deleteMenuItem: deleteMenuItem,
