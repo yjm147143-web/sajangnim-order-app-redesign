@@ -101,7 +101,8 @@
         '<div class="icon">' + window.Icons3D.iconLine('box', 24) + '</div><div class="label">주문 관리</div><div class="chevron">›</div>' +
       '</div>' +
       '<div class="settings-list-item" data-nav="qrMenu">' +
-        '<div class="icon">' + window.Icons3D.iconLine('phone', 24) + '</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
+        // 휴대폰 아이콘은 'QR'보다 '휴대폰'으로 먼저 읽혀서, 주문 채널 배지와 같은 qr 아이콘을 쓴다.
+        '<div class="icon">' + window.Icons3D.iconLine('qr', 24) + '</div><div class="label">QR 메뉴판 보기</div><div class="chevron">›</div>' +
       '</div>' +
 
       '<div class="divider-line"></div>' +
