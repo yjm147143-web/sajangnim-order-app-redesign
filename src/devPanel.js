@@ -48,7 +48,6 @@
   var devContactType = 'PHONE';
   var devReusable = false;
   var devIsReservation = false;
-  var devFirstCome = false;
   var devHasOption = false;
   var devMenuCountMode = '1';
   var devMenuCountCustom = 3;
@@ -82,7 +81,7 @@
       '</div></div>';
   }
 
-  // ON/OFF 토글형 그룹: 각 항목이 서로 독립적으로 켜고 끌 수 있는 버튼(다회용기/예약/선착순)
+  // ON/OFF 토글형 그룹: 각 항목이 서로 독립적으로 켜고 끌 수 있는 버튼(다회용기/예약)
   function toggleGroupHtml(label, items, disabledKeys) {
     disabledKeys = disabledKeys || [];
     return '<div class="dp-group">' +
@@ -133,7 +132,6 @@
         toggleGroupHtml('주문 유형', [
           { key: 'reusable', label: '다회용기', on: devReusable },
           { key: 'reservation', label: '예약', on: devIsReservation },
-          { key: 'firstCome', label: '선착순', on: devFirstCome },
         ], channelSettings.acceptReservationOrders ? [] : ['reservation']) +
       '</div>'
     );
@@ -243,7 +241,6 @@
         lineCount: lineCount,
         hasOption: devHasOption,
         isReusableContainer: devReusable,
-        hasFirstCome: devFirstCome,
         paymentMethod: devPaymentMethod,
       });
       if (order) created += 1;
@@ -311,7 +308,6 @@
   function onToggle(key) {
     if (key === 'reusable') devReusable = !devReusable;
     else if (key === 'reservation') devIsReservation = !devIsReservation;
-    else if (key === 'firstCome') devFirstCome = !devFirstCome;
   }
 
   function onClick(e) {

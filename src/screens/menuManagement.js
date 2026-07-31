@@ -63,7 +63,6 @@
             (item.soldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') +
             (item.exposed === false ? ' <span class="badge badge-neutral">숨김</span>' : '') +
             (item.happyHourEnabled ? ' ' + window.UI.promoBadgeHtml('HAPPY_HOUR') : '') +
-            (item.firstComeEnabled ? ' ' + window.UI.promoBadgeHtml('FIRST_COME') : '') +
           '</div>' +
           '<div class="menu-row-sub">' + esc(catName) + (item.description ? ' · ' + esc(item.description) : '') + '</div>' +
           '<div class="menu-row-price">' +
@@ -622,9 +621,6 @@
         happyHourPrice: item.happyHourPrice != null ? item.happyHourPrice : '',
         happyHourStart: item.happyHourStart || '15:00',
         happyHourEnd: item.happyHourEnd || '17:00',
-        firstComeEnabled: !!item.firstComeEnabled,
-        firstComePrice: item.firstComePrice != null ? item.firstComePrice : '',
-        firstComeQty: item.firstComeQty != null ? item.firstComeQty : '',
         stockQuantity: item.stockQuantity != null ? item.stockQuantity : '',
         autoSoldoutEnabled: item.autoSoldoutEnabled !== false,
         exposed: item.exposed !== false,
@@ -651,9 +647,6 @@
       happyHourPrice: '',
       happyHourStart: '15:00',
       happyHourEnd: '17:00',
-      firstComeEnabled: false,
-      firstComePrice: '',
-      firstComeQty: '',
       stockQuantity: '',
       autoSoldoutEnabled: false,
       exposed: true,
@@ -706,19 +699,12 @@
     var classes = 'menu-preview-card' + (previewSoldOut ? ' menu-preview-soldout' : '') + (!state.exposed ? ' menu-edit-preview-hidden' : '');
 
     var hasHappyHour = state.happyHourEnabled && state.happyHourPrice !== '' && !isNaN(Number(state.happyHourPrice)) && Number(state.happyHourPrice) > 0;
-    var hasFirstCome = state.firstComeEnabled && state.firstComePrice !== '' && !isNaN(Number(state.firstComePrice)) && Number(state.firstComePrice) > 0;
 
     var priceHtml = '<div class="menu-preview-price">' + money(priceNum) + '</div>';
     if (hasHappyHour) {
       priceHtml += '<div class="menu-preview-promo-row">' +
         '<span class="menu-preview-price-promo">' + window.Icons3D.iconLine('flame', 13) + ' 해피아워 ' + money(Number(state.happyHourPrice)) + '</span>' +
         '<span class="menu-preview-promo-caption">' + esc(state.happyHourStart) + '~' + esc(state.happyHourEnd) + '</span>' +
-      '</div>';
-    }
-    if (hasFirstCome) {
-      priceHtml += '<div class="menu-preview-promo-row">' +
-        '<span class="menu-preview-price-promo">' + window.Icons3D.iconLine('bolt', 14) + ' 선착순 ' + money(Number(state.firstComePrice)) + '</span>' +
-        (state.firstComeQty !== '' ? '<span class="menu-preview-promo-caption">' + esc(state.firstComeQty) + '개 한정</span>' : '') +
       '</div>';
     }
 
@@ -761,17 +747,6 @@
       }
       if (!state.happyHourStart || !state.happyHourEnd) {
         return { field: 'happyHourPrice', message: '해피아워 시간을 설정해주세요' };
-      }
-    }
-    if (state.firstComeEnabled) {
-      if (state.firstComePrice === '' || state.firstComePrice === null || isNaN(Number(state.firstComePrice)) || Number(state.firstComePrice) <= 0) {
-        return { field: 'firstComePrice', message: '선착순 가격 미입력' };
-      }
-      if (Number(state.firstComePrice) >= Number(state.price)) {
-        return { field: 'firstComePrice', message: '선착순 가격은 정가보다 낮아야 해요' };
-      }
-      if (state.firstComeQty === '' || state.firstComeQty === null || isNaN(Number(state.firstComeQty)) || Number(state.firstComeQty) <= 0) {
-        return { field: 'firstComePrice', message: '선착순 수량 미입력' };
       }
     }
     if (state.useOptionGroups) {
@@ -822,9 +797,6 @@
       happyHourPrice: state.happyHourEnabled && state.happyHourPrice !== '' ? Number(state.happyHourPrice) : null,
       happyHourStart: state.happyHourEnabled ? state.happyHourStart : null,
       happyHourEnd: state.happyHourEnabled ? state.happyHourEnd : null,
-      firstComeEnabled: !!state.firstComeEnabled,
-      firstComePrice: state.firstComeEnabled && state.firstComePrice !== '' ? Number(state.firstComePrice) : null,
-      firstComeQty: state.firstComeEnabled && state.firstComeQty !== '' ? Number(state.firstComeQty) : null,
       stockQuantity: state.stockQuantity === '' ? 0 : Number(state.stockQuantity),
       autoSoldoutEnabled: !!state.autoSoldoutEnabled,
       exposed: !!state.exposed,
@@ -1004,27 +976,6 @@
           '<div class="divider-line"></div>' +
 
           '<div class="input-group">' +
-            '<div class="toggle-row">' +
-              '<div class="label-group" style="display:flex;flex-direction:column;">' +
-                '<span class="input-label" style="margin:0;">선착순 가격 설정</span>' +
-                '<span class="menu-edit-subcaption">정해진 수량까지만 할인 가격으로 판매해요</span>' +
-              '</div>' +
-              '<button type="button" class="toggle' + (state.firstComeEnabled ? ' on' : '') + '" role="switch" aria-checked="' + (state.firstComeEnabled ? 'true' : 'false') + '" id="toggle-first-come"><span class="toggle-knob"></span></button>' +
-            '</div>' +
-            '<div id="first-come-detail" style="margin-top:12px;' + (state.firstComeEnabled ? '' : 'display:none;') + '">' +
-              '<div class="promo-price-net">정가 ' + money(Number(state.price) || 0) + '</div>' +
-              '<div class="input-label">선착순 가격</div>' +
-              '<input class="input-field" type="number" id="f-first-price" placeholder="할인 적용 가격을 입력해주세요" value="' + (state.firstComePrice === '' ? '' : state.firstComePrice) + '" />' +
-              '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
-              '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
-              '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
-              '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="divider-line"></div>' +
-
-          '<div class="input-group">' +
             '<div class="input-label">원산지 (선택)</div>' +
             '<input class="input-field" type="text" id="f-origin" placeholder="원산지를 입력해주세요" value="' + esc(state.origin) + '" />' +
           '</div>' +
@@ -1086,14 +1037,14 @@
     }
 
     function clearErrors() {
-      ['name', 'category', 'price', 'stock', 'happyHourPrice', 'firstComePrice', 'general'].forEach(function (key) {
+      ['name', 'category', 'price', 'stock', 'happyHourPrice', 'general'].forEach(function (key) {
         var el = root.querySelector('#err-' + key);
         if (el) { el.style.display = 'none'; el.textContent = ''; }
       });
     }
 
     // 필드가 어느 탭에 있는지 알아야, 검증 에러가 나면 그 탭으로 이동시켜 사용자가 에러를 놓치지 않게 한다
-    var FIELD_TAB = { name: 'basic', category: 'basic', price: 'basic', stock: 'etc', happyHourPrice: 'etc', firstComePrice: 'etc', optionGroup: 'option' };
+    var FIELD_TAB = { name: 'basic', category: 'basic', price: 'basic', stock: 'etc', happyHourPrice: 'etc', optionGroup: 'option' };
 
     function switchEditTab(tabKey) {
       root.querySelectorAll('[data-edit-tab]').forEach(function (btn) {
@@ -1147,27 +1098,6 @@
     if (happyStartInput) happyStartInput.addEventListener('input', function (e) { state.happyHourStart = e.target.value; updatePreview(); });
     var happyEndInput = root.querySelector('#f-happy-end');
     if (happyEndInput) happyEndInput.addEventListener('input', function (e) { state.happyHourEnd = e.target.value; updatePreview(); });
-
-    var firstToggle = root.querySelector('#toggle-first-come');
-    var firstDetail = root.querySelector('#first-come-detail');
-    firstToggle.addEventListener('click', function () {
-      state.firstComeEnabled = !state.firstComeEnabled;
-      firstToggle.classList.toggle('on', state.firstComeEnabled);
-      firstDetail.style.display = state.firstComeEnabled ? '' : 'none';
-      if (!state.firstComeEnabled) {
-        state.firstComePrice = '';
-        state.firstComeQty = '';
-        var fpInput = root.querySelector('#f-first-price');
-        if (fpInput) fpInput.value = '';
-        var fqInput = root.querySelector('#f-first-qty');
-        if (fqInput) fqInput.value = '';
-      }
-      updatePreview();
-    });
-    var firstPriceInput = root.querySelector('#f-first-price');
-    if (firstPriceInput) firstPriceInput.addEventListener('input', function (e) { state.firstComePrice = e.target.value; updatePreview(); });
-    var firstQtyInput = root.querySelector('#f-first-qty');
-    if (firstQtyInput) firstQtyInput.addEventListener('input', function (e) { state.firstComeQty = e.target.value; updatePreview(); });
 
     function updateImageUI() {
       root.querySelector('#menu-image-thumb').innerHTML = state.imageUrl

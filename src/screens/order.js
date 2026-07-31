@@ -278,9 +278,6 @@
   // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
   // 다회용기 메뉴는 별도 뱃지 대신, 그 메뉴명 뒤에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다.
   // 여기만 OS 기본 이모지를 그대로 쓴다 — 사장님이 iOS 재활용 표시 그대로 가져가기로 결정했다.
-  // 선착순 배지는 주문 라인에 기록된 값(it.promoType)으로만 판단한다 — 메뉴 카탈로그를 다시
-  // 조회하면 선착순으로 주문하지 않은 건에도 배지가 붙는다(그 메뉴에 설정만 켜져 있으면).
-  // 주문 카드 단위가 아니라 메뉴 줄 단위로 노출한다.
   function itemListHtml(order) {
     return (order.items || []).map(function (it) {
       // 다회용기는 메뉴 단위 값이라 줄마다 따로 판단한다 — 한 주문에 다회용기와 일회용이 섞일 수 있다.
@@ -288,11 +285,10 @@
       const optHtml = (it.optionNames && it.optionNames.length)
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';
-      const firstComeHtml = it.promoType === 'FIRST_COME' ? '<span class="line-promo">선착순</span>' : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
         '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ♻️' : '') + '</span>' +
-        optHtml + firstComeHtml +
+        optHtml +
         '</div>';
     }).join('');
   }
@@ -535,11 +531,10 @@
 
     // 배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
-    // 선착순은 주문 건 단위가 아니라 메뉴별 배지(itemListHtml)로 표시하므로 헤더에서는 제외한다
     // 해피아워는 주문 카드에 배지로 표시하지 않는다 — 대신 해피아워가 시작되는 순간 팝업으로 알린다(handleHappyHourStarted)
     // 주문 채널(키오스크/QR오더/임의 생성 주문)도 헤더 배지 없이 상세보기의 '주문 유형' 행으로만 노출한다
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">' + window.Icons3D.iconLine('scooterLine', 13) + ' 배달 주문</span>' : '';
-    const promoHtml = (order.promoType === 'FIRST_COME' || order.promoType === 'HAPPY_HOUR') ? '' : window.UI.promoBadgeHtml(order.promoType);
+    const promoHtml = order.promoType === 'HAPPY_HOUR' ? '' : window.UI.promoBadgeHtml(order.promoType);
     if (deliveryHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + deliveryHtml + promoHtml + '</div>';
     }

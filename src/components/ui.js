@@ -86,7 +86,7 @@
     return '<span class="inline-icon-text">' + L('monitor', 14) + '키오스크</span>';
   }
 
-  const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워', FIRST_COME: '선착순' };
+  const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워' };
   function promoLabel(promoType) { return PROMO_LABELS[promoType] || ''; }
   function promoBadgeHtml(promoType) {
     const label = promoLabel(promoType);

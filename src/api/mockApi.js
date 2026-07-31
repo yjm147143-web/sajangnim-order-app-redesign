@@ -477,7 +477,7 @@
 
   // ---------------- 개발자 도구: 선택한 조건에 맞는 신규 주문 1건 생성 (실시간 주문 유입 시뮬레이션) ----------------
   // opts: { hasNote, isReservation, channel: 'QR'|'TABLET', identifierType: 'PICKUP'|'SEAT', multiMenu, hasOption,
-  //         isReusableContainer, promoType: null|'GROUP_COUPON'|'STORE_COUPON'|'HAPPY_HOUR'|'FIRST_COME' }
+  //         isReusableContainer, promoType: null|'GROUP_COUPON'|'STORE_COUPON'|'HAPPY_HOUR' }
   // isReusableContainer는 주문이 아니라 items[] 각 줄에 저장된다(메뉴 단위).
   function createCustomOrder(storeId, opts) {
     opts = opts || {};
@@ -497,12 +497,8 @@
     const itemsWithOption = menuItems.filter(function (m) {
       return getOptionGroupsByIds(m.optionGroupIds).some(function (g) { return (g.options || []).length; });
     });
-    // 선착순: 지금 선착순 가격이 설정된 메뉴만 후보로 삼는다(주문 카드의 선착순 배지는
-    // 이 메뉴 플래그를 보고 뜨므로, 완전 랜덤 배정이면 우연히 하나도 안 뽑혀 배지가 안 보일 수 있다).
-    const itemsWithFirstCome = menuItems.filter(function (m) { return m.firstComeEnabled; });
-    function buildLine(preferOption, preferFirstCome) {
-      const pool = (preferFirstCome && itemsWithFirstCome.length) ? itemsWithFirstCome
-        : (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
+    function buildLine(preferOption) {
+      const pool = (preferOption && itemsWithOption.length) ? itemsWithOption : menuItems;
       const menu = pool[Math.floor(Math.random() * pool.length)];
       const qty = 1 + Math.floor(Math.random() * 2);
       let optionNames = [];
@@ -517,35 +513,15 @@
     const lines = [];
     let amount = 0;
     for (let i = 0; i < lineCount; i++) {
-      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서, 선착순을 선택했을 땐
-      // 최소 1개 메뉴엔 선착순 메뉴가 붙도록 그 다음 줄(줄이 하나뿐이면 그 줄)에서 우선 배정한다.
-      const wantFirstComeHere = !!opts.hasFirstCome && (opts.hasOption && lineCount > 1 ? i === 1 : i === 0);
-      const line = buildLine(!!opts.hasOption && i === 0, wantFirstComeHere);
-      // 선착순 여부를 주문 라인에 박아둔다. 화면이 메뉴 카탈로그를 다시 조회해 판단하면,
-      // 선착순으로 주문하지 않은 건에도 배지가 붙고(그 메뉴에 설정만 켜져 있으면) 반대로
-      // 나중에 설정을 끄면 과거 주문의 배지가 사라진다. 주문은 그 시점의 사실이어야 한다.
-      const lineIsFirstCome = !!opts.hasFirstCome && itemsWithFirstCome.some(function (m) { return m.name === line.menuName; });
+      // 옵션 있음을 선택했을 땐 최소 1개 메뉴엔 옵션이 붙도록 첫 줄에서 우선 배정한다.
+      const line = buildLine(!!opts.hasOption && i === 0);
       lines.push({
         menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity,
-        promoType: lineIsFirstCome ? 'FIRST_COME' : null,
         // 다회용기는 메뉴 단위로 저장한다 — 손님이 음료만 다회용기에 담아가는 식으로 섞일 수 있다.
         // 시뮬레이션에서는 첫 줄에만 붙여, 한 주문 안에 다회용기/일회용이 섞인 상태를 재현한다.
         isReusableContainer: !!opts.isReusableContainer && i === 0,
       });
       amount += line.price * line.quantity;
-    }
-    // 줄이 하나뿐인데 옵션·선착순을 동시에 요청해 위 배정에서 선착순이 밀린 경우를 대비한 안전망 —
-    // 그래도 선착순 메뉴가 한 줄도 없으면 강제로 하나를 선착순 메뉴로 바꿔 배지가 반드시 뜨게 한다.
-    if (opts.hasFirstCome && itemsWithFirstCome.length && !lines.some(function (l) { return itemsWithFirstCome.some(function (m) { return m.name === l.menuName; }); })) {
-      const oldLine = lines[0];
-      const oldMenu = menuItems.find(function (m) { return m.name === oldLine.menuName; });
-      const menu = itemsWithFirstCome[Math.floor(Math.random() * itemsWithFirstCome.length)];
-      // 줄을 통째로 바꾸므로 다회용기 여부는 원래 줄의 값을 그대로 물려준다.
-      lines[0] = {
-        menuName: menu.name, optionNames: [], quantity: oldLine.quantity, promoType: 'FIRST_COME',
-        isReusableContainer: !!oldLine.isReusableContainer,
-      };
-      amount += (menu.price - (oldMenu ? oldMenu.price : 0)) * oldLine.quantity;
     }
 
     const customerContact = isEmailContact ? emails[Math.floor(Math.random() * emails.length)] : phones[Math.floor(Math.random() * phones.length)];
@@ -561,7 +537,7 @@
     const autoAccept = !!(store && store.autoAcceptOrders);
     // VAN 결제는 QA에서 태블릿오더 취소 예외팝업(실물 카드 필요)을 재현하기 위한 강제 지정값이라 랜덤 후보에 넣지 않는다.
     const paymentMethod = opts.paymentMethod === 'VAN' ? 'VAN' : payments[Math.floor(Math.random() * payments.length)];
-    const promoType = opts.hasFirstCome ? 'FIRST_COME' : (opts.hasHappyHour ? 'HAPPY_HOUR' : null);
+    const promoType = opts.hasHappyHour ? 'HAPPY_HOUR' : null;
 
     const order = {
       id: uid('order'), storeId: storeId,
