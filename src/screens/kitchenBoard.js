@@ -1,4 +1,4 @@
-/*
+﻿/*
  * KDS(조리 현황판) 화면 (설정 화면 상단바의 🍳 버튼에서 진입)
  * - 메뉴판의 모든 메뉴를 항상 노출하되, 오늘 주문이 들어온 메뉴는 강조 처리 후 상단으로 올린다.
  * - 메뉴별 호출 완료 수량 / 남은 수량 / 오늘 누적 판매 수량을 카테고리별로 보여준다.
@@ -95,7 +95,7 @@
     menuItems.forEach(function (m) { soldOutByName[m.name] = !!m.soldOut; });
 
     if (!menuItems.length) {
-      return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>판매 중인 메뉴가 없어요</div></div>';
+      return '' + window.UI.emptyStateHtml('plate', '판매 중인 메뉴가 없어요') + '';
     }
 
     // 카탈로그 메뉴 + 카탈로그에서 지워졌지만 오늘 주문에 남아있는 메뉴를 함께 보여준다.

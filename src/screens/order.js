@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 사장님 주문 접수 화면 (order)
  * 대기 / 처리중 / 완료 탭 기반의 주문 카드 보드.
  * '설정 > 권한 잠금 설정'에서 결제 취소 항목을 보호 중이면, 결제 취소 시 비밀번호 확인이 필요하다.
@@ -84,6 +84,8 @@
     '.order-topbar-centered #status-btn-slot { display: inline-flex; flex-shrink: 0; }' +
     // 설정 아이콘은 기본 20px보다 키워 매장명과 함께 상단바의 시각적 무게를 맞춘다(터치 영역 44px은 유지)
     '.order-topbar-centered .icon-btn { font-size: 26px; }' +
+    // 3D 기어는 색·크기를 SVG가 직접 정하므로 icon-btn의 font-size 확대가 필요 없다.
+    '.order-topbar-centered .settings-icon-btn { font-size: 0; }' +
     // 상단바 패딩이 위아래로 다르므로(32px/8px) 기본 top:50%를 그대로 쓰면 매장명이 좌우 배지보다
     // 12px 위로 뜬다. 패딩 안쪽 영역에 맞춰 위아래를 물려 배지·설정 버튼과 같은 행에 오게 한다.
     '.topbar-title { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 45vw;' +
@@ -268,7 +270,7 @@
       const firstComeHtml = it.promoType === 'FIRST_COME' ? '<span class="line-promo">선착순</span>' : '';
       return '<div class="order-card-menu-line">' +
         '<span class="line-qty">' + it.quantity + '개</span>' +
-        '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ♻️' : '') + '</span>' +
+        '<span class="line-name' + (isReusable ? ' reusable' : '') + '">' + esc(it.menuName) + (isReusable ? ' ' + window.Icons3D.iconLine('recycle', 13) : '') + '</span>' +
         optHtml + firstComeHtml +
         '</div>';
     }).join('');
@@ -341,7 +343,7 @@
   }
 
   function renderCallStatusButtonHtml() {
-    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">📣 주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
+    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">' + window.Icons3D.iconLine('listCheck', 14) + ' 주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
   // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버/대기)으로 보여줘
@@ -388,7 +390,7 @@
   function autoSoldoutBannerHtml() {
     return autoSoldoutNames.map(function (n) {
       return '<div class="auto-soldout-banner">' +
-        '<span>⚠️ ' + esc(n) + ' 메뉴가 자동 품절됐어요.</span>' +
+        '<span>' + window.Icons3D.iconLine('warning', 14) + ' ' + esc(n) + ' 메뉴가 자동 품절됐어요.</span>' +
         '<button type="button" class="auto-soldout-banner-close" data-action="dismiss-auto-soldout" data-name="' + esc(n) + '" aria-label="닫기">✕</button>' +
         '</div>';
     }).join('');
@@ -402,7 +404,7 @@
       const priceText = (p.price != null) ? window.UI.formatMoney(p.price) : '';
       const detail = priceText ? (priceText + (timeRange ? ' · ' + timeRange : '')) : timeRange;
       return '<div class="happy-hour-banner">' +
-        '<span>🔥 ' + esc(p.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '') + '</span>' +
+        '<span>' + window.Icons3D.iconLine('flame', 14) + ' ' + esc(p.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '') + '</span>' +
         '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour" data-name="' + esc(p.name) + '" aria-label="닫기">✕</button>' +
         '</div>';
     }).join('');
@@ -465,7 +467,7 @@
       const timeLabel = window.UI.clockLabel(order.reservationTime || order.orderedAt);
       const urgencyCls = isOverdue ? (overdueMins >= 10 ? ' urgent' : ' normal') : '';
       const overdueText = isOverdue ? ' · ' + overdueMins + '분 지남' : '';
-      return '<span class="elapsed-badge reservation' + urgencyCls + '">📅 ' + timeLabel + ' 예약' + overdueText + '</span>';
+      return '<span class="elapsed-badge reservation' + urgencyCls + '">' + window.Icons3D.iconLine('calendarLine', 12) + ' ' + timeLabel + ' 예약' + overdueText + '</span>';
     }
     const mins = window.UI.elapsedMinutes(order.orderedAt);
     const urgencyCls = mins >= 10 ? 'urgent' : 'normal';
@@ -488,7 +490,7 @@
     // 선착순은 주문 건 단위가 아니라 메뉴별 배지(itemListHtml)로 표시하므로 헤더에서는 제외한다
     // 해피아워는 주문 카드에 배지로 표시하지 않는다 — 대신 해피아워가 시작되는 순간 팝업으로 알린다(handleHappyHourStarted)
     // 주문 채널(키오스크/QR오더/임의 생성 주문)도 헤더 배지 없이 상세보기의 '주문 유형' 행으로만 노출한다
-    const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">🛵 배달 주문</span>' : '';
+    const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">' + window.Icons3D.iconLine('scooterLine', 13) + ' 배달 주문</span>' : '';
     const promoHtml = (order.promoType === 'FIRST_COME' || order.promoType === 'HAPPY_HOUR') ? '' : window.UI.promoBadgeHtml(order.promoType);
     if (deliveryHtml || promoHtml) {
       html += '<div class="order-card-header-row">' + deliveryHtml + promoHtml + '</div>';
@@ -498,7 +500,7 @@
 
     // 손님 요청(메모)은 조리 시 바로 확인해야 하는 정보라 '간단히 보기'에서도 항상 노출한다
     if (order.customerNote) {
-      html += '<div class="order-card-note">💬 ' + esc(order.customerNote) + '</div>';
+      html += '<div class="order-card-note">' + window.Icons3D.iconLine('notice2', 14) + ' ' + esc(order.customerNote) + '</div>';
     }
     if (order.canceled) {
       const typeLabel = order.cancelType === 'RETURN' ? '결제 취소' : (order.cancelType === 'PAYMENT_CANCEL' ? '결제 취소' : '주문 거절');
@@ -521,7 +523,7 @@
         ? (function () {
             const contact = window.UI.formatContact(order.customerContact);
             const isEmailContact = order.customerContact.indexOf('@') !== -1;
-            const contactIcon = isEmailContact ? '✉️' : '📞';
+            const contactIcon = window.Icons3D.iconLine(isEmailContact ? 'mail' : 'phoneCall', 14);
             return '<button type="button" class="contact-link-btn" data-action="open-contact" data-contact="' + esc(order.customerContact) + '" data-is-email="' + (isEmailContact ? '1' : '0') + '">' + contactIcon + ' ' + esc(contact) + '<span class="cl-arrow">›</span></button>';
           })()
         : '연락처 없음(카운터 접수)';
@@ -555,8 +557,8 @@
   function renderGroupsHtml(groups, allOrders, disabled) {
     const tabStatus = currentStatus();
     if (!allOrders.length) {
-      if (searchQuery) return '<div class="empty-state"><div class="empty-state-emoji">🔎</div><div>검색 결과가 없어요</div></div>';
-      return '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>주문 내역이 없어요</div></div>';
+      if (searchQuery) return '' + window.UI.emptyStateHtml('magnifier', '검색 결과가 없어요') + '';
+      return '' + window.UI.emptyStateHtml('inbox', '주문 내역이 없어요') + '';
     }
     return groups.map(function (g) {
       return renderBucketHeader(g, tabStatus, disabled) + g.orders.map(function (o) { return renderOrderCard(o, tabStatus, disabled); }).join('');
@@ -807,7 +809,7 @@
       }
       if (needPassword) {
         bodyHtml += '<div class="reason-pw-block">' +
-          '<div class="reason-pw-label">🔐 권한 잠금이 설정된 항목이에요</div>' +
+          '<div class="reason-pw-label">' + window.Icons3D.iconLine('lockLine', 14) + ' 권한 잠금이 설정된 항목이에요</div>' +
           '<input type="password" inputmode="numeric" class="input-field" id="reason-password"' +
             ' placeholder="비밀번호를 입력해 주세요" value="' + esc(password) + '" />' +
           (pwError ? '<div class="reason-pw-error">' + esc(pwError) + '</div>' : '') +
@@ -1374,7 +1376,8 @@
       '<span class="order-title-text">' + esc(store.name) + '</span>' +
       '<span class="order-network-caption" id="order-network-caption">' + networkIconHtml(networkState()) + '</span>' +
       '</div>' +
-      '<button type="button" class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>' +
+      '<button type="button" class="icon-btn settings-icon-btn" data-action="open-settings" aria-label="설정">' +
+        window.Icons3D.icon3d('gear', 26) + '</button>' +
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
       '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 알림 설정 화면 (설정 > 알림 설정) — 기존에 설정 메인 화면에 있던 알림 관련 항목을
  * 별도 카테고리 화면으로 분리했다.
  * - 알림 켜기/끄기, 알림음 크기, 알림음 종류, 반복 횟수(1~10, +/- 스테퍼)를 관리한다.
@@ -28,7 +28,7 @@
     var repeatCount = repeatCountOf(store);
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">🔔</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('bell', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">알림 설정</div>' +
           '<div class="label-sub">' + (notificationOn ? '소리 · 푸시 · 진동으로 새 주문을 알려드려요' : '소리 · 푸시 알림이 꺼져 있어요') + '</div>' +
@@ -39,7 +39,7 @@
         '<span class="notification-volume-label">알림음 크기</span>' +
         '<input type="range" min="0" max="100" step="5" value="' + volume + '" id="notification-volume-slider"' + (notificationOn ? '' : ' disabled') + ' />' +
         '<span class="notification-volume-value" id="notification-volume-value">' + volume + '</span>' +
-        '<button type="button" class="pill-btn" id="notification-preview-btn"' + (notificationOn ? '' : ' disabled') + '>🔊</button>' +
+        '<button type="button" class="pill-btn" id="notification-preview-btn"' + (notificationOn ? '' : ' disabled') + '>' + window.Icons3D.iconLine('speaker', 15) + '</button>' +
       '</div>' +
       '<div class="notification-volume-hint">' + (notificationOn && volume === 0 ? '소리 크기가 0이라 진동으로만 알려드려요' : '') + '</div>' +
       '<div class="notification-sub-row' + (notificationOn ? '' : ' disabled') + '">' +

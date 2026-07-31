@@ -42,7 +42,9 @@
       '<div class="qr-image-wrap">' +
         '<img src="' + qrSrc + '" alt="QR 코드" id="qr-image" />' +
         '<div class="empty-state" id="qr-image-error" style="display:none;">' +
-          '<div class="empty-state-emoji">📵</div><div>QR 코드를 불러오지 못했어요</div>' +
+          // 다시 시도 버튼이 함께 들어가는 자리라 emptyStateHtml 헬퍼 대신 아이콘만 끼운다.
+          '<div class="empty-state-icon">' + window.Icons3D.icon3d('qrOff', 44) + '</div>' +
+          '<div>QR 코드를 불러오지 못했어요</div>' +
           '<button type="button" class="btn-text" id="qr-retry-btn">다시 시도</button>' +
         '</div>' +
       '</div>' +

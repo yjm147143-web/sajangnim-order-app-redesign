@@ -68,12 +68,22 @@
     return keys.map(function (k) { return map[k]; });
   }
 
+  // 빈 상태는 화면마다 마크업을 따로 쓰고 있어 아이콘 크기가 조금씩 달랐다. 한 곳에서 만든다.
+  function emptyStateHtml(iconName, message) {
+    return '<div class="empty-state">' +
+      '<div class="empty-state-icon">' + window.Icons3D.icon3d(iconName, 44) + '</div>' +
+      '<div>' + message + '</div>' +
+      '</div>';
+  }
+
   // ---------------- Channel / status badges ----------------
   // 어떤 채널이든 카드 헤더에는 배지로 노출하지 않는다 — 상세보기의 '주문 유형' 행으로만 안내한다.
+  // 채널 라벨은 문장 안에 흐르는 텍스트라, 아이콘도 글자와 같은 무게로 보이는 선 아이콘을 쓴다.
   function channelTypeLabel(channel) {
-    if (channel === 'QR') return '🔳 QR오더';
-    if (channel === 'MANUAL') return '🧾 임의 생성 주문';
-    return '🖥️ 키오스크';
+    const L = window.Icons3D.iconLine;
+    if (channel === 'QR') return '<span class="inline-icon-text">' + L('qr', 14) + 'QR오더</span>';
+    if (channel === 'MANUAL') return '<span class="inline-icon-text">' + L('receipt', 14) + '임의 생성 주문</span>';
+    return '<span class="inline-icon-text">' + L('monitor', 14) + '키오스크</span>';
   }
 
   const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워', FIRST_COME: '선착순' };
@@ -83,10 +93,12 @@
     return label ? '<span class="badge badge-warning-soft">' + label + '</span>' : '';
   }
 
+  // dot은 색 하나로 끝나는 표시라 SVG가 과하다. CSS로 그린 원을 쓰고 색은 cls가 정한다.
   function operatingStatusMeta(status) {
-    if (status === 'OPEN') return { label: '영업중', cls: 'open', dot: '🟢' };
-    if (status === 'PAUSED') return { label: '일시중지', cls: 'paused', dot: '🟠' };
-    return { label: '마감', cls: 'closed', dot: '🔴' };
+    const D = window.Icons3D.statusDot;
+    if (status === 'OPEN') return { label: '영업중', cls: 'open', dot: D('open') };
+    if (status === 'PAUSED') return { label: '일시중지', cls: 'paused', dot: D('paused') };
+    return { label: '마감', cls: 'closed', dot: D('closed') };
   }
 
   function statusPillHtml(status) {
@@ -136,7 +148,7 @@
     const host = document.getElementById('push-host');
     if (!host) return;
     host.innerHTML = '<div class="push-card" id="active-push" role="alert">' +
-      '<div class="push-icon">🧾</div>' +
+      '<div class="push-icon">' + window.Icons3D.icon3d('receipt', 22) + '</div>' +
       '<div class="push-body">' +
       '<div class="push-app">사장님 주문접수</div>' +
       '<div class="push-title">' + escapeHtml(opts.title || '') + '</div>' +
@@ -228,7 +240,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="lock-gate-modal">' +
         '<div class="modal-card">' +
-          '<div style="font-size:28px;text-align:center;margin-bottom:6px;">🔒</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
           '<div class="modal-title">' + escapeHtml(label) + '</div>' +
           '<div class="modal-message">사장님이 잠근 기능이에요.<br/>계속하려면 비밀번호를 입력해주세요.</div>' +
           '<input type="password" class="input-field" id="lock-gate-input" maxlength="12" placeholder="비밀번호" style="text-align:center;letter-spacing:4px;margin-bottom:6px;" />' +
@@ -363,7 +375,7 @@
   }
 
   function salesChartHtml(dimension, data) {
-    if (!data.length) return '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
+    if (!data.length) return emptyStateHtml('inbox', '해당 기간의 매출이 없어요');
     if (dimension === 'period' || dimension === 'hour') return barChartHtml(data);
     if (dimension === 'payment' || dimension === 'channel') return donutChartHtml(data);
     if (dimension === 'menu' || dimension === 'store') return rankListHtml(data);
@@ -376,6 +388,7 @@
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
     channelTypeLabel: channelTypeLabel, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
+    emptyStateHtml: emptyStateHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
     showPushNotification: showPushNotification, hidePushNotification: hidePushNotification,
     requirePasswordGate: requirePasswordGate, requireLockReauth: requireLockReauth,

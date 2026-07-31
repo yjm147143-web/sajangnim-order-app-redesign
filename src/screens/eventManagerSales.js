@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 행사 담당자 — 매출 현황 화면
  * 사장님 보드의 매출 조회(sales.js)와 동일한 UI/UX: 실시간 매출현황 / 과거 매출현황 2탭 구조.
  * 실시간 탭은 오늘 하루 고정, 과거 탭은 전일/행사일/기간설정 필터로 날짜(구간)를 고른다.
@@ -209,7 +209,7 @@
           else if (showHighlight && d === minItem) { cls = 'sales-amount-min'; badge = ' <span class="badge badge-danger-soft">최저</span>'; }
           return listRowHtml(d.name, d.amount, d.count, d.date, cls, badge);
         }).join('')
-      : '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
+      : '' + window.UI.emptyStateHtml('inbox', '해당 기간의 매출이 없어요') + '';
     return (
       rangeFilterHtml(range) +
       metricGridHtml(summary) +

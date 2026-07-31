@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 임의 주문 생성 화면 (설정 > 주문 관리 > 임의 주문 생성)
  * - 사장님이 카운터에서 손님 대신 메뉴를 골라 주문을 대신 등록하는 화면.
  * - 첨부된 기능명세서(현금주문생성_기능명세서.xlsx)의 5단계 중 '카테고리 선택' depth는
@@ -135,7 +135,7 @@
     const items = activeCategoryId ? allMenuItems.filter(function (m) { return m.categoryId === activeCategoryId; }) : allMenuItems;
     const listHtml = items.length
       ? items.map(menuCardHtml).join('')
-      : '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>등록된 메뉴가 없어요</div></div>';
+      : '' + window.UI.emptyStateHtml('plate', '등록된 메뉴가 없어요') + '';
     const count = cartCount();
     return (
       '<div class="topbar">' +

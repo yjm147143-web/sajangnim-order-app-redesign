@@ -1,13 +1,13 @@
-/*
+﻿/*
  * 행사 담당자 보드 — 하단 탭바 공용 헬퍼
  * Router 화면으로 등록하지 않고, Home/Sales/Settings 3개 화면이 공유하는
  * 순수 함수만 window.EventManagerShell 로 노출한다.
  */
 (function () {
   const TABS = [
-    { screen: 'eventManagerHome', icon: '🏠', label: '홈' },
-    { screen: 'eventManagerSales', icon: '📊', label: '매출현황' },
-    { screen: 'eventManagerSettings', icon: '⚙️', label: '설정' },
+    { screen: 'eventManagerHome', icon: window.Icons3D.icon3d('home', 24), label: '홈' },
+    { screen: 'eventManagerSales', icon: window.Icons3D.icon3d('chart', 24), label: '매출현황' },
+    { screen: 'eventManagerSettings', icon: window.Icons3D.icon3d('gear', 24), label: '설정' },
   ];
 
   function tabbarHtml(activeScreen) {

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 메뉴 관리 화면 (목록 + 추가/수정 폼)
  * - 'menuManagement' : 카테고리 탭 + 메뉴 목록 (품절 토글 / 순서 변경)
  * - 'menuEdit'       : 메뉴 추가/수정 폼 (옵션그룹 편집 + 실시간 미리보기)
@@ -56,7 +56,8 @@
             '<span class="menu-row-order-num">' + orderNum + '</span>' +
           '</div>' : ''
         ) +
-        '<div class="menu-row-thumb">' + (item.imageUrl ? '<img src="' + esc(item.imageUrl) + '" alt="" />' : '🍽️') + '</div>' +
+        '<div class="menu-row-thumb">' + (item.imageUrl ? '<img src="' + esc(item.imageUrl) + '" alt="" />' :
+          '<span class="thumb-placeholder">' + window.Icons3D.iconLine('camera', 18) + '</span>') + '</div>' +
         '<div class="menu-row-body">' +
           '<div class="menu-row-name">' + esc(item.name) +
             (item.soldOut ? ' <span class="badge badge-danger-soft">품절</span>' : '') +
@@ -82,7 +83,7 @@
 
   function listBodyHtml(items, categories, isSpecific) {
     if (!items.length) {
-      return '<div class="empty-state"><div class="empty-state-emoji">🍽️</div><div>등록된 메뉴가 없어요</div></div>';
+      return '' + window.UI.emptyStateHtml('plate', '등록된 메뉴가 없어요') + '';
     }
     return '<div class="menu-list">' + items.map(function (item, idx) { return menuRowHtml(item, categories, isSpecific, idx + 1); }).join('') + '</div>';
   }
@@ -199,7 +200,7 @@
 
   function optionLibraryHtml(groups) {
     var listHtml = !groups.length
-      ? '<div class="empty-state"><div class="empty-state-emoji">🧩</div><div>등록된 옵션 그룹이 없어요</div></div>'
+      ? '' + window.UI.emptyStateHtml('puzzle', '등록된 옵션 그룹이 없어요') + ''
       : '<div class="menu-list">' + groups.map(optionGroupRowHtml).join('') + '</div>';
     return '<div class="option-library-list">' + listHtml +
       '<button type="button" class="menu-add-btn" id="add-option-group-btn">+ 옵션 그룹 추가</button>' +
@@ -710,13 +711,13 @@
     var priceHtml = '<div class="menu-preview-price">' + money(priceNum) + '</div>';
     if (hasHappyHour) {
       priceHtml += '<div class="menu-preview-promo-row">' +
-        '<span class="menu-preview-price-promo">🔥 해피아워 ' + money(Number(state.happyHourPrice)) + '</span>' +
+        '<span class="menu-preview-price-promo">' + window.Icons3D.iconLine('flame', 13) + ' 해피아워 ' + money(Number(state.happyHourPrice)) + '</span>' +
         '<span class="menu-preview-promo-caption">' + esc(state.happyHourStart) + '~' + esc(state.happyHourEnd) + '</span>' +
       '</div>';
     }
     if (hasFirstCome) {
       priceHtml += '<div class="menu-preview-promo-row">' +
-        '<span class="menu-preview-price-promo">⚡ 선착순 ' + money(Number(state.firstComePrice)) + '</span>' +
+        '<span class="menu-preview-price-promo">' + window.Icons3D.icon3d('bolt', 14) + ' 선착순 ' + money(Number(state.firstComePrice)) + '</span>' +
         (state.firstComeQty !== '' ? '<span class="menu-preview-promo-caption">' + esc(state.firstComeQty) + '개 한정</span>' : '') +
       '</div>';
     }
@@ -877,9 +878,9 @@
         '<div class="topbar-side"></div>' +
       '</div>' +
       '<div class="segment-tabs menu-edit-tab-bar">' +
-        '<button type="button" class="segment-tab active" data-edit-tab="basic">📝 기본 정보</button>' +
-        '<button type="button" class="segment-tab" data-edit-tab="etc">⚙️ 기타 설정</button>' +
-        '<button type="button" class="segment-tab" data-edit-tab="option">🧩 옵션</button>' +
+        '<button type="button" class="segment-tab active" data-edit-tab="basic">' + window.Icons3D.iconLine('pencilLine', 14) + ' 기본 정보</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="etc">' + window.Icons3D.iconLine('gearLine', 14) + ' 기타 설정</button>' +
+        '<button type="button" class="segment-tab" data-edit-tab="option">' + window.Icons3D.iconLine('puzzleLine', 14) + ' 옵션</button>' +
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="menu-edit-form-pad">' +
@@ -890,7 +891,7 @@
             '<div class="input-label">메뉴 이미지</div>' +
             '<div class="menu-image-upload-row">' +
               '<div class="menu-image-thumb" id="menu-image-thumb">' +
-                (state.imageUrl ? '<img src="' + esc(state.imageUrl) + '" alt="" />' : '<span>📷</span>') +
+                (state.imageUrl ? '<img src="' + esc(state.imageUrl) + '" alt="" />' : '<span class="thumb-placeholder">' + window.Icons3D.iconLine('camera', 20) + '</span>') +
               '</div>' +
               '<div class="menu-image-upload-actions">' +
                 '<label class="btn btn-outline btn-sm" for="f-image-file-album">앨범에서 선택</label>' +
@@ -996,7 +997,7 @@
                 '<span class="time-range-sep">~</span>' +
                 '<input type="time" class="input-field" id="f-happy-end" value="' + esc(state.happyHourEnd) + '" />' +
               '</div>' +
-              '<div class="info-memo">💡 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
+              '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 설정한 시간 동안에는 정가 대신 이 가격이 자동으로 적용돼요.</div>' +
             '</div>' +
           '</div>' +
 
@@ -1017,7 +1018,7 @@
               '<div class="input-error" id="err-firstComePrice" style="display:none;"></div>' +
               '<div class="input-label" style="margin-top:10px;">선착순 수량</div>' +
               '<input class="input-field" type="number" id="f-first-qty" placeholder="예: 20" value="' + (state.firstComeQty === '' ? '' : state.firstComeQty) + '" />' +
-              '<div class="info-memo">💡 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
+              '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 선착순 수량이 모두 팔리면 정가로 자동 전환돼요.</div>' +
             '</div>' +
           '</div>' +
 
@@ -1171,7 +1172,7 @@
     function updateImageUI() {
       root.querySelector('#menu-image-thumb').innerHTML = state.imageUrl
         ? '<img src="' + esc(state.imageUrl) + '" alt="" />'
-        : '<span>📷</span>';
+        : '<span class="thumb-placeholder">' + window.Icons3D.iconLine('camera', 20) + '</span>';
       var removeBtn = root.querySelector('#remove-image-btn');
       if (state.imageUrl && !removeBtn) {
         var btn = document.createElement('button');

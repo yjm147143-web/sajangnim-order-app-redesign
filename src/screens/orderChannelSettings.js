@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 주문 방식 관리 화면 (설정 > 주문 관리 > 주문 방식 관리)
  * - 예약 주문 / 배달(자리번호) 주문 / 손님 요청 수신 여부를 매장이 직접 켜고 끈다.
  * - 꺼진 항목은 개발자 테스트 패널에서도 해당 옵션이 비활성화되어, 실제로 그 유형의
@@ -74,17 +74,17 @@
 
   function contentHtml(settings) {
     return (
-      rowHtml('📅', 'ocs-reservation-toggle', '예약 주문',
+      rowHtml(window.Icons3D.icon3d('calendar', 24), 'ocs-reservation-toggle', '예약 주문',
         settings.acceptReservationOrders ? '예약 주문을 받고 있어요' : '예약 주문을 받지 않아요',
         settings.acceptReservationOrders) +
       reservationHoursHtml(settings) +
       '<div class="divider-line"></div>' +
-      rowHtml('🛎️', 'ocs-seat-toggle', '배달 주문',
+      rowHtml(window.Icons3D.icon3d('scooter', 24), 'ocs-seat-toggle', '배달 주문',
         settings.acceptSeatOrders ? '켜면 자리번호 주문도 함께 들어와요' : '꺼져 있으면 호출번호 주문만 들어와요',
         settings.acceptSeatOrders) +
       seatInputHtml(settings) +
       '<div class="divider-line"></div>' +
-      rowHtml('💬', 'ocs-note-toggle', '손님 요청',
+      rowHtml(window.Icons3D.icon3d('notice', 24), 'ocs-note-toggle', '손님 요청',
         settings.acceptCustomerNotes ? '주문 시 손님 요청을 받을게요' : '손님 요청을 받지 않아요',
         settings.acceptCustomerNotes)
     );

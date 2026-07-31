@@ -185,7 +185,164 @@
       details: '<rect x="8.2" y="12.4" width="7.6" height="9.8" rx="1.2" fill="rgba(255,255,255,0.34)"/>',
       highlight: gloss('M3.4 7.4 5.4 3.4', 1.2),
     },
+    // 임의 주문 생성 / 임의 생성 주문 배지 — 영수증. 아래를 톱니로 끊어 '출력물'로 읽히게 한다.
+    receipt: {
+      hue: 'slate',
+      paths: '<path d="M4.4 1.8h15.2a1.4 1.4 0 0 1 1.4 1.4v18.4l-2.8-1.7-2.8 1.7-2.8-1.7-2.8 1.7-2.8-1.7-2.8 1.7V3.2a1.4 1.4 0 0 1 1.4-1.4z"/>',
+      details: '<g fill="rgba(255,255,255,0.82)">' +
+        '<rect x="7" y="5.6" width="10" height="1.7" rx="0.85"/>' +
+        '<rect x="7" y="9.2" width="10" height="1.7" rx="0.85"/>' +
+        '<rect x="7" y="12.8" width="6.4" height="1.7" rx="0.85"/></g>',
+      highlight: gloss('M5.6 4.4A1.6 1.6 0 0 1 7 3.2', 1.2),
+    },
+    // 최소 주문 금액 — 지폐
+    bill: {
+      hue: 'teal',
+      paths: '<rect x="1.4" y="5.2" width="21.2" height="13.6" rx="2.4"/>',
+      details: '<circle cx="12" cy="12" r="3.6" fill="rgba(255,255,255,0.42)"/>' +
+        '<g fill="rgba(30,29,43,0.18)">' +
+        '<rect x="3.8" y="10.4" width="2.4" height="3.2" rx="1.2"/>' +
+        '<rect x="17.8" y="10.4" width="2.4" height="3.2" rx="1.2"/></g>',
+      highlight: gloss('M3 8.2A2.4 2.4 0 0 1 5.2 6.4', 1.2),
+    },
+    // 행사 전환 — 위아래로 엇갈린 두 화살표
+    swap: {
+      hue: 'violet',
+      paths: '<path d="M2.6 5.8h12.6V2.6l6.2 4.6-6.2 4.6V8.6H2.6z"/>' +
+        '<path d="M21.4 18.2H8.8v3.2l-6.2-4.6 6.2-4.6v3.2h12.6z"/>',
+      highlight: gloss('M3.4 6.6h10.4', 1.1),
+    },
+    // 행사담당자 탭바 — 홈
+    home: {
+      hue: 'blue',
+      paths: '<path d="M12 1.8 22.6 10.6l-1.7 2-1.1-.9v9.1a1.5 1.5 0 0 1-1.5 1.5H5.7a1.5 1.5 0 0 1-1.5-1.5v-9.1l-1.1.9-1.7-2z"/>',
+      details: '<rect x="9.6" y="14" width="4.8" height="8.3" rx="1.2" fill="rgba(30,29,43,0.22)"/>',
+      highlight: gloss('M4.4 10.2 11 4.8', 1.3),
+    },
+    // 행사담당자 탭바 — 매출현황(막대 그래프)
+    chart: {
+      hue: 'teal',
+      paths: '<rect x="3" y="12.4" width="4.6" height="8.8" rx="1.5"/>' +
+        '<rect x="9.7" y="7" width="4.6" height="14.2" rx="1.5"/>' +
+        '<rect x="16.4" y="2.8" width="4.6" height="18.4" rx="1.5"/>',
+      highlight: gloss('M4 13.4v6.6', 1.1),
+    },
+    // 예약 주문 / 담당 행사 — 달력
+    calendar: {
+      hue: 'rose',
+      paths: '<rect x="2.6" y="4.8" width="18.8" height="16.8" rx="2.6"/>' +
+        '<rect x="6.4" y="1.6" width="2.6" height="5.4" rx="1.3"/>' +
+        '<rect x="15" y="1.6" width="2.6" height="5.4" rx="1.3"/>',
+      details: '<rect x="2.6" y="9.2" width="18.8" height="1.6" fill="rgba(30,29,43,0.2)"/>' +
+        '<g fill="rgba(255,255,255,0.8)">' +
+        '<rect x="6" y="13" width="3.2" height="3.2" rx="1"/>' +
+        '<rect x="10.4" y="13" width="3.2" height="3.2" rx="1"/>' +
+        '<rect x="14.8" y="13" width="3.2" height="3.2" rx="1"/></g>',
+      highlight: gloss('M4 7.6A2.6 2.6 0 0 1 6 6', 1.2),
+    },
+    // 메뉴 옵션 — 퍼즐 조각
+    puzzle: {
+      hue: 'amber',
+      paths: '<path d="M3.2 3.2h6.6v1.7a2.3 2.3 0 1 0 4.6 0V3.2h6.4v6.6h-1.7a2.3 2.3 0 1 0 0 4.6h1.7v6.4h-6.4v-1.7a2.3 2.3 0 1 0-4.6 0v1.7H3.2z"/>',
+      highlight: gloss('M4.4 4.4h4.2', 1.1),
+    },
+    // 메뉴 기본 정보 — 연필
+    pencil: {
+      hue: 'amber',
+      paths: '<path d="M16.9 1.7 22.3 7.1l-2.5 2.5-5.4-5.4z"/>' +
+        '<path d="M13.1 5.5l5.4 5.4L7.6 21.8 1.4 23.2l1.4-6.2z"/>',
+      details: '<path d="M1.4 23.2l1.4-6.2 2.4 2.4z" fill="rgba(30,29,43,0.3)"/>',
+      highlight: gloss('M4.6 17.4 13 9', 1.2),
+    },
+    // 메뉴 이미지 자리 — 카메라
+    camera: {
+      hue: 'slate',
+      paths: '<path d="M8.6 3.2h6.8l1.7 2.8h3.5A2.4 2.4 0 0 1 23 8.4v10.4a2.4 2.4 0 0 1-2.4 2.4H3.4A2.4 2.4 0 0 1 1 18.8V8.4A2.4 2.4 0 0 1 3.4 6h3.5z"/>',
+      details: '<circle cx="12" cy="13.4" r="4.6" fill="rgba(30,29,43,0.26)"/>' +
+        '<circle cx="12" cy="13.4" r="2.4" fill="rgba(255,255,255,0.5)"/>',
+      highlight: gloss('M2.6 9.6A2.2 2.2 0 0 1 4.4 7.8', 1.2),
+    },
+    // 주문/매출 없음 — 빈 수납함
+    inbox: {
+      hue: 'slate',
+      paths: '<path d="M2.2 12.8 5.6 3.6h12.8l3.4 9.2v6.4a1.8 1.8 0 0 1-1.8 1.8H4a1.8 1.8 0 0 1-1.8-1.8z"/>',
+      details: '<path d="M2.2 12.8h5.6l1.3 2.8h5.8l1.3-2.8h5.6" fill="none"' +
+        ' stroke="rgba(255,255,255,0.72)" stroke-width="1.5" stroke-linejoin="round"/>',
+      highlight: gloss('M6.4 4.6 3.8 11.4', 1.2),
+    },
+    // QR 불러오기 실패 — QR + 사선
+    qrOff: {
+      hue: 'rose',
+      paths: '<rect x="2.4" y="2.4" width="19.2" height="19.2" rx="3.4"/>',
+      details: '<g fill="rgba(255,255,255,0.88)">' +
+        '<rect x="5.6" y="5.6" width="4.4" height="4.4" rx="1.2"/>' +
+        '<rect x="14" y="5.6" width="4.4" height="4.4" rx="1.2"/>' +
+        '<rect x="5.6" y="14" width="4.4" height="4.4" rx="1.2"/>' +
+        '<rect x="14" y="14" width="2" height="2" rx="0.6"/>' +
+        '<rect x="16.4" y="16.4" width="2" height="2" rx="0.6"/></g>' +
+        '<path d="M4.4 19.6 19.6 4.4" stroke="rgba(30,29,43,0.55)" stroke-width="2.6" stroke-linecap="round"/>',
+      highlight: gloss('M4 6.2A2.6 2.6 0 0 1 6 4.2', 1.2),
+    },
+    // 검색 결과 없음 — 돋보기
+    magnifier: {
+      hue: 'blue',
+      paths: '<circle cx="10.2" cy="10.2" r="7.8"/>' +
+        '<rect x="14.6" y="16.2" width="7.2" height="3.6" rx="1.8" transform="rotate(45 14.6 16.2)"/>',
+      details: '<circle cx="10.2" cy="10.2" r="4.6" fill="rgba(255,255,255,0.45)"/>',
+      highlight: gloss('M4.6 8A7.8 7.8 0 0 1 11 2.6'),
+    },
+    // 배달 주문 — 스쿠터
+    scooter: {
+      hue: 'teal',
+      paths: '<circle cx="5.6" cy="17.4" r="4.2"/>' +
+        '<circle cx="18.4" cy="17.4" r="4.2"/>' +
+        '<path d="M2.6 6.6h5.2a1.4 1.4 0 0 1 1.2.7l4.6 7.8h4.8v3.4h-6.2a1.4 1.4 0 0 1-1.2-.7L6.4 10H2.6z"/>' +
+        '<rect x="15.4" y="4.2" width="4.6" height="2.8" rx="1.4"/>',
+      details: '<circle cx="5.6" cy="17.4" r="1.7" fill="rgba(30,29,43,0.34)"/>' +
+        '<circle cx="18.4" cy="17.4" r="1.7" fill="rgba(30,29,43,0.34)"/>',
+      highlight: gloss('M3.4 7.6h3.6', 1.1),
+    },
   };
+
+  // ---------------- 인라인 선 아이콘 ----------------
+  // 문구 앞에 붙는 작은 기호(💡 안내, ⚠️ 경고 등)는 3D로 그리면 글자보다 무거워 문장이 안 읽힌다.
+  // currentColor를 쓰는 선 아이콘으로 두면 옆 글자와 같은 색·같은 무게로 흐른다.
+  var LINE = {
+    lightbulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1.2.9 1.9V16h5.2v-.2c0-.7.3-1.4.9-1.9A6 6 0 0 0 12 3z"/>',
+    warning: '<path d="M12 3.2 22.2 20H1.8z"/><path d="M12 9.4v4.8M12 17.2h.01"/>',
+    flame: '<path d="M12 2.4c3.4 3.2 6.2 6 6.2 10.2A6.2 6.2 0 0 1 5.8 12.6c0-1.8.7-3.2 1.8-4.6.4 1.2 1.2 2 2.2 2.2-.6-3 .8-6 2.2-7.8z"/>',
+    recycle: '<path d="M7.2 8.4 4.4 13.2h5.6z"/><path d="M12 3.6l2.8 4.8h-5.6z"/><path d="M16.8 8.4l2.8 4.8H14z"/><path d="M4.4 13.2 7 17.8h10l2.6-4.6"/>',
+    mail: '<rect x="2.4" y="5" width="19.2" height="14" rx="2.4"/><path d="M3.4 6.6 12 13l8.6-6.4"/>',
+    phoneCall: '<path d="M6.2 3.4h3.2l1.6 4-2 1.4a10.4 10.4 0 0 0 6.2 6.2l1.4-2 4 1.6v3.2a1.6 1.6 0 0 1-1.8 1.6C11.6 18.6 5.4 12.4 4.6 5.2A1.6 1.6 0 0 1 6.2 3.4z"/>',
+    qr: '<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/>',
+    monitor: '<rect x="2.4" y="3.6" width="19.2" height="13.2" rx="2.2"/><path d="M8.6 20.4h6.8M12 16.8v3.6"/>',
+    // 아래 6종은 위 3D 아이콘과 같은 대상을 가리키는 선 버전이다. 문장·배지·세그먼트탭처럼
+    // 글자와 나란히 놓이는 자리에서는 3D가 글자를 눌러버려서, 같은 형태를 선으로 다시 그렸다.
+    calendarLine: '<rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+    lockLine: '<rect x="4.6" y="10.4" width="14.8" height="10.8" rx="2.4"/><path d="M8 10.4V7.8a4 4 0 0 1 8 0v2.6"/>',
+    gearLine: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/>',
+    pencilLine: '<path d="M16.8 3.2 20.8 7.2 8 20H4v-4z"/><path d="M14.6 5.4 18.6 9.4"/>',
+    puzzleLine: '<path d="M4 4h5v1.4a2 2 0 1 0 4 0V4h6v6h-1.4a2 2 0 1 0 0 4H19v6h-6v-1.4a2 2 0 1 0-4 0V20H4z"/>',
+    scooterLine: '<circle cx="6" cy="17.4" r="3.4"/><circle cx="18" cy="17.4" r="3.4"/><path d="M3.4 7h4l4 8.4h4M16 5h3.4v3"/>',
+    listCheck: '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6l1.6 1.6L7 5M3 12l1.6 1.6L7 11M3 18l1.6 1.6L7 17"/>',
+    camera: '<path d="M3.4 7h3.4l1.6-2.6h7.2L17.2 7h3.4a2 2 0 0 1 2 2v9.4a2 2 0 0 1-2 2H3.4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13.6" r="3.8"/>',
+    // 주문 메모 앞 말풍선. 3D notice와 같은 형태지만 문장 안에 흐르므로 선으로 둔다.
+    notice2: '<path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>',
+    // 3D receipt와 같은 실루엣(아래 톱니)이라 두 크기에서 같은 것으로 읽힌다.
+    receipt: '<path d="M5 2.6h14v18.8l-2.6-1.6-2.4 1.6-2-1.6-2 1.6-2.4-1.6L5 21.4z"/><path d="M8.4 7h7.2M8.4 11h7.2M8.4 15h4.4"/>',
+    speaker: '<path d="M4 9.2h3.4L12 5v14l-4.6-4.2H4z"/><path d="M16 9a4.4 4.4 0 0 1 0 6M18.8 6.4a8 8 0 0 1 0 11.2"/>',
+  };
+
+  // 선 아이콘은 크기와 굵기만 조절한다. fill 없이 stroke만 쓰므로 어느 배경에도 얹힌다.
+  function iconLine(name, size, strokeWidth) {
+    var d = LINE[name];
+    if (!d) return '';
+    var w = size || 16;
+    return '<svg class="icon-line" width="' + w + '" height="' + w + '" viewBox="0 0 24 24"' +
+      ' fill="none" stroke="currentColor" stroke-width="' + (strokeWidth || 1.9) + '"' +
+      ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+      d + '</svg>';
+  }
 
   function icon3d(name, size) {
     var def = ICONS[name];
@@ -213,5 +370,14 @@
       '</svg>';
   }
 
-  window.Icons3D = { icon3d: icon3d, starToggle: starToggle, names: Object.keys(ICONS) };
+  // 영업 상태 점(🟢🟠🔴)은 아이콘이 아니라 색 하나로 끝나는 표시라 SVG가 과하다.
+  // CSS로 그린 원 하나로 대체하고, 색은 상태별 클래스가 정한다.
+  function statusDot(cls) {
+    return '<span class="status-dot ' + cls + '" aria-hidden="true"></span>';
+  }
+
+  window.Icons3D = {
+    icon3d: icon3d, iconLine: iconLine, starToggle: starToggle, statusDot: statusDot,
+    names: Object.keys(ICONS), lineNames: Object.keys(LINE),
+  };
 })();

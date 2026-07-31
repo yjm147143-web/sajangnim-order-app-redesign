@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 행사 담당자 — 홈 화면
  * 구성: 행사 정보 / 매출 요약 / 매장 운영 현황(체크박스로 매장을 골라 개별 통제 가능) / 매장 통제
  */
@@ -37,7 +37,7 @@
   // 영업상태 배지(🟢영업중)와 겹쳐 보여 헷갈리던 '🟢 온라인' 배지를 없앤 것.
   function networkWarningHtml(store) {
     if (store.networkStatus !== 'OFFLINE') return '';
-    return '<span class="store-network-warning">⚠️ 네트워크 끊김</span>';
+    return '<span class="store-network-warning">' + window.Icons3D.iconLine('warning', 14) + ' 네트워크 끊김</span>';
   }
 
 
@@ -54,7 +54,7 @@
           '</div>' +
         '</div>' +
         window.UI.statusPillHtml(s.operatingStatus) +
-        '<button type="button" class="store-settings-btn" data-action="open-store-settings" data-store-id="' + s.id + '" aria-label="' + esc(s.name) + ' 설정">⚙️</button>' +
+        '<button type="button" class="store-settings-btn" data-action="open-store-settings" data-store-id="' + s.id + '" aria-label="' + esc(s.name) + ' 설정">' + window.Icons3D.icon3d('gear', 20) + '</button>' +
       '</div>'
     );
   }
@@ -87,7 +87,7 @@
 
     const storeRowsHtml = stores.length
       ? stores.map(storeRowHtml).join('')
-      : '<div class="empty-state"><div class="empty-state-emoji">🏪</div><div>등록된 매장이 없어요</div></div>';
+      : '' + window.UI.emptyStateHtml('store', '등록된 매장이 없어요') + '';
 
     return (
       '<style>' +

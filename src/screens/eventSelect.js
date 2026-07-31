@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 행사 선택 화면 (행사 담당자 로그인 직후 진입점 · 설정의 '행사 전환'에서도 진입)
  * '행사 전환'으로 들어온 경우 이전 화면과 이어지는 느낌을 주도록 하단 탭바를 그대로 유지한다.
  */
@@ -33,7 +33,7 @@
             '</div>'
           );
         }).join('')
-      : '<div class="empty-state"><div class="empty-state-emoji">🗓️</div><div>담당 중인 행사가 없어요</div></div>';
+      : '' + window.UI.emptyStateHtml('calendar', '담당 중인 행사가 없어요') + '';
 
     return (
       '<div class="topbar"><div class="topbar-side"></div><div class="topbar-title">행사 선택</div><div class="topbar-side"></div></div>' +

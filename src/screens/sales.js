@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 매출 조회 화면 — 실시간 매출현황 / 과거 매출현황 2탭 구조.
  * 두 탭 모두 날짜(또는 오늘)를 탭하면 그 날짜 하나만의 주문방식별/메뉴별/시간대별/결제수단별
  * 매출을 4개 탭으로 볼 수 있는 '날짜별 매출 상세' 화면으로 들어간다.
@@ -186,7 +186,7 @@
           else if (showHighlight && d === minItem) { cls = 'sales-amount-min'; badge = ' <span class="badge badge-danger-soft">최저</span>'; }
           return listRowHtml(d.name, d.amount, d.count, d.date, cls, badge);
         }).join('')
-      : '<div class="empty-state"><div class="empty-state-emoji">📭</div><div>해당 기간의 매출이 없어요</div></div>';
+      : '' + window.UI.emptyStateHtml('inbox', '해당 기간의 매출이 없어요') + '';
     return (
       rangeFilterHtml(range) +
       metricGridHtml(summary) +

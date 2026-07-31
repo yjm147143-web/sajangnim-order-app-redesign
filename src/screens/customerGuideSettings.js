@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 고객 대기 관리 화면 (구 '손님 안내 설정', 그 이전엔 '예상 대기시간 관리')
  * - 기능 전체 사용 여부 토글 (OFF면 손님 화면에 대기 안내를 보여주지 않음)
  * - 표시 모드 선택: 예상 시간 / 대기 주문 수
@@ -134,7 +134,7 @@
             '<span class="cg-field-desc">처음 한 개를 만들 때 걸리는 시간이에요.</span>' +
             stepperRowHtml('base', 0, '분', 0) +
           '</div>' +
-          '<div class="info-memo">💡 이 시간은 <b>지금 조리 중인 주문이 없을 때</b> 손님에게 보이는 기준이에요. 영업 중에도 앞선 주문이 없으면 이 시간으로 안내돼요.</div>' +
+          '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 이 시간은 <b>지금 조리 중인 주문이 없을 때</b> 손님에게 보이는 기준이에요. 영업 중에도 앞선 주문이 없으면 이 시간으로 안내돼요.</div>' +
           '<div class="cg-field">' +
             '<span class="cg-field-title">1개 더 늘어날 때</span>' +
             '<span class="cg-field-desc">주문이 하나 더 늘어날 때 더 걸리는 시간이에요.</span>' +

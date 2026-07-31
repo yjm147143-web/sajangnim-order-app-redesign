@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 최소 주문 금액 설정 화면 (설정 > 주문 관리 > 최소 주문 금액 설정)
  * - 매장 전체 공통 1개 값. OFF면 금액 제한 없이 주문 가능.
  * - 손님 화면 미리보기/개발자 도구 연동 없이 설정 저장까지만 다룬다.
@@ -11,7 +11,7 @@
     var amount = state.amount;
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">💵</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('bill', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">최소 주문 금액 사용</div>' +
           '<div class="label-sub">' + (enabled ? '설정한 금액 미만은 주문할 수 없어요' : '금액 제한 없이 주문할 수 있어요') + '</div>' +
@@ -36,7 +36,7 @@
         : ''
       ) +
 
-      '<div class="info-memo">💡 매장 전체 주문에 공통으로 적용돼요.</div>'
+      '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 매장 전체 주문에 공통으로 적용돼요.</div>'
     );
   }
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 권한 잠금 설정 화면 (설정 > 권한 잠금 설정)
  * - 사장님 계정 하나를 여러 사람이 함께 쓸 때, 매출 조회/영업상태 변경/결제 취소 중
  *   원하는 기능만 골라 비밀번호로 보호한다 (역할 구분 없이, 이 계정을 쓰는 누구에게나 적용).
@@ -47,7 +47,7 @@
   function statusCardHtml(status) {
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">🔐</div>' +
+        '<div class="icon">' + window.Icons3D.icon3d('lock', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">권한 잠금</div>' +
           '<div class="label-sub">' + (status.isSet
@@ -76,7 +76,7 @@
     return (
       statusCardHtml(status) +
       '<div class="divider-line"></div>' +
-      '<div class="info-memo">💡 비밀번호를 설정하고 항목을 선택하면, 이 계정을 쓰는 누구든 선택한 기능을 사용할 때마다 비밀번호를 입력해야 해요.</div>' +
+      '<div class="info-memo">' + window.Icons3D.iconLine('lightbulb', 15) + ' 비밀번호를 설정하고 항목을 선택하면, 이 계정을 쓰는 누구든 선택한 기능을 사용할 때마다 비밀번호를 입력해야 해요.</div>' +
       actionsHtml(status)
     );
   }
@@ -100,7 +100,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="pl-setup-modal">' +
         '<div class="modal-card">' +
-          '<div style="font-size:28px;text-align:center;margin-bottom:6px;">🔐</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
           '<div class="modal-title">' + (isChange ? '비밀번호 변경' : '비밀번호 설정') + '</div>' +
           '<input type="password" class="input-field" id="pl-setup-input" maxlength="12" placeholder="새 비밀번호" style="text-align:center;letter-spacing:4px;margin-bottom:6px;" />' +
           '<div class="input-error" id="pl-setup-error" style="min-height:16px;"></div>' +
@@ -153,7 +153,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="pl-scopes-modal">' +
         '<div class="modal-card">' +
-          '<div style="font-size:28px;text-align:center;margin-bottom:6px;">🔐</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
           '<div class="modal-title">보호 항목 변경</div>' +
           '<div class="pl-scope-title">비밀번호로 보호할 기능을 선택해주세요</div>' +
           '<div id="pl-scope-list">' + scopeChecklistHtml(scopes) + '</div>' +
