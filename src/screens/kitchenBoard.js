@@ -134,7 +134,11 @@
   function render() {
     return (
       '<style>' +
-        '.kb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 var(--space-5) var(--space-4);}' +
+        // 1fr의 최소 크기는 auto여서, 줄바꿈 없는 긴 메뉴명이 자기 컬럼을 max-content까지
+        // 밀어내 좌우 폭이 갈라진다(예: 144px / 427px). minmax(0,1fr)로 최소를 0으로 낮춰
+        // 항상 5:5를 유지하고, 넘치는 메뉴명은 말줄임으로 처리되게 한다.
+        '.kb-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;' +
+          'padding:0 var(--space-5) var(--space-4);}' +
         '.kb-card{position:relative;background:var(--color-white);border:1px solid var(--color-divider);border-radius:16px;padding:13px 14px;' +
           'display:flex;flex-direction:column;gap:9px;' +
           'opacity:0;transform:translateY(8px);animation:kbFadeUp .4s ease forwards;animation-delay:calc(.05s + var(--i,0)*35ms);}' +
@@ -154,7 +158,14 @@
         '.kb-pin-btn:active{transform:scale(.92);}' +
         '@media (prefers-reduced-motion: reduce){.kb-pin-btn{transition:none;}.kb-pin-btn:active{transform:none;}}' +
         // 핀 버튼이 메뉴명 위로 겹치지 않게 이름 쪽에 오른쪽 여백을 준다.
-        '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px;}' +
+        // 줄 높이를 20px로 고정한다 — 품절 배지가 붙은 카드만 줄이 커지면 같은 행의
+        // 다른 카드보다 아래 내용(남은 주문 숫자·합계·버튼)이 그만큼 밀려 정렬이 깨진다.
+        '.kb-card-name{font-size:12.5px;font-weight:700;color:var(--color-text-secondary);white-space:nowrap;' +
+          'overflow:hidden;text-overflow:ellipsis;padding-right:24px;height:20px;line-height:20px;}' +
+        // 공용 .badge(13px·상하 4px)는 이 줄에서 25px까지 커진다. KDS 카드 안에서만 줄여
+        // 고정한 20px 줄 안에 들어오게 하고, 중앙 정렬로 메뉴명과 눈높이를 맞춘다.
+        '.kb-card-name .badge{font-size:10px;font-weight:800;padding:1px 6px;line-height:1.4;' +
+          'vertical-align:middle;margin-left:2px;}' +
         '.kb-card-total{font-size:23px;font-weight:800;letter-spacing:-0.3px;font-variant-numeric:tabular-nums;}' +
         '.kb-card-total .unit{font-size:11px;font-weight:600;color:var(--color-text-secondary);margin-left:2px;}' +
         '.kb-card-total-label{font-size:10px;font-weight:700;color:var(--color-text-secondary);margin-top:-7px;}' +
