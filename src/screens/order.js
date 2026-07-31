@@ -573,7 +573,8 @@
       html += '<div class="order-card-meta">' +
         cancelActionRowHtml(order, tabStatus, disabled) +
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
-        '<div class="meta-row"><span class="meta-label">주문 유형</span><span class="meta-value">' + esc(window.UI.channelTypeLabel(order.channel)) + '</span></div>' +
+        // channelTypeLabel은 아이콘이 포함된 HTML을 돌려주므로 esc()로 감싸면 태그가 글자로 출력된다.
+        '<div class="meta-row"><span class="meta-label">주문 유형</span><span class="meta-value">' + window.UI.channelTypeLabel(order.channel) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">결제정보</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>' +
         '</div>';
