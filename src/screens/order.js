@@ -415,18 +415,29 @@
     }).join('');
   }
 
-  // 해피아워 시작도 자동 품절과 동일한 방식(팝업이 아니라 화면 상단 배너)으로 알린다 — 여러 메뉴가
-  // 동시에 시작해도 메뉴마다 각각 별도의 배너로 띄운다.
+  // 해피아워 시작도 자동 품절과 동일한 방식(팝업이 아니라 화면 상단 배너)으로 알린다.
+  // 여러 메뉴가 동시에 시작하면 '외 n개'로 묶어 배너 하나로 띄운다 — 메뉴마다 배너를 쌓으면
+  // 주문 목록이 그만큼 아래로 밀려 접수 화면을 가린다.
   function happyHourBannerHtml() {
-    return happyHourPromos.map(function (p) {
-      const timeRange = (p.start && p.end) ? (p.start + '~' + p.end) : '';
-      const priceText = (p.price != null) ? window.UI.formatMoney(p.price) : '';
+    if (!happyHourPromos.length) return '';
+    const first = happyHourPromos[0];
+    const rest = happyHourPromos.length - 1;
+    let label;
+    const timeRange = (first.start && first.end) ? (first.start + '~' + first.end) : '';
+    if (rest > 0) {
+      // 묶은 상태에서는 메뉴마다 할인가가 달라 하나로 적을 수 없으므로 할인가는 빼고 시간만 남긴다.
+      // 동시에 시작한 메뉴들이라 시작 시각은 같다.
+      label = esc(first.name) + ' 외 ' + rest + '개 메뉴가 해피아워 할인가로 판매를 시작해요' +
+        (timeRange ? ' (' + timeRange + ')' : '');
+    } else {
+      const priceText = (first.price != null) ? window.UI.formatMoney(first.price) : '';
       const detail = priceText ? (priceText + (timeRange ? ' · ' + timeRange : '')) : timeRange;
-      return '<div class="happy-hour-banner">' +
-        '<span>' + window.Icons3D.iconLine('flame', 14) + ' ' + esc(p.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '') + '</span>' +
-        '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour" data-name="' + esc(p.name) + '" aria-label="닫기">✕</button>' +
-        '</div>';
-    }).join('');
+      label = esc(first.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '');
+    }
+    return '<div class="happy-hour-banner">' +
+      '<span>' + window.Icons3D.iconLine('flame', 14) + ' ' + label + '</span>' +
+      '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour" aria-label="닫기">✕</button>' +
+      '</div>';
   }
 
   // 호출/완료 횟수는 0회일 때는 굳이 보여줄 필요가 없어 숨기고, 1회부터는 버튼 옆 작은 뱃지로 노출한다
@@ -1333,8 +1344,8 @@
       refreshAutoSoldoutBanner();
     }
     else if (action === 'dismiss-happy-hour') {
-      const dismissName = target.getAttribute('data-name');
-      happyHourPromos = happyHourPromos.filter(function (p) { return p.name !== dismissName; });
+      // 배너가 메뉴별로 나뉘지 않고 하나로 묶여 있으므로, 닫으면 묶인 메뉴 전체를 함께 비운다.
+      happyHourPromos = [];
       refreshHappyHourBanner();
     }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
