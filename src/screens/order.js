@@ -363,14 +363,14 @@
     return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
-  // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버/대기)으로 보여줘
-  // 한눈에 상태를 구분하기 쉽게 한다. 0건인 쪽은 톤을 낮춰(zero) 시선이 안 가게 한다.
-  // labelOverride가 있으면 kind 기본 라벨(신규/완료) 대신 그 문구를 쓴다.
-  function csPillHtml(kind, count, unit, labelOverride) {
+  // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버)으로 보여줘
+  // 한눈에 상태를 구분하기 쉽게 한다. 0개인 쪽은 톤을 낮춰(zero) 시선이 안 가게 한다.
+  // 아이콘은 두지 않는다 — 색과 라벨로 이미 구분되고, 알약이 작아 글리프가 들어갈 자리가 없다.
+  // 참고: '완료' 수는 처리중(미호출 포함)+완료를 합친 오늘 총 수량이다(callStatusCounts).
+  function csPillHtml(kind, count, unit) {
     const cls = count === 0 ? 'cs-pill zero' : 'cs-pill ' + kind;
-    const icon = kind === 'total' ? '' : '⏳';
-    const label = labelOverride || (kind === 'total' ? '완료' : '신규');
-    return '<span class="' + cls + '">' + (icon ? icon + ' ' : '') + label + ' <b>' + count + '</b>' + unit + '</span>';
+    const label = kind === 'total' ? '완료' : '신규';
+    return '<span class="' + cls + '">' + label + ' <b>' + count + '</b>' + unit + '</span>';
   }
 
   function renderCallStatusPanelHtml() {
