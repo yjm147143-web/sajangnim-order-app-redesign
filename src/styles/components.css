@@ -533,7 +533,13 @@ select.input-field { appearance: none; background-image: url("data:image/svg+xml
   box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
   z-index: 40;
 }
-.bulk-action-bar .btn { flex: 1; width: auto; height: 48px; min-height: 44px; }
+/* 라벨에 건수가 들어가 길이가 변한다("선택 10건 손님 호출"). 기본 17px·좌우 20px로는
+   가용 136px에 10건이 134px로 들어가 여유가 2px뿐이고, 100건은 136px로 넘겨 두 줄이 된다.
+   15px로 줄이고 좌우 여백을 12px로 좁혀 세 자릿수까지 한 줄을 유지한다(100건 128px / 가용 144px). */
+.bulk-action-bar .btn {
+  flex: 1; width: auto; height: 48px; min-height: 44px;
+  font-size: var(--font-size-body); padding: 0 var(--space-3);
+}
 
 /* ---------- Search / Filter Toolbar ---------- */
 .toolbar { padding: 0 var(--space-5) var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); flex-shrink: 0; }
