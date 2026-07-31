@@ -276,14 +276,15 @@
   }
 
   // 메뉴 수량·이름·옵션 전체 목록 — '간단히 보기' 상태에서도 항상 노출된다 (수량이 먼저, 메뉴명이 뒤에)
-  // 다회용기 주문은 별도 뱃지 대신, 각 메뉴명 뒤에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다.
+  // 다회용기 메뉴는 별도 뱃지 대신, 그 메뉴명 뒤에 ♻️를 붙이고 메뉴명 글자를 초록색으로 강조한다.
   // 여기만 OS 기본 이모지를 그대로 쓴다 — 사장님이 iOS 재활용 표시 그대로 가져가기로 결정했다.
   // 선착순 배지는 주문 라인에 기록된 값(it.promoType)으로만 판단한다 — 메뉴 카탈로그를 다시
   // 조회하면 선착순으로 주문하지 않은 건에도 배지가 붙는다(그 메뉴에 설정만 켜져 있으면).
   // 주문 카드 단위가 아니라 메뉴 줄 단위로 노출한다.
   function itemListHtml(order) {
-    const isReusable = !!order.isReusableContainer;
     return (order.items || []).map(function (it) {
+      // 다회용기는 메뉴 단위 값이라 줄마다 따로 판단한다 — 한 주문에 다회용기와 일회용이 섞일 수 있다.
+      const isReusable = !!it.isReusableContainer;
       const optHtml = (it.optionNames && it.optionNames.length)
         ? '<span class="line-option">' + it.optionNames.map(function (o) { return esc(o); }).join(', ') + '</span>'
         : '';

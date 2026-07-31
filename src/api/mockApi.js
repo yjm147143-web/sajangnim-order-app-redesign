@@ -478,6 +478,7 @@
   // ---------------- 개발자 도구: 선택한 조건에 맞는 신규 주문 1건 생성 (실시간 주문 유입 시뮬레이션) ----------------
   // opts: { hasNote, isReservation, channel: 'QR'|'TABLET', identifierType: 'PICKUP'|'SEAT', multiMenu, hasOption,
   //         isReusableContainer, promoType: null|'GROUP_COUPON'|'STORE_COUPON'|'HAPPY_HOUR'|'FIRST_COME' }
+  // isReusableContainer는 주문이 아니라 items[] 각 줄에 저장된다(메뉴 단위).
   function createCustomOrder(storeId, opts) {
     opts = opts || {};
     const menuItems = DB.menuItems.filter(function (m) { return m.storeId === storeId && !m.soldOut; });
@@ -527,6 +528,9 @@
       lines.push({
         menuName: line.menuName, optionNames: line.optionNames, quantity: line.quantity,
         promoType: lineIsFirstCome ? 'FIRST_COME' : null,
+        // 다회용기는 메뉴 단위로 저장한다 — 손님이 음료만 다회용기에 담아가는 식으로 섞일 수 있다.
+        // 시뮬레이션에서는 첫 줄에만 붙여, 한 주문 안에 다회용기/일회용이 섞인 상태를 재현한다.
+        isReusableContainer: !!opts.isReusableContainer && i === 0,
       });
       amount += line.price * line.quantity;
     }
@@ -536,7 +540,11 @@
       const oldLine = lines[0];
       const oldMenu = menuItems.find(function (m) { return m.name === oldLine.menuName; });
       const menu = itemsWithFirstCome[Math.floor(Math.random() * itemsWithFirstCome.length)];
-      lines[0] = { menuName: menu.name, optionNames: [], quantity: oldLine.quantity, promoType: 'FIRST_COME' };
+      // 줄을 통째로 바꾸므로 다회용기 여부는 원래 줄의 값을 그대로 물려준다.
+      lines[0] = {
+        menuName: menu.name, optionNames: [], quantity: oldLine.quantity, promoType: 'FIRST_COME',
+        isReusableContainer: !!oldLine.isReusableContainer,
+      };
       amount += (menu.price - (oldMenu ? oldMenu.price : 0)) * oldLine.quantity;
     }
 
@@ -572,7 +580,7 @@
       isReservation: isReservation,
       reservationTime: isReservation ? new Date(Date.now() + (20 + Math.floor(Math.random() * 100)) * 60000).toISOString() : null,
       customerNote: null,
-      isReusableContainer: !!opts.isReusableContainer,
+      // 다회용기는 주문이 아니라 각 items[] 줄에 저장한다(메뉴 단위).
       promoType: promoType,
     };
     DB.orders.unshift(order);
@@ -638,7 +646,6 @@
       canceled: false, cancelReason: null, cancelType: null,
       isReservation: false, reservationTime: null,
       customerNote: null,
-      isReusableContainer: false,
       promoType: null,
       cashReceived: cashReceived,
       cashChange: cashReceived - amount,
