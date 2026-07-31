@@ -415,29 +415,45 @@
     }).join('');
   }
 
+  // 배너를 묶는 단위 키 — 해피아워 시간(시작~종료)이 완전히 같아야 같은 배너다.
+  function happyHourRangeKey(p) { return (p.start || '') + '~' + (p.end || ''); }
+
   // 해피아워 시작도 자동 품절과 동일한 방식(팝업이 아니라 화면 상단 배너)으로 알린다.
-  // 여러 메뉴가 동시에 시작하면 '외 n개'로 묶어 배너 하나로 띄운다 — 메뉴마다 배너를 쌓으면
+  // 해피아워 시간이 같은 메뉴는 '외 n개'로 묶어 배너 하나로 띄운다 — 메뉴마다 배너를 쌓으면
   // 주문 목록이 그만큼 아래로 밀려 접수 화면을 가린다.
+  // 반대로 시간이 다르면(15:00~16:00 / 15:00~17:00) 언제까지 할인인지가 달라 따로 띄운다.
   function happyHourBannerHtml() {
     if (!happyHourPromos.length) return '';
-    const first = happyHourPromos[0];
-    const rest = happyHourPromos.length - 1;
-    let label;
-    const timeRange = (first.start && first.end) ? (first.start + '~' + first.end) : '';
-    if (rest > 0) {
-      // 묶은 상태에서는 메뉴마다 할인가가 달라 하나로 적을 수 없으므로 할인가는 빼고 시간만 남긴다.
-      // 동시에 시작한 메뉴들이라 시작 시각은 같다.
-      label = esc(first.name) + ' 외 ' + rest + '개 메뉴가 해피아워 할인가로 판매를 시작해요' +
-        (timeRange ? ' (' + timeRange + ')' : '');
-    } else {
-      const priceText = (first.price != null) ? window.UI.formatMoney(first.price) : '';
-      const detail = priceText ? (priceText + (timeRange ? ' · ' + timeRange : '')) : timeRange;
-      label = esc(first.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '');
-    }
-    return '<div class="happy-hour-banner">' +
-      '<span>' + window.Icons3D.iconLine('flame', 14) + ' ' + label + '</span>' +
-      '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour" aria-label="닫기">✕</button>' +
-      '</div>';
+    const groups = [];
+    const byKey = {};
+    happyHourPromos.forEach(function (p) {
+      const key = happyHourRangeKey(p);
+      if (!byKey[key]) {
+        byKey[key] = { key: key, start: p.start, end: p.end, items: [] };
+        groups.push(byKey[key]);
+      }
+      byKey[key].items.push(p);
+    });
+    return groups.map(function (g) {
+      const first = g.items[0];
+      const rest = g.items.length - 1;
+      const timeRange = (g.start && g.end) ? (g.start + '~' + g.end) : '';
+      let label;
+      if (rest > 0) {
+        // 묶인 메뉴는 할인가가 서로 달라 하나로 적을 수 없으므로 할인가는 빼고 시간만 남긴다.
+        label = esc(first.name) + ' 외 ' + rest + '개 메뉴가 해피아워 할인가로 판매를 시작해요' +
+          (timeRange ? ' (' + timeRange + ')' : '');
+      } else {
+        const priceText = (first.price != null) ? window.UI.formatMoney(first.price) : '';
+        const detail = priceText ? (priceText + (timeRange ? ' · ' + timeRange : '')) : timeRange;
+        label = esc(first.name) + ' 메뉴가 해피아워 할인가로 판매를 시작해요' + (detail ? ' (' + detail + ')' : '');
+      }
+      return '<div class="happy-hour-banner">' +
+        '<span>' + window.Icons3D.iconLine('flame', 14) + ' ' + label + '</span>' +
+        '<button type="button" class="happy-hour-banner-close" data-action="dismiss-happy-hour"' +
+        ' data-range="' + esc(g.key) + '" aria-label="닫기">✕</button>' +
+        '</div>';
+    }).join('');
   }
 
   // 호출/완료 횟수는 0회일 때는 굳이 보여줄 필요가 없어 숨기고, 1회부터는 버튼 옆 작은 뱃지로 노출한다
@@ -1344,8 +1360,10 @@
       refreshAutoSoldoutBanner();
     }
     else if (action === 'dismiss-happy-hour') {
-      // 배너가 메뉴별로 나뉘지 않고 하나로 묶여 있으므로, 닫으면 묶인 메뉴 전체를 함께 비운다.
-      happyHourPromos = [];
+      // 배너 하나는 '해피아워 시간이 같은 메뉴들'의 묶음이라, 닫으면 그 시간대 묶음만 비운다.
+      // 시간이 다른 다른 배너는 그대로 남는다.
+      const dismissRange = target.getAttribute('data-range');
+      happyHourPromos = happyHourPromos.filter(function (p) { return happyHourRangeKey(p) !== dismissRange; });
       refreshHappyHourBanner();
     }
     else if (action === 'open-contact') handleOpenContact(target.getAttribute('data-contact'), target.getAttribute('data-is-email') === '1');
