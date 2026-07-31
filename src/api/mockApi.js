@@ -797,15 +797,15 @@
     return { order: o, notification: '결제 취소' };
   }
 
+  // 취소된 주문은 복구할 수 없다 — 결제가 이미 취소돼 앱에서 되돌릴 수 없는 상태다.
+  // 화면에서도 복구 버튼 대신 '취소 완료' 배지로 대체하지만, 화면만 막으면 다른 경로가
+  // 생겼을 때 취소가 풀려버린다. 여기서도 거부해 취소 상태는 어떤 경로로도 되돌아가지 않는다.
   function revertOrder(id) {
     const o = getOrder(id);
+    if (o.canceled) return { order: o, reverted: false };
     o.status = 'PROCESSING';
-    o.canceled = false;
-    o.cancelReason = null;
-    o.cancelType = null;
-    o.cancelledAt = null;
     persist();
-    return { order: o };
+    return { order: o, reverted: true };
   }
 
   function returnOrder(id, reason) {
