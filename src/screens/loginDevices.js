@@ -109,7 +109,7 @@
         '<div class="ld-note">' + window.Icons3D.iconLine('lightbulb', 15) +
         ' 모르는 기기가 있으면 로그아웃시켜 주세요. 로그아웃된 기기는 다시 로그인해야 주문을 받을 수 있어요.</div>';
     } else {
-      html += window.UI.emptyStateHtml('tablet', '다른 기기에서는 로그인하지 않았어요');
+      html += window.UI.emptyStateHtml('tablet', '로그인한 다른 기기가 없어요.');
     }
     return html;
   }
