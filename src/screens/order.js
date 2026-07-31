@@ -575,7 +575,7 @@
         '<div class="meta-row"><span class="meta-label">연락처</span><span class="meta-value">' + contactHtml + '</span></div>' +
         // channelTypeLabel은 아이콘이 포함된 HTML을 돌려주므로 esc()로 감싸면 태그가 글자로 출력된다.
         '<div class="meta-row"><span class="meta-label">주문 유형</span><span class="meta-value">' + window.UI.channelTypeLabel(order.channel) + '</span></div>' +
-        '<div class="meta-row"><span class="meta-label">결제정보</span><span class="meta-value">' + esc(order.paymentMethod) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
+        '<div class="meta-row"><span class="meta-label">결제정보</span><span class="meta-value">' + esc(window.UI.paymentMethodLabel(order)) + ' · ' + window.UI.formatMoney(order.amount) + '</span></div>' +
         '<div class="meta-row"><span class="meta-label">주문번호</span><span class="meta-value">' + esc(order.paymentOrderNo) + '</span></div>' +
         '</div>';
     }
@@ -945,9 +945,10 @@
     updateList();
   }
 
-  // 키오스크 + VAN 결제건은 실물 카드가 있어야 취소·반품이 가능해 이 화면에서 처리할 수 없다
+  // 키오스크 + VAN 결제건은 실물 카드가 있어야 취소·반품이 가능해 이 화면에서 처리할 수 없다.
+  // VAN은 사장님에게 '카드'로 보이므로 표시값이 아니라 isVanPayment 플래그로 판정한다.
   function blockIfVanTabletPayment(order, proceed) {
-    if (order && order.channel === 'TABLET' && order.paymentMethod === 'VAN') {
+    if (order && order.channel === 'TABLET' && order.isVanPayment) {
       window.UI.showModal({
         title: '실물 카드가 필요해요',
         message: "주문 거절에 '실물 카드'가 필요해요.<br/><strong>키오스크에서 취소</strong>해 주세요.",

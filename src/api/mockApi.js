@@ -488,7 +488,8 @@
     const identifierType = (opts.identifierType === 'SEAT' && channelSettings.acceptSeatOrders) ? 'SEAT' : 'PICKUP';
     const phones = ['01011112222', '01022223333', '01033334444', '01044445555', '01055556666', '01066667777', '01077778888'];
     const emails = ['guest01@example.com', 'guest02@example.com', 'guest03@example.com', 'guest04@example.com'];
-    const payments = ['카드', '간편결제', '쿠폰'];
+    // 쿠폰은 단독 결제수단이 아니라 카드·간편결제에 덧붙는 값이라 이 후보에서 빼고 usedCoupon으로 따로 잡는다.
+    const payments = ['카드', '간편결제'];
     const seatCodes = ['A-3', 'A-12', 'B-2', 'B-7', 'C-1', 'D-5'];
     const isReservation = !!opts.isReservation && channelSettings.acceptReservationOrders;
     const isEmailContact = opts.contactType === 'EMAIL';
@@ -535,8 +536,12 @@
     }
 
     const autoAccept = !!(store && store.autoAcceptOrders);
-    // VAN 결제는 QA에서 태블릿오더 취소 예외팝업(실물 카드 필요)을 재현하기 위한 강제 지정값이라 랜덤 후보에 넣지 않는다.
-    const paymentMethod = opts.paymentMethod === 'VAN' ? 'VAN' : payments[Math.floor(Math.random() * payments.length)];
+    // VAN은 결제수단이 아니라 카드 결제의 승인 경로다. 사장님에게는 '카드'로 보이고,
+    // 실물 카드가 필요한지 여부만 isVanPayment로 따로 들고 간다(취소 예외 팝업 판정에 쓰인다).
+    const isVanPayment = opts.paymentMethod === 'VAN';
+    const paymentMethod = isVanPayment ? '카드' : payments[Math.floor(Math.random() * payments.length)];
+    // 쿠폰은 카드·간편결제에 덧붙는 값이라 일부 주문에만 함께 붙인다.
+    const usedCoupon = Math.random() < 0.3;
     const promoType = opts.hasHappyHour ? 'HAPPY_HOUR' : null;
 
     const order = {
@@ -546,6 +551,8 @@
       identifierType: identifierType,
       channel: opts.channel === 'TABLET' ? 'TABLET' : 'QR',
       paymentMethod: paymentMethod,
+      usedCoupon: usedCoupon,
+      isVanPayment: isVanPayment,
       amount: amount,
       items: lines,
       customerContact: customerContact,

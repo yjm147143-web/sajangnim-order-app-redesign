@@ -86,6 +86,14 @@
     return '<span class="inline-icon-text">' + L('monitor', 14) + '키오스크</span>';
   }
 
+  // 쿠폰은 단독 결제수단이 아니라 카드·간편결제와 함께 쓰이므로 '쿠폰 + 카드'처럼 둘 다 보여준다.
+  // 어느 수단으로 결제됐는지와 쿠폰을 썼는지는 취소 문의 때 둘 다 필요한 정보다.
+  function paymentMethodLabel(order) {
+    const method = (order && order.paymentMethod) || '';
+    if (order && order.usedCoupon) return method ? '쿠폰 + ' + method : '쿠폰';
+    return method;
+  }
+
   const PROMO_LABELS = { GROUP_COUPON: '쿠폰(그룹)', STORE_COUPON: '쿠폰(매장)', HAPPY_HOUR: '해피아워' };
   function promoLabel(promoType) { return PROMO_LABELS[promoType] || ''; }
   function promoBadgeHtml(promoType) {
@@ -386,7 +394,8 @@
     escapeHtml: escapeHtml, formatMoney: formatMoney, clockLabel: clockLabel, clockLabelWithSeconds: clockLabelWithSeconds, elapsedLabel: elapsedLabel, elapsedMinutes: elapsedMinutes,
     formatContact: formatContact,
     bucketKeyOf: bucketKeyOf, bucketLabel: bucketLabel, groupByBucket: groupByBucket,
-    channelTypeLabel: channelTypeLabel, operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
+    channelTypeLabel: channelTypeLabel, paymentMethodLabel: paymentMethodLabel,
+    operatingStatusMeta: operatingStatusMeta, statusPillHtml: statusPillHtml,
     promoLabel: promoLabel, promoBadgeHtml: promoBadgeHtml,
     emptyStateHtml: emptyStateHtml,
     toast: toast, showModal: showModal, closeModal: closeModal, confirmModal: confirmModal, showBottomSheet: showBottomSheet,
