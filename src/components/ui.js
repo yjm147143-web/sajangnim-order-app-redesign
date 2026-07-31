@@ -82,7 +82,7 @@
   function channelTypeLabel(channel) {
     const L = window.Icons3D.iconLine;
     if (channel === 'QR') return '<span class="inline-icon-text">' + L('qr', 14) + 'QR오더</span>';
-    if (channel === 'MANUAL') return '<span class="inline-icon-text">' + L('receipt', 14) + '임의 생성 주문</span>';
+    if (channel === 'MANUAL') return '<span class="inline-icon-text">' + L('receipt', 14) + '임의 생성</span>';
     return '<span class="inline-icon-text">' + L('monitor', 14) + '키오스크</span>';
   }
 

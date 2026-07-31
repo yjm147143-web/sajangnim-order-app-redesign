@@ -532,7 +532,7 @@
     // 배달·프로모션 배지는 한눈에 파악해야 할 핵심 정보라 '간단히 보기'에서도 항상 노출한다
     // 예약 여부는 상단의 [예약 HH:MM] 배지로 이미 표시되므로 헤더에 별도 예약 배지를 중복 노출하지 않는다
     // 해피아워는 주문 카드에 배지로 표시하지 않는다 — 대신 해피아워가 시작되는 순간 팝업으로 알린다(handleHappyHourStarted)
-    // 주문 채널(키오스크/QR오더/임의 생성 주문)도 헤더 배지 없이 상세보기의 '주문 유형' 행으로만 노출한다
+    // 주문 채널(키오스크/QR오더/임의 생성)도 헤더 배지 없이 상세보기의 '주문 유형' 행으로만 노출한다
     const deliveryHtml = order.identifierType === 'SEAT' ? '<span class="badge badge-neutral">' + window.Icons3D.iconLine('scooterLine', 13) + ' 배달 주문</span>' : '';
     const promoHtml = order.promoType === 'HAPPY_HOUR' ? '' : window.UI.promoBadgeHtml(order.promoType);
     if (deliveryHtml || promoHtml) {
