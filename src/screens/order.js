@@ -1039,7 +1039,7 @@
     if (!ids.length) return;
     window.UI.confirmModal(
       '선택한 ' + ids.length + '건을 수락할까요?',
-      '선택한 주문이 처리중으로 넘어가고, 손님에게 준비중 알림을 보내요.',
+      '선택한 주문이 처리중으로 이동해요.',
       '수락하기',
       function () {
         window.MockApi.bulkAction(ids, 'accept');
