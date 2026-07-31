@@ -355,6 +355,11 @@
     // 글자와 나란히 놓이는 자리에서는 3D가 글자를 눌러버려서, 같은 형태를 선으로 다시 그렸다.
     calendarLine: '<rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M8 3v4M16 3v4M3 10h18"/>',
     gearLine: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/>',
+    // 조절판(슬라이더) — 상단바 설정 버튼용. 기어는 톱니가 많아 20px 이하에서 뭉치는데,
+    // 이 형태는 굵은 가로선 3개가 골격이라 작은 크기에서도 형태가 유지된다.
+    sliders: '<path d="M3.5 6.5h11M18.5 6.5h2"/><circle cx="16.5" cy="6.5" r="2.1"/>' +
+      '<path d="M3.5 12h3M10.5 12h10"/><circle cx="8.5" cy="12" r="2.1"/>' +
+      '<path d="M3.5 17.5h8M15.5 17.5h5"/><circle cx="13.5" cy="17.5" r="2.1"/>',
     // lockLine / pencilLine / puzzleLine / scooterLine은 위 정식 이름(lock·pencil·option·scooter)과
     // 같은 것을 가리키는 옛 이름이라 LINE_ALIAS로 넘긴다. 여기 남겨두면 낡은 경로가 별칭을 이겨서
     // 다시 그린 아이콘이 화면에 반영되지 않는다.

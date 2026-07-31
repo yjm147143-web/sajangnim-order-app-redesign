@@ -84,8 +84,24 @@
     '.order-topbar-centered #status-btn-slot { display: inline-flex; flex-shrink: 0; }' +
     // 설정 아이콘은 기본 20px보다 키워 매장명과 함께 상단바의 시각적 무게를 맞춘다(터치 영역 44px은 유지)
     '.order-topbar-centered .icon-btn { font-size: 26px; }' +
-    // 3D 기어는 색·크기를 SVG가 직접 정하므로 icon-btn의 font-size 확대가 필요 없다.
-    '.order-topbar-centered .settings-icon-btn { font-size: 0; }' +
+    // 설정은 글리프가 아니라 '누를 수 있는 면'으로 읽히도록 흰 버튼(테두리+그림자)으로 감싼다.
+    // 44px 터치 영역은 유지하고 그 안에 38px 면만 그려, 옆 매장명(17px)보다 무게가 앞서지 않게 한다.
+    // .icon-btn의 좌우 패딩(6px)을 그대로 두면 44px 버튼의 내부 폭이 32px로 좁아져 38px 면이 눌린다.
+    '.order-topbar-centered .settings-icon-btn { font-size: 0; padding: 0; }' +
+    '.settings-icon-btn .settings-icon-surface { display: inline-flex; align-items: center;' +
+      ' justify-content: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 13px;' +
+      ' background: var(--color-white); color: var(--color-text-primary);' +
+      // 민트 계열 --color-disabled(#DCEAE7)는 흰 면 위에서 1.24:1로 사라지므로,
+      // 중립 회색 표면(--color-card-bg)과 짝이 되는 중립 보더를 직접 쓴다.
+      ' border: 1px solid #E3E6EC;' +
+      ' box-shadow: 0 1px 2px rgba(30, 29, 43, 0.08), 0 2px 6px rgba(30, 29, 43, 0.05);' +
+      ' transition: background-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease; }' +
+    // 눌림은 그림자를 inset으로 뒤집어 '면이 안으로 들어가는' 방향으로 표현한다.
+    '.settings-icon-btn:active .settings-icon-surface { background: var(--color-card-bg);' +
+      ' box-shadow: inset 0 1px 2px rgba(30, 29, 43, 0.10); transform: scale(0.96); }' +
+    '@media (prefers-reduced-motion: reduce) {' +
+      ' .settings-icon-btn .settings-icon-surface { transition: none; }' +
+      ' .settings-icon-btn:active .settings-icon-surface { transform: none; } }' +
     // 상단바 패딩이 위아래로 다르므로(32px/8px) 기본 top:50%를 그대로 쓰면 매장명이 좌우 배지보다
     // 12px 위로 뜬다. 패딩 안쪽 영역에 맞춰 위아래를 물려 배지·설정 버튼과 같은 행에 오게 한다.
     '.topbar-title { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 45vw;' +
@@ -343,7 +359,7 @@
   }
 
   function renderCallStatusButtonHtml() {
-    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">' + window.Icons3D.iconLine('listCheck', 14) + ' 주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
+    return '<button type="button" class="pill-btn call-status-btn' + (callStatusPanelOpen ? ' active' : '') + '" data-action="toggle-call-status-panel">주문 요약 ' + (callStatusPanelOpen ? '▴' : '▾') + '</button>';
   }
 
   // 신규/완료 수를 회색 텍스트가 아니라 색이 있는 알약(완료=블루, 신규=앰버/대기)으로 보여줘
@@ -1377,7 +1393,7 @@
       '<span class="order-network-caption" id="order-network-caption">' + networkIconHtml(networkState()) + '</span>' +
       '</div>' +
       '<button type="button" class="icon-btn settings-icon-btn" data-action="open-settings" aria-label="설정">' +
-        window.Icons3D.icon3d('gear', 26) + '</button>' +
+        '<span class="settings-icon-surface">' + window.Icons3D.iconLine('sliders', 21) + '</span></button>' +
       '</div>' +
       '<div id="offline-banner-slot">' + (isOnline ? '' : offlineBannerHtml()) + '</div>' +
       '<div id="auto-soldout-banner-slot">' + autoSoldoutBannerHtml() + '</div>' +
