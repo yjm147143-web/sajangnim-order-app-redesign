@@ -307,7 +307,42 @@
   // ---------------- 인라인 선 아이콘 ----------------
   // 문구 앞에 붙는 작은 기호(💡 안내, ⚠️ 경고 등)는 3D로 그리면 글자보다 무거워 문장이 안 읽힌다.
   // currentColor를 쓰는 선 아이콘으로 두면 옆 글자와 같은 색·같은 무게로 흐른다.
+  // 목록·탭바·빈 상태 아이콘도 전부 선으로 그린다.
+  // 컬러 3D는 광택·그라디언트·두께가 24px에서 서로를 잡아먹어 형태가 뭉개졌고, 무엇보다
+  // 색이 들어간 입체 덩어리는 이모지와 시각적으로 구별되지 않았다. 선 하나로만 그리면
+  // 작은 크기에서 형태가 살아남고, currentColor라 놓이는 자리의 색을 그대로 따른다.
+  // 기하 규칙: viewBox 24, stroke 1.8, 라운드 캡·조인, 채움 없음.
   var LINE = {
+    // 천막을 물결(scallop)로 그려야 '가게'로 읽힌다. 직선 사다리꼴로 두면 서류가방처럼 보였다.
+    store: '<path d="M4 10v9.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V10"/>' +
+      '<path d="M2.5 9.6 4.6 4h14.8l2.1 5.6a3 3 0 0 1-5.6 0 3 3 0 0 1-5.6 0 3 3 0 0 1-5.6 0z"/>',
+    bolt: '<path d="M13.4 2.6 5.6 13.4h4.8l-1 8 7.8-10.8h-4.8z"/>',
+    dome: '<path d="M3 19.6h18"/><path d="M5.2 16.4a6.8 6.8 0 0 1 13.6 0"/><path d="M5.2 16.4h13.6"/><circle cx="12" cy="5" r="1.5"/><path d="M12 6.5v3"/>',
+    plate: '<path d="M6 3v5.4a1.9 1.9 0 0 0 3.8 0V3"/><path d="M7.9 8.4V21"/><path d="M16.4 3c1.7 1.6 2.4 3.6 2.4 5.6 0 1.6-.7 2.7-1.8 3.2V21"/>',
+    megaphone: '<path d="M3.6 9.6 17 4.2v15.6L3.6 14.4z"/><path d="M7.6 15.6V20a1.6 1.6 0 0 0 3.2 0v-3.4"/>',
+    box: '<path d="M12 2.8 21 7.4v9.2L12 21.2 3 16.6V7.4z"/><path d="M3 7.4 12 12l9-4.6"/><path d="M12 12v9.2"/>',
+    phone: '<rect x="6" y="2.5" width="12" height="19" rx="2.6"/><rect x="8.6" y="6" width="2.8" height="2.8" rx="0.8"/><rect x="12.6" y="6" width="2.8" height="2.8" rx="0.8"/><rect x="8.6" y="10" width="2.8" height="2.8" rx="0.8"/><path d="M10.4 18.6h3.2"/>',
+    coins: '<circle cx="12" cy="12" r="8.8"/><path d="M8.8 8.4 12 13.8l3.2-5.4"/><path d="M8.4 11.4h7.2M8.4 13.6h7.2"/>',
+    bell: '<path d="M18 9.6a6 6 0 0 0-12 0v4.2L4.4 17h15.2L18 13.8z"/><path d="M9.6 17a2.4 2.4 0 0 0 4.8 0"/>',
+    lock: '<rect x="4.6" y="10.4" width="14.8" height="10.6" rx="2.2"/><path d="M8 10.4V7.8a4 4 0 0 1 8 0v2.6"/>',
+    notice: '<path d="M4 4.4h16a2 2 0 0 1 2 2v8.4a2 2 0 0 1-2 2h-6.8l-4.6 3.6v-3.6H4a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2z"/><path d="M6.6 8.6h10.8M6.6 12h6.8"/>',
+    // 로그아웃은 문만 그리면 '문'으로만 읽혀서, 나가는 화살표를 붙여 동작을 담는다.
+    door: '<path d="M15 3.6H6.6A1.6 1.6 0 0 0 5 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6H15"/><path d="M19.4 12H10.2"/><path d="M16 8.6 19.4 12 16 15.4"/>',
+    bill: '<rect x="2.6" y="6" width="18.8" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.8"/><path d="M5.8 12h.6M17.6 12h.6"/>',
+    swap: '<path d="M3.6 8.2h13"/><path d="M13.6 5.2 16.6 8.2l-3 3"/><path d="M20.4 15.8h-13"/><path d="M10.4 12.8 7.4 15.8l3 3"/>',
+    home: '<path d="M3.4 10.6 12 3.4l8.6 7.2"/><path d="M5.6 9.4V20a1 1 0 0 0 1 1h10.8a1 1 0 0 0 1-1V9.4"/><path d="M9.6 21v-5.8h4.8V21"/>',
+    chart: '<path d="M3.4 20.6h17.2"/><rect x="5" y="11.6" width="3.4" height="6.4" rx="1"/><rect x="10.3" y="7.6" width="3.4" height="10.4" rx="1"/><rect x="15.6" y="4" width="3.4" height="14" rx="1"/>',
+    inbox: '<path d="M2.6 12.6 5.7 4.6h12.6l3.1 8v6a1.6 1.6 0 0 1-1.6 1.6H4.2a1.6 1.6 0 0 1-1.6-1.6z"/><path d="M2.6 12.6h5l1.2 2.6h6.4l1.2-2.6h5"/>',
+    qrOff: '<rect x="3" y="3" width="6.4" height="6.4" rx="1.4"/><rect x="14.6" y="3" width="6.4" height="6.4" rx="1.4"/><rect x="3" y="14.6" width="6.4" height="6.4" rx="1.4"/><path d="M14.6 14.6h2.8v2.8h-2.8z"/><path d="M3.4 20.6 20.6 3.4"/>',
+    magnifier: '<circle cx="10.8" cy="10.8" r="7.2"/><path d="M16.1 16.1 21 21"/>',
+    // 바퀴 2개 + 좌석으로 올라가는 프레임 + 핸들바. 차체를 덩어리로 그리면 18px에서 뭉갠다.
+    scooter: '<circle cx="5.8" cy="17.6" r="2.9"/><circle cx="18.2" cy="17.6" r="2.9"/>' +
+      '<path d="M8.7 17.6h6.6"/><path d="M15.3 17.6 12.3 9.6H9.5"/>' +
+      '<path d="M12.3 9.6h4.4l1.5 5.2"/><path d="M16.2 6.4h3.4"/>',
+    // 메뉴 옵션은 퍼즐 조각으로 그렸더니 24px 이하에서 깨진 X자로 보였다. 겹친 레이어가
+    // '같은 메뉴의 여러 갈래'를 더 정확히 전달하고 작은 크기에서도 형태가 살아남는다.
+    option: '<path d="M12 3.2 21 8l-9 4.8L3 8z"/><path d="M3 12.4 12 17.2l9-4.8"/><path d="M3 16.6 12 21.4l9-4.8"/>',
+    pencil: '<path d="M16.8 3.2 20.8 7.2 8 20H4v-4z"/><path d="M14.6 5.4 18.6 9.4"/>',
     lightbulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1.2.9 1.9V16h5.2v-.2c0-.7.3-1.4.9-1.9A6 6 0 0 0 12 3z"/>',
     warning: '<path d="M12 3.2 22.2 20H1.8z"/><path d="M12 9.4v4.8M12 17.2h.01"/>',
     flame: '<path d="M12 2.4c3.4 3.2 6.2 6 6.2 10.2A6.2 6.2 0 0 1 5.8 12.6c0-1.8.7-3.2 1.8-4.6.4 1.2 1.2 2 2.2 2.2-.6-3 .8-6 2.2-7.8z"/>',
@@ -319,11 +354,10 @@
     // 아래 6종은 위 3D 아이콘과 같은 대상을 가리키는 선 버전이다. 문장·배지·세그먼트탭처럼
     // 글자와 나란히 놓이는 자리에서는 3D가 글자를 눌러버려서, 같은 형태를 선으로 다시 그렸다.
     calendarLine: '<rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M8 3v4M16 3v4M3 10h18"/>',
-    lockLine: '<rect x="4.6" y="10.4" width="14.8" height="10.8" rx="2.4"/><path d="M8 10.4V7.8a4 4 0 0 1 8 0v2.6"/>',
     gearLine: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/>',
-    pencilLine: '<path d="M16.8 3.2 20.8 7.2 8 20H4v-4z"/><path d="M14.6 5.4 18.6 9.4"/>',
-    puzzleLine: '<path d="M4 4h5v1.4a2 2 0 1 0 4 0V4h6v6h-1.4a2 2 0 1 0 0 4H19v6h-6v-1.4a2 2 0 1 0-4 0V20H4z"/>',
-    scooterLine: '<circle cx="6" cy="17.4" r="3.4"/><circle cx="18" cy="17.4" r="3.4"/><path d="M3.4 7h4l4 8.4h4M16 5h3.4v3"/>',
+    // lockLine / pencilLine / puzzleLine / scooterLine은 위 정식 이름(lock·pencil·option·scooter)과
+    // 같은 것을 가리키는 옛 이름이라 LINE_ALIAS로 넘긴다. 여기 남겨두면 낡은 경로가 별칭을 이겨서
+    // 다시 그린 아이콘이 화면에 반영되지 않는다.
     listCheck: '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6l1.6 1.6L7 5M3 12l1.6 1.6L7 11M3 18l1.6 1.6L7 17"/>',
     camera: '<path d="M3.4 7h3.4l1.6-2.6h7.2L17.2 7h3.4a2 2 0 0 1 2 2v9.4a2 2 0 0 1-2 2H3.4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13.6" r="3.8"/>',
     // 주문 메모 앞 말풍선. 3D notice와 같은 형태지만 문장 안에 흐르므로 선으로 둔다.
@@ -333,9 +367,17 @@
     speaker: '<path d="M4 9.2h3.4L12 5v14l-4.6-4.2H4z"/><path d="M16 9a4.4 4.4 0 0 1 0 6M18.8 6.4a8 8 0 0 1 0 11.2"/>',
   };
 
+  // 같은 아이콘을 부르는 옛 이름들. 화면 코드를 한꺼번에 고치지 않고도 정식 이름으로 모인다.
+  var LINE_ALIAS = {
+    calendar: 'calendarLine', gear: 'gearLine',
+    chat: 'notice2', 'notice-line': 'notice2',
+    puzzle: 'option', puzzleLine: 'option',
+    scooterLine: 'scooter', lockLine: 'lock', pencilLine: 'pencil',
+  };
+
   // 선 아이콘은 크기와 굵기만 조절한다. fill 없이 stroke만 쓰므로 어느 배경에도 얹힌다.
   function iconLine(name, size, strokeWidth) {
-    var d = LINE[name];
+    var d = LINE[name] || LINE[LINE_ALIAS[name]];
     if (!d) return '';
     var w = size || 16;
     return '<svg class="icon-line" width="' + w + '" height="' + w + '" viewBox="0 0 24 24"' +

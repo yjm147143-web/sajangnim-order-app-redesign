@@ -39,9 +39,9 @@
 
         '<div class="card-flat" style="margin:0 20px;border:1px solid var(--color-divider);border-radius:var(--radius-card);">' +
           (showSwitch
-            ? '<div class="settings-list-item" id="switch-event-btn"><span class="icon">' + window.Icons3D.icon3d('swap', 24) + '</span><span class="label">행사 전환</span><span style="color:var(--color-text-secondary);">›</span></div>'
+            ? '<div class="settings-list-item" id="switch-event-btn"><span class="icon">' + window.Icons3D.iconLine('swap', 24) + '</span><span class="label">행사 전환</span><span style="color:var(--color-text-secondary);">›</span></div>'
             : '') +
-          '<div class="settings-list-item" id="logout-btn"><span class="icon">' + window.Icons3D.icon3d('door', 24) + '</span><span class="label" style="color:var(--color-accent-red);">로그아웃</span></div>' +
+          '<div class="settings-list-item" id="logout-btn"><span class="icon">' + window.Icons3D.iconLine('door', 24) + '</span><span class="label" style="color:var(--color-accent-red);">로그아웃</span></div>' +
         '</div>' +
 
         '<div style="height:24px;"></div>' +

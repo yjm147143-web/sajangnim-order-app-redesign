@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 공용 UI 헬퍼 — 포맷팅, 토스트/모달/바텀시트, 차트 SVG, 주문 카드 조각
  */
 (function () {
@@ -71,7 +71,7 @@
   // 빈 상태는 화면마다 마크업을 따로 쓰고 있어 아이콘 크기가 조금씩 달랐다. 한 곳에서 만든다.
   function emptyStateHtml(iconName, message) {
     return '<div class="empty-state">' +
-      '<div class="empty-state-icon">' + window.Icons3D.icon3d(iconName, 44) + '</div>' +
+      '<div class="empty-state-icon">' + window.Icons3D.iconLine(iconName, 44) + '</div>' +
       '<div>' + message + '</div>' +
       '</div>';
   }
@@ -148,7 +148,7 @@
     const host = document.getElementById('push-host');
     if (!host) return;
     host.innerHTML = '<div class="push-card" id="active-push" role="alert">' +
-      '<div class="push-icon">' + window.Icons3D.icon3d('receipt', 22) + '</div>' +
+      '<div class="push-icon">' + window.Icons3D.iconLine('receipt', 22) + '</div>' +
       '<div class="push-body">' +
       '<div class="push-app">사장님 주문접수</div>' +
       '<div class="push-title">' + escapeHtml(opts.title || '') + '</div>' +
@@ -240,7 +240,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="lock-gate-modal">' +
         '<div class="modal-card">' +
-          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.iconLine('lock', 34) + '</div>' +
           '<div class="modal-title">' + escapeHtml(label) + '</div>' +
           '<div class="modal-message">사장님이 잠근 기능이에요.<br/>계속하려면 비밀번호를 입력해주세요.</div>' +
           '<input type="password" class="input-field" id="lock-gate-input" maxlength="12" placeholder="비밀번호" style="text-align:center;letter-spacing:4px;margin-bottom:6px;" />' +

@@ -112,7 +112,16 @@
   cursor: pointer;
 }
 .settings-list-item:active { background: var(--color-divider); }
-.settings-list-item .icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+/* 선 아이콘은 currentColor를 쓰므로 놓이는 자리에서 색을 정해준다.
+   목록 아이콘은 라벨보다 한 단 흐린 회색 — 아이콘이 라벨보다 진하면 글자를 읽기 전에
+   아이콘부터 훑게 되어 목록 읽기가 느려진다. */
+.settings-list-item .icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-secondary);
+}
+/* 빈 상태 아이콘은 안내 문구와 같은 회색으로 두고 크기로만 존재감을 준다. */
+.empty-state-icon { color: var(--color-text-secondary); }
 .settings-list-item .label { flex: 1; font-size: var(--font-size-body); font-weight: 600; }
 .settings-list-item.no-toggle-click { cursor: default; }
 .settings-list-item.no-toggle-click:active { background: transparent; }

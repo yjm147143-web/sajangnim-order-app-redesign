@@ -74,17 +74,17 @@
 
   function contentHtml(settings) {
     return (
-      rowHtml(window.Icons3D.icon3d('calendar', 24), 'ocs-reservation-toggle', '예약 주문',
+      rowHtml(window.Icons3D.iconLine('calendar', 24), 'ocs-reservation-toggle', '예약 주문',
         settings.acceptReservationOrders ? '예약 주문을 받고 있어요' : '예약 주문을 받지 않아요',
         settings.acceptReservationOrders) +
       reservationHoursHtml(settings) +
       '<div class="divider-line"></div>' +
-      rowHtml(window.Icons3D.icon3d('scooter', 24), 'ocs-seat-toggle', '배달 주문',
+      rowHtml(window.Icons3D.iconLine('scooter', 24), 'ocs-seat-toggle', '배달 주문',
         settings.acceptSeatOrders ? '켜면 자리번호 주문도 함께 들어와요' : '꺼져 있으면 호출번호 주문만 들어와요',
         settings.acceptSeatOrders) +
       seatInputHtml(settings) +
       '<div class="divider-line"></div>' +
-      rowHtml(window.Icons3D.icon3d('notice', 24), 'ocs-note-toggle', '손님 요청',
+      rowHtml(window.Icons3D.iconLine('notice', 24), 'ocs-note-toggle', '손님 요청',
         settings.acceptCustomerNotes ? '주문 시 손님 요청을 받을게요' : '손님 요청을 받지 않아요',
         settings.acceptCustomerNotes)
     );

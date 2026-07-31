@@ -717,7 +717,7 @@
     }
     if (hasFirstCome) {
       priceHtml += '<div class="menu-preview-promo-row">' +
-        '<span class="menu-preview-price-promo">' + window.Icons3D.icon3d('bolt', 14) + ' 선착순 ' + money(Number(state.firstComePrice)) + '</span>' +
+        '<span class="menu-preview-price-promo">' + window.Icons3D.iconLine('bolt', 14) + ' 선착순 ' + money(Number(state.firstComePrice)) + '</span>' +
         (state.firstComeQty !== '' ? '<span class="menu-preview-promo-caption">' + esc(state.firstComeQty) + '개 한정</span>' : '') +
       '</div>';
     }

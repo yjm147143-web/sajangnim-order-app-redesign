@@ -1,4 +1,4 @@
-/*
+﻿/*
  * QR 메뉴판 보기 화면
  * - 메뉴판 링크 표시 + 복사
  * - QR코드 이미지 (공개 QR 생성 API 사용 — 실서비스 전환 시 서버측 생성 권장)
@@ -43,7 +43,7 @@
         '<img src="' + qrSrc + '" alt="QR 코드" id="qr-image" />' +
         '<div class="empty-state" id="qr-image-error" style="display:none;">' +
           // 다시 시도 버튼이 함께 들어가는 자리라 emptyStateHtml 헬퍼 대신 아이콘만 끼운다.
-          '<div class="empty-state-icon">' + window.Icons3D.icon3d('qrOff', 44) + '</div>' +
+          '<div class="empty-state-icon">' + window.Icons3D.iconLine('qrOff', 44) + '</div>' +
           '<div>QR 코드를 불러오지 못했어요</div>' +
           '<button type="button" class="btn-text" id="qr-retry-btn">다시 시도</button>' +
         '</div>' +

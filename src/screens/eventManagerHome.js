@@ -54,7 +54,7 @@
           '</div>' +
         '</div>' +
         window.UI.statusPillHtml(s.operatingStatus) +
-        '<button type="button" class="store-settings-btn" data-action="open-store-settings" data-store-id="' + s.id + '" aria-label="' + esc(s.name) + ' 설정">' + window.Icons3D.icon3d('gear', 20) + '</button>' +
+        '<button type="button" class="store-settings-btn" data-action="open-store-settings" data-store-id="' + s.id + '" aria-label="' + esc(s.name) + ' 설정">' + window.Icons3D.iconLine('gear', 20) + '</button>' +
       '</div>'
     );
   }

@@ -28,7 +28,7 @@
     var repeatCount = repeatCountOf(store);
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">' + window.Icons3D.icon3d('bell', 24) + '</div>' +
+        '<div class="icon">' + window.Icons3D.iconLine('bell', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">알림 설정</div>' +
           '<div class="label-sub">' + (notificationOn ? '소리 · 푸시 · 진동으로 새 주문을 알려드려요' : '소리 · 푸시 알림이 꺼져 있어요') + '</div>' +

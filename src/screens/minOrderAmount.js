@@ -11,7 +11,7 @@
     var amount = state.amount;
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">' + window.Icons3D.icon3d('bill', 24) + '</div>' +
+        '<div class="icon">' + window.Icons3D.iconLine('bill', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">최소 주문 금액 사용</div>' +
           '<div class="label-sub">' + (enabled ? '설정한 금액 미만은 주문할 수 없어요' : '금액 제한 없이 주문할 수 있어요') + '</div>' +

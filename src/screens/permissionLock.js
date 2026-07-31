@@ -47,7 +47,7 @@
   function statusCardHtml(status) {
     return (
       '<div class="settings-list-item no-toggle-click">' +
-        '<div class="icon">' + window.Icons3D.icon3d('lock', 24) + '</div>' +
+        '<div class="icon">' + window.Icons3D.iconLine('lock', 24) + '</div>' +
         '<div class="label-group">' +
           '<div class="label">권한 잠금</div>' +
           '<div class="label-sub">' + (status.isSet
@@ -100,7 +100,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="pl-setup-modal">' +
         '<div class="modal-card">' +
-          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.iconLine('lock', 34) + '</div>' +
           '<div class="modal-title">' + (isChange ? '비밀번호 변경' : '비밀번호 설정') + '</div>' +
           '<input type="password" class="input-field" id="pl-setup-input" maxlength="12" placeholder="새 비밀번호" style="text-align:center;letter-spacing:4px;margin-bottom:6px;" />' +
           '<div class="input-error" id="pl-setup-error" style="min-height:16px;"></div>' +
@@ -153,7 +153,7 @@
     host.innerHTML =
       '<div class="modal-overlay" id="pl-scopes-modal">' +
         '<div class="modal-card">' +
-          '<div class="modal-lead-icon">' + window.Icons3D.icon3d('lock', 34) + '</div>' +
+          '<div class="modal-lead-icon">' + window.Icons3D.iconLine('lock', 34) + '</div>' +
           '<div class="modal-title">보호 항목 변경</div>' +
           '<div class="pl-scope-title">비밀번호로 보호할 기능을 선택해주세요</div>' +
           '<div id="pl-scope-list">' + scopeChecklistHtml(scopes) + '</div>' +

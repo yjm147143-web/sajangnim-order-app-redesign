@@ -14,17 +14,17 @@
       '</div>' +
       '<div class="screen-scroll">' +
         '<div class="settings-list-item" data-nav="minOrderAmount">' +
-          '<div class="icon">' + window.Icons3D.icon3d('bill', 24) + '</div>' +
+          '<div class="icon">' + window.Icons3D.iconLine('bill', 24) + '</div>' +
           '<div class="label-group"><div class="label">최소 주문 금액 설정</div><div class="label-sub">이 금액 미만이면 주문을 받지 않아요</div></div>' +
           '<div class="chevron">›</div>' +
         '</div>' +
         '<div class="settings-list-item" data-nav="orderChannelSettings">' +
-          '<div class="icon">' + window.Icons3D.icon3d('receipt', 24) + '</div>' +
+          '<div class="icon">' + window.Icons3D.iconLine('receipt', 24) + '</div>' +
           '<div class="label-group"><div class="label">주문 방식 관리</div><div class="label-sub">예약, 배달 등 주문 방식을 설정해요.</div></div>' +
           '<div class="chevron">›</div>' +
         '</div>' +
         '<div class="settings-list-item" data-nav="cashOrderCreate">' +
-          '<div class="icon">' + window.Icons3D.icon3d('coins', 24) + '</div>' +
+          '<div class="icon">' + window.Icons3D.iconLine('coins', 24) + '</div>' +
           '<div class="label-group"><div class="label">임의 주문 생성</div><div class="label-sub">카운터에서 메뉴를 직접 골라 주문을 등록해요</div></div>' +
           '<div class="chevron">›</div>' +
         '</div>' +

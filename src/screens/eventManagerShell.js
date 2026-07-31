@@ -5,9 +5,9 @@
  */
 (function () {
   const TABS = [
-    { screen: 'eventManagerHome', icon: window.Icons3D.icon3d('home', 24), label: '홈' },
-    { screen: 'eventManagerSales', icon: window.Icons3D.icon3d('chart', 24), label: '매출현황' },
-    { screen: 'eventManagerSettings', icon: window.Icons3D.icon3d('gear', 24), label: '설정' },
+    { screen: 'eventManagerHome', icon: window.Icons3D.iconLine('home', 24), label: '홈' },
+    { screen: 'eventManagerSales', icon: window.Icons3D.iconLine('chart', 24), label: '매출현황' },
+    { screen: 'eventManagerSettings', icon: window.Icons3D.iconLine('gear', 24), label: '설정' },
   ];
 
   function tabbarHtml(activeScreen) {
