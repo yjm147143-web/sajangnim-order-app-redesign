@@ -187,7 +187,9 @@
       '</div>' +
       '<div class="cta-fixed">' +
         '<div class="coc-total-row"><span class="label">총액</span><span class="value">' + money(cartTotal()) + '</span></div>' +
-        '<button type="button" class="btn btn-primary" data-action="coc-go-amount" id="coc-pay-btn">주문 생성</button>' +
+        // 이 버튼은 금액 입력 단계로 넘어가는 것뿐이라 '다음'으로 둔다(1단계 버튼과 동일).
+        // 실제로 주문이 만들어지는 마지막 단계 버튼만 '주문 생성'을 쓴다.
+        '<button type="button" class="btn btn-primary" data-action="coc-go-amount" id="coc-pay-btn">다음</button>' +
       '</div>'
     );
   }
@@ -243,7 +245,8 @@
         '</div>' +
       '</div>' +
       '<div class="cta-fixed">' +
-        '<button type="button" class="btn btn-primary" data-action="coc-complete" id="coc-complete-btn">주문 완료</button>' +
+        // 실제로 주문이 접수되는 지점 — 라벨이 동작과 일치해야 하는 유일한 버튼이다.
+        '<button type="button" class="btn btn-primary" data-action="coc-complete" id="coc-complete-btn">주문 생성</button>' +
       '</div>'
     );
   }
