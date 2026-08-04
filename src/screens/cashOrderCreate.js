@@ -187,7 +187,7 @@
       '</div>' +
       '<div class="cta-fixed">' +
         '<div class="coc-total-row"><span class="label">총액</span><span class="value">' + money(cartTotal()) + '</span></div>' +
-        '<button type="button" class="btn btn-primary" data-action="coc-go-amount" id="coc-pay-btn">현금 결제 진행</button>' +
+        '<button type="button" class="btn btn-primary" data-action="coc-go-amount" id="coc-pay-btn">주문 생성</button>' +
       '</div>'
     );
   }
